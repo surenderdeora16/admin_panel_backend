@@ -1,0 +1,56 @@
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"POST /api-v1/admin/login - invalid csrf token"}
+{"level":"error","message":"GET /socket.io/?EIO=4&transport=websocket - Not allowed by CORS"}
+{"level":"error","message":"GET /socket.io/?EIO=4&transport=websocket - Not allowed by CORS"}
+{"level":"error","message":"GET /socket.io/?EIO=4&transport=websocket - Not allowed by CORS"}
+{"level":"error","message":"GET /socket.io/?EIO=4&transport=websocket - Not allowed by CORS"}
+{"level":"error","message":"GET /socket.io/?EIO=4&transport=websocket - Not allowed by CORS"}
+{"level":"error","message":"GET /socket.io/?EIO=4&transport=websocket - Not allowed by CORS"}
+{"level":"error","message":"GET /socket.io/?EIO=4&transport=websocket - Not allowed by CORS"}
+{"level":"error","message":"GET /socket.io/?EIO=4&transport=websocket - Not allowed by CORS"}
+{"level":"error","message":"GET /socket.io/?EIO=4&transport=websocket - Not allowed by CORS"}
+{"level":"error","message":"GET /socket.io/?EIO=4&transport=websocket - Not allowed by CORS"}
+{"level":"error","message":"GET /socket.io/?EIO=4&transport=websocket - Not allowed by CORS"}
+{"level":"error","message":"GET /socket.io/?EIO=4&transport=websocket - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/profile - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/settings/1 - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/profile - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/constant-list - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/profile - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/settings/1 - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/profile - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/constant-list - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/logout - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/logout - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/get-ureadnotification?userId=null - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/business-datatable - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/advertisement-datatable - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/get-advertisement-count - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/recent-transaction - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/get-ureadnotification?userId=null - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/business-datatable - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/advertisement-datatable - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/get-advertisement-count - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/recent-transaction - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/get-banner/login/loginbanner - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/get-banner/login/loginbanner - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/get-banner/login/loginbanner - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/settings/1 - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/constant-list - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/profile - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/get-banner/login/loginbanner - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/settings/1 - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/profile - Not allowed by CORS"}
+{"level":"error","message":"OPTIONS /front/constant-list - Not allowed by CORS"}

@@ -1,0 +1,39 @@
+{
+    "name": "param",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node server.js",
+        "report": "eslint -f json  -o ./report.json ./",
+        "babel-node-version": "babel-node --version",
+        "client": "npm start --prefix client",
+        "dev": "nodemon server.js"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "axios": "^1.6.8",
+        "bcrypt": "^5.1.1",
+        "body-parser": "^1.20.2",
+        "cookie-parser": "^1.4.6",
+        "cors": "^2.8.5",
+        "crypto-js": "^4.2.0",
+        "csurf": "^1.10.0",
+        "dotenv": "^16.4.5",
+        "express": "^4.19.2",
+        "express-rate-limit": "^7.5.0",
+        "express-validator": "^7.0.1",
+        "helmet": "^8.1.0",
+        "jsonwebtoken": "^9.0.2",
+        "moment": "^2.30.1",
+        "mongoose": "^8.4.0",
+        "multer": "^1.4.5-lts.1",
+        "supertest": "^7.1.0",
+        "winston": "^3.17.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.0"
+    }
+}
