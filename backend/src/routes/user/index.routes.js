@@ -9,8 +9,8 @@ const Storage = require('../../helpers/Storage');
 const upload = new Storage.uploadTo({ dir: 'user', isImage: true });
 
 // User Auth
-router.post('/send-otp', checkValid('sendOtp'), showValidationErrors, authController.sendotp);
 router.post('/register', checkValid('register'), showValidationErrors, authController.register);
+router.post('/send-otp', checkValid('sendOtp'), showValidationErrors, authController.sendotp);
 router.post('/login-otp', checkValid('loginWithOtp'), showValidationErrors, authController.loginWithOtp);
 
 // User Login Check

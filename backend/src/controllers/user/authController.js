@@ -138,31 +138,15 @@ exports.getProfile = async (req, res) => {
 
 exports.register = async (req, res) => {
     try {
-
-        const { first_name, last_name, email, gender, mobile, otp } = req.body;
+        const { name, email, mobile, password, confirmPassword, state, district } = req.body;
         let user = await User.findOne({ $or: [{ mobile }, { email }] });
-        if (user) return res.json({
+        if (user) return res.status(409).json({
             'status': false,
             'message': "User already registered..!!",
             'data': []
         });
 
-        let otpRecord = await UserOTP.findOne({ phone_no: mobile, otp });
-        if (!otpRecord) return res.json({
-            'status': false,
-            'message': "Invalid OTP..!!",
-            'data': []
-        });
-
-        if (otpRecord.createdAt.getTime() + 600000 <= new Date().getTime()) {
-            return res.json({
-                'status': false,
-                'message': "OTP expired..!!",
-                'data': []
-            });
-        }
-
-        const record = await User.create({ first_name, last_name, email, mobile, gender });
+        const record = await User.create({ name, email, mobile, password, confirmPassword, state, district });
         return res.success(record);
     } catch (error) {
         return res.someThingWentWrong(error);

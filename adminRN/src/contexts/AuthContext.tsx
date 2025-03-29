@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const checkAuthStatus = async () => {
         try {
-            const response = await axios.get('/api-v1/admin/profile', {
+            const response = await axios.get('admin/profile', {
                 withCredentials: true
             });
             if (response.data.status) {

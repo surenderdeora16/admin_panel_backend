@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { PiToggleLeftLight, PiToggleRightLight } from 'react-icons/pi';
 import AxiosHelper from '../../helper/AxiosHelper';
 import { toast } from 'react-toastify';
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FILE_SIZE, SUPPORTED_FORMATS_IMAGE } from '../../constant/constant';
 import { TbShieldLock } from "react-icons/tb";
 import { LuUser } from "react-icons/lu";
@@ -12,13 +12,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { updateAdmin } from '../../redux/admin/adminSlice';
 import { toast } from 'react-toastify';
+import noUserImage from '../../images/user/user.svg'
 
 const Profile = () => {
   const dispatch = useDispatch();
   const profile = useSelector((state: RootState) => state.admin?.data);
   const [activeTab, setActiveTab] = useState('personal')
   const [isImageLoading, setIsImageLoading] = useState(false);
-  const [avatar, setAvatar]= useState("")
+  const [avatar, setAvatar] = useState("")
 
   const handleImageUpload = async (file: any) => {
     if (!SUPPORTED_FORMATS_IMAGE.includes(file.type)) {
@@ -43,6 +44,16 @@ const Profile = () => {
     }
   }
 
+  const handleImageError = useCallback(() => {
+    setAvatar(noUserImage);
+  }, []);
+
+  useEffect(() => {
+    if (profile) {
+      setAvatar(profile?.image)
+    }
+  }, [profile])
+
   return (
     <>
       <Breadcrumb pageName="Profile" />
@@ -51,11 +62,13 @@ const Profile = () => {
         <div className="w-full mx-auto py-4 bg-white dark:bg-boxdark rounded-2xl shadow-xl overflow-hidden">
           <div className="relative h-28 bg-gray-100 dark:bg-boxdark">
             <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
-              <div className="relative">
+              <div className="relative bg-white rounded-full">
                 <img
-                  src={avatar || profile?.image}
+                  src={avatar}
+                  onError={handleImageError}
                   alt="Admin Avatar"
-                  className="w-44 h-44 rounded-full object-cover border-4 border-white"
+                  className="w-44 h-44 rounded-full object-cover border-4 border-white dark:border-boxdark shadow-lg"
+                  loading="lazy"
                 />
                 <label
                   htmlFor="avatar-upload"

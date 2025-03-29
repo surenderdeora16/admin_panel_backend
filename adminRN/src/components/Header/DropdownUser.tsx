@@ -1,12 +1,26 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ClickOutside from '../ClickOutside';
-import UserOne from '../../images/user/user-01.png';
 import { useAuth } from '../../hooks/useAuth';
+import { RootState } from '../../store';
+import { useSelector } from 'react-redux';
+import noUserImage from '../../images/user/user.svg'
 
 const DropdownUser = () => {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const admin = useSelector((state: RootState) => state.admin?.data)
   const { logout } = useAuth()
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [avatar, setAvatar] = useState("")
+
+  const handleImageError = useCallback(() => {
+    setAvatar(noUserImage);
+  }, []);
+
+  useEffect(() => {
+    if (admin) {
+      setAvatar(admin?.image)
+    }
+  }, [admin])
 
   return (
     <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">
@@ -17,13 +31,19 @@ const DropdownUser = () => {
       >
         <span className="hidden text-right lg:block">
           <span className="block text-sm font-medium text-black dark:text-white">
-            Thomas Anree
+            {admin?.name}
           </span>
-          <span className="block text-xs">UX Designer</span>
+          <span className="block text-xs">Admin</span>
         </span>
 
-        <span className="h-12 w-12 rounded-full">
-          <img src={UserOne} alt="User" />
+        <span className="h-12 w-12 rounded-full overflow-hidden">
+          <img
+            src={avatar}
+            onError={handleImageError}
+            alt={admin?.name}
+            loading="lazy"
+            className='object-cover w-full h-full'
+          />
         </span>
 
         <svg

@@ -2,13 +2,8 @@ const mongoose = require('mongoose');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const UserSchema  = new mongoose.Schema({
-    first_name: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    last_name: {
+const UserSchema = new mongoose.Schema({
+    name: {
         type: String,
         required: true,
         trim: true
@@ -25,15 +20,22 @@ const UserSchema  = new mongoose.Schema({
         minlength: 10,
         maxlength: 10
     },
-    gender: {
-        type: Number,
+    state: {
+        type: String,
         required: true,
+        trim: true
+    },
+    district: {
+        type: String,
+        required: true,
+        trim: true
     },
     image: {
         type: String,
         default: "user/avatar.png",
         get: (value) => `${process.env.BASEURL}/uploads/user/${value}`
     },
+    password: { type: String, required: true },
     device_token: {
         type: String,
         default: null

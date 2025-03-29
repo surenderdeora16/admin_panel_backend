@@ -16,7 +16,7 @@ const AdminLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
   useEffect(() => {
     const updateDataAdmin = async () => {
       try {
-        const { data } = await AxiosHelper.getData('/admin/profile');
+        const { data } = await AxiosHelper.getData('admin/profile');
         if (data?.status === true) {
           dispatch(updateAdmin(data?.data));
         }
@@ -34,19 +34,19 @@ const AdminLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   return (
     // <ProtectedRoute requiredRole="admin">
-      <div className="dark:bg-boxdark-2 dark:text-bodydark">
-        <div className="flex h-screen overflow-hidden">
-          <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-          <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-            <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-            <main>
-              <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
-                {children}
-              </div>
-            </main>
-          </div>
+    <div className="dark:bg-boxdark-2 dark:text-bodydark">
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+          <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+          <main>
+            <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+              {children}
+            </div>
+          </main>
         </div>
       </div>
+    </div>
     // </ProtectedRoute>
   );
 };

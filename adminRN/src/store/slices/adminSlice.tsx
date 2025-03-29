@@ -79,7 +79,7 @@ export const fetchAdminProfile = createAsyncThunk(
     'admin/fetchProfile',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await retryRequest(() => AxiosHelper.getData('/admin/profile'), 3);
+            const response = await retryRequest(() => AxiosHelper.getData('admin/profile'), 3);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response.data);

@@ -5,12 +5,13 @@ module.exports = (method) => {
         case "register":
             {
                 return [
-                    check("first_name", "First Name Required..!!").exists().not().isEmpty().isLength({ min: 2, max: 50 }),
-                    check("last_name", "Last Name Required..!!").exists().not().isEmpty().isLength({ min: 2, max: 50 }),
-                    check("email", "Invalid Email..!!").not().isEmpty().isEmail().isLength({ min: 6, max: 50 }),
-                    check("mobile", "Mobile Number Required.!!").exists().not().isEmpty().isLength({ min: 10, max: 10 }).withMessage("10 Digits Required.").isNumeric().withMessage("Mobile No Must Be Digits Only."),
-                    check("gender", "Gender is required..!!").not().isEmpty(),
-                    check("otp", "OTP Required!").exists().not().isEmpty(),
+                    check("name", "Name is required and should be between 2 and 50 characters.").exists().not().isEmpty().isLength({ min: 2, max: 50 }),
+                    check("email", "A valid email is required.").exists().not().isEmpty().isEmail().isLength({ min: 6, max: 50 }),
+                    check("mobile", "Mobile number is required and must be 10 digits.").exists().not().isEmpty().isLength({ min: 10, max: 10 }).withMessage("Mobile number must be exactly 10 digits.").isNumeric().withMessage("Mobile number must contain only digits."),
+                    check("password", "Password is required and should be at least 6 characters long.").exists().not().isEmpty().isLength({ min: 6 }),
+                    check("confirmPassword", "Confirm Password is required and should match the password.").exists().not().isEmpty().custom((value, { req }) => value === req.body.password).withMessage("Passwords do not match."),
+                    check("state", "State is required").exists().not().isEmpty(),
+                    check("district", "District is required").exists().not().isEmpty(),
                 ];
             }
             break;
