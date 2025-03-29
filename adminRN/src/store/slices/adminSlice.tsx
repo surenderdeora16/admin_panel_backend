@@ -13,6 +13,7 @@ interface AdminState {
 }
 
 const initialState: AdminState = {
+    data: null,
     isLoggedIn: localStorage.getItem('isLoggedIn') === 'true',
     name: localStorage.getItem('adminName') || '',
     email: localStorage.getItem('adminEmail') || '',
@@ -51,6 +52,7 @@ export const loginAdmin = createAsyncThunk(
             localStorage.setItem('adminImage', response.data.image);
             return response.data;
         } catch (error: any) {
+            console.log("error::",error)
             return rejectWithValue(error.response.data);
         }
     }

@@ -15,7 +15,6 @@ const SignIn: React.FC = () => {
     e.preventDefault();
     try {
       await login(mobile, password);
-      navigate('/dashboard');
     } catch (err) {
       setError('Login failed. Please check your credentials.');
     }
@@ -208,7 +207,7 @@ const SignIn: React.FC = () => {
 
                 <div className="mb-6">
                   <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Re-type Password
+                    Password
                   </label>
                   <div className="relative">
                     <input
@@ -251,7 +250,7 @@ const SignIn: React.FC = () => {
                   <button
                     type="submit"
                     className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
-                    >
+                  >
                     Sign In
                   </button>
 

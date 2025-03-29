@@ -9,15 +9,11 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const App: React.FC = () => {
-  const { isLoggedIn, loading, checkAuth } = useAuth();
+  const { isLoggedIn, checkAuth } = useAuth();
 
   useEffect(() => {
     checkAuth();
   }, []);
-
-  if (loading) {
-    return <Loader />;
-  }
 
   return (
     <React.Fragment>

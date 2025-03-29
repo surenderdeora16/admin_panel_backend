@@ -20,28 +20,27 @@ const commonHeaders = () => {
 };
 
 
+const handleUnauthorized = async (response: any) => {
+    if (response.data.message.includes('Invalid Login Credentials')) {
+        toast.error(response.data.message);
+        return Promise.reject(response.data.message);
+    }
+
+    toast.error('Session expired. Please login again.');
+    localStorage.removeItem('isLoggedIn');
+    window.location.href = '/login';
+    return Promise.reject('Session expired');
+};
+
 axios.interceptors.response.use(
     (response) => response,
-    async (error: any) => {
+    (error) => {
         if (error.response?.status === 401) {
-            handleUnauthorized(error.response);
+            return handleUnauthorized(error.response);
         }
         return Promise.reject(error);
     }
 );
-
-
-const handleUnauthorized = async (response: any) => {
-    if (response.data.message == 'Invalid Login Credentials..!!') {
-        toast.error(response.data.message);
-        console.log('Invalid Login Credentials')
-        return
-    }
-    toast.error('Session expired. Please login again.');
-    localStorage.removeItem('isLoggedIn');
-    // store.dispatch(logdedOutUser());
-    window.location.href = '/login';
-};
 
 const errorHandler = (error: any) => {
     if (import.meta.env.VITE_LOG_ERRORS_IN_CONSOLE === 'true') {

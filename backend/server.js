@@ -24,15 +24,18 @@ const logger = winston.createLogger({
 
 // CORS configuration
 const allowedOrigins = [process.env.FRONTEND_URL || "http://localhost:5173"];
-app.use(
-    cors({
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) callback(null, true);
-            else callback(new Error("Not allowed by CORS"));
-        },
-        credentials: true,
-    })
-);
+
+const corsOptionsDelegate = (req, callback) => {
+    const origin = req.header('Origin');
+
+    if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, { origin: true, credentials: true });
+    } else {
+        callback(new Error("CORS policy violation: Origin not allowed"));
+    }
+};
+
+app.use(cors(corsOptionsDelegate));
 
 // Security middlewares
 app.use(helmet());
@@ -56,12 +59,12 @@ app.use('/api-v1', require('./src/routes/index.routes'));
 // Error handling
 app.use((err, req, res, next) => {
     logger.error(`${req.method} ${req.url} - ${err.message}`);
-    res.status(500).json({ status: false, message: "Something went ++ wrong.", data: [] });
+    res.status(500).json({ status: false, message: "Something went wrong.", data: [] });
 });
 
 
 
-const PORT = parseInt(process.env.PORT) || 9000;
+const PORT = parseInt(process.env.PORT) || 3000;
 const httpServer = http.createServer(app);
 
 if (process.env.IS_HTTPS === 'true') {
@@ -70,9 +73,9 @@ if (process.env.IS_HTTPS === 'true') {
         // cert: fs.readFileSync(process.env.CERTIFICATE_FILE_PATH),
         // ca: fs.readFileSync(process.env.CERTIFICATE_BUNDLE_FILE_PATH),
 
-        key: fs.readFileSync('/etc/ssl/param.life/param.life.key'),
-        cert: fs.readFileSync('/etc/ssl/param.life/param.life.crt'),
-        ca: fs.readFileSync('/etc/ssl/param.life/param.life-bundle.crt')
+        // key: fs.readFileSync('/etc/ssl/param.life/param.life.key'),
+        // cert: fs.readFileSync('/etc/ssl/param.life/param.life.crt'),
+        // ca: fs.readFileSync('/etc/ssl/param.life/param.life-bundle.crt')
     }, app).listen(PORT, () => console.log(`https Server is running on port ${PORT}.`));
 } else {
     httpServer.listen(PORT, () => console.log(`http Server is running on port ${PORT}.`));

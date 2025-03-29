@@ -15,8 +15,9 @@ export const useAuth = () => {
         try {
             const credentials = { mobile, password };
             const response = await dispatch(loginAdmin(credentials)).unwrap();
-            console.log('response', response);
-            navigate('/');
+            if (response.status == true) {
+                navigate('/');
+            }
         } catch (error) {
             console.error('Login failed:', error);
         }
