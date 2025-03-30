@@ -20,19 +20,19 @@ module.exports = (req, res, next) => {
     }
 
     // Responce :: No records found
-    res.noRecords = function (status = false) {
+    res.noRecords = function (message = '') {
         return this.status(404).json({
-            status,
-            message: language.NO_RECORD_FOUND,
+            status:false,
+            message: message || language.NO_RECORD_FOUND,
             data: []
         });
     }
 
     // Responce :: Success
-    res.success = function (data = []) {
+    res.success = function (data = [], message = '') {
         return res.status(200).json({
             status: true,
-            message: language.SUCCESS,
+            message: message || language.SUCCESS,
             data
         });
     }

@@ -35,13 +35,13 @@ const getFilePath = (value, path, returnType = true) => {
     }
 }
 
-const getCookiesConfig = () => {
+const getCookiesConfig = (maxAge = 48 * 60 * 60 * 1000) => {
     return {
         httpOnly: true,
         secure: true,
         //   secure: process.env.NODE_ENV !== 'development', // Use secure cookies in production
         sameSite: 'None', // 'strict' | 'Lax' | 'None', // Prevent CSRF attacks
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        maxAge,
     }
 }
 

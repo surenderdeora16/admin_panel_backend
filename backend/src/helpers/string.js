@@ -20,6 +20,10 @@ exports.generateOTP = (limit = 6) => {
     return otp;
 }
 
+exports.calculateExpiryTime = (minutes = 10) => {
+    return new Date(Date.now() + minutes * 60 * 1000)
+  }
+
 exports.randomInt = (min, max) => {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }

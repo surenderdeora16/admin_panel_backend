@@ -10,6 +10,13 @@ const upload = new Storage.uploadTo({ dir: 'user', isImage: true });
 
 // User Auth
 router.post('/register', checkValid('register'), showValidationErrors, authController.register);
+router.post('/login', checkValid('login'), showValidationErrors, authController.login);
+router.post('/forgot-password', checkValid('forgotPassword'), showValidationErrors, authController.forgotPassword);
+router.post('/verify-otp', checkValid('verifyOtp'), showValidationErrors, authController.verifyOtp);
+router.post('/reset-password', checkValid('resetPassword'), showValidationErrors, authController.resetPassword);
+router.post('/change-password', checkValid('changePassword'), showValidationErrors, authController.changePassword);
+
+// >>>>
 router.post('/send-otp', checkValid('sendOtp'), showValidationErrors, authController.sendotp);
 router.post('/login-otp', checkValid('loginWithOtp'), showValidationErrors, authController.loginWithOtp);
 

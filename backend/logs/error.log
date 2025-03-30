@@ -330,3 +330,4 @@
 {"level":"error","message":"OPTIONS /api-v1/admin/logout - CORS policy violation: Origin not allowed"}
 {"level":"error","message":"OPTIONS /api-v1/admin/logout - CORS policy violation: Origin not allowed"}
 {"level":"error","message":"OPTIONS /api-v1/admin/logout - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"POST /api-v1/user/verify-otp - Expected double-quoted property name in JSON at position 30"}

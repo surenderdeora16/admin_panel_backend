@@ -5,24 +5,120 @@ module.exports = (method) => {
         case "register":
             {
                 return [
-                    check("name", "Name is required and should be between 2 and 50 characters.").exists().not().isEmpty().isLength({ min: 2, max: 50 }),
-                    check("email", "A valid email is required.").exists().not().isEmpty().isEmail().isLength({ min: 6, max: 50 }),
-                    check("mobile", "Mobile number is required and must be 10 digits.").exists().not().isEmpty().isLength({ min: 10, max: 10 }).withMessage("Mobile number must be exactly 10 digits.").isNumeric().withMessage("Mobile number must contain only digits."),
-                    check("password", "Password is required and should be at least 6 characters long.").exists().not().isEmpty().isLength({ min: 6 }),
-                    check("confirmPassword", "Confirm Password is required and should match the password.").exists().not().isEmpty().custom((value, { req }) => value === req.body.password).withMessage("Passwords do not match."),
-                    check("state", "State is required").exists().not().isEmpty(),
-                    check("district", "District is required").exists().not().isEmpty(),
+                    check("name")
+                        .exists().withMessage("Please provide your name")
+                        .notEmpty().withMessage("Name cannot be empty")
+                        .isLength({ min: 2, max: 50 }).withMessage("Name should be between 2 and 50 characters"),
+
+                    check("email")
+                        .exists().withMessage("Please provide an email address")
+                        .notEmpty().withMessage("Email cannot be empty")
+                        .isEmail().withMessage("Please enter a valid email address (e.g., example@domain.com)")
+                        .normalizeEmail()
+                        .isLength({ max: 100 }).withMessage("Email should not exceed 100 characters"),
+
+                    check("mobile")
+                        .exists().withMessage("Please provide your mobile number")
+                        .notEmpty().withMessage("Mobile number cannot be empty")
+                        .isMobilePhone("en-IN").withMessage("Please enter a valid 10-digit Indian mobile number")
+                        .isLength({ min: 10, max: 10 }).withMessage("Mobile number must be exactly 10 digits"),
+
+                    check("password")
+                        .exists().withMessage("Please create a password")
+                        .notEmpty().withMessage("Password cannot be empty")
+                        .isLength({ min: 8 }).withMessage("Password must be at least 8 characters long"),
+
+                    check("confirmPassword")
+                        .exists().withMessage("Please confirm your password")
+                        .notEmpty().withMessage("Password confirmation cannot be empty")
+                        .custom((value, { req }) => value === req.body.password)
+                        .withMessage("Passwords do not match"),
+
+                    check("state")
+                        .exists().withMessage("Please select your state")
+                        .notEmpty().withMessage("State cannot be empty"),
+
+                    check("district")
+                        .exists().withMessage("Please select your district")
+                        .notEmpty().withMessage("District cannot be empty"),
                 ];
             }
             break;
         case "login":
             {
                 return [
-                    check("mobile", "Mobile Number Required!").exists().not().isEmpty(),
-                    check("password", "Password Required!").exists().not().isEmpty(),
+                    check("mobile")
+                        .exists().withMessage("Please enter your mobile number")
+                        .notEmpty().withMessage("Mobile number cannot be empty")
+                        .isMobilePhone("en-IN").withMessage("Please enter a valid 10-digit Indian mobile number"),
+
+                    check("password")
+                        .exists().withMessage("Please enter your password")
+                        .notEmpty().withMessage("Password cannot be empty"),
                 ];
             }
             break;
+        case "forgotPassword":
+            {
+            return [
+                check("mobile")
+                    .exists().withMessage("Please enter your mobile number")
+                    .notEmpty().withMessage("Mobile number cannot be empty")
+                    .isMobilePhone("en-IN").withMessage("Please enter a valid 10-digit Indian mobile number")
+            ];
+        }
+            break;
+        case "verifyOtp":
+            return [
+                check("mobile")
+                    .exists().withMessage("Please enter your mobile number")
+                    .notEmpty().withMessage("Mobile number cannot be empty")
+                    .isMobilePhone("en-IN").withMessage("Please enter a valid 10-digit Indian mobile number"),
+
+                check("otp")
+                    .exists().withMessage("Please enter the OTP")
+                    .notEmpty().withMessage("OTP cannot be empty")
+                    .isLength({ min: 6, max: 6 }).withMessage("OTP must be exactly 6 digits")
+                    .isNumeric().withMessage("OTP must contain only numbers")
+            ];
+            break;
+
+        case "resetPassword":
+            return [
+                check("newPassword")
+                    .exists().withMessage("Please enter a new password")
+                    .notEmpty().withMessage("New password cannot be empty")
+                    .isLength({ min: 8 }).withMessage("New password must be at least 8 characters long"),
+
+                check("confirmPassword")
+                    .exists().withMessage("Please confirm your new password")
+                    .notEmpty().withMessage("Password confirmation cannot be empty")
+                    .custom((value, { req }) => value === req.body.newPassword)
+                    .withMessage("Passwords do not match")
+            ];
+            break;
+
+        case "changePassword":
+            return [
+                check("oldPassword")
+                    .exists().withMessage("Please enter your current password")
+                    .notEmpty().withMessage("Current password cannot be empty"),
+
+                check("newPassword")
+                    .exists().withMessage("Please enter a new password")
+                    .notEmpty().withMessage("New password cannot be empty")
+                    .isLength({ min: 8 }).withMessage("New password must be at least 8 characters long"),
+
+                check("confirmPassword")
+                    .exists().withMessage("Please confirm your new password")
+                    .notEmpty().withMessage("Password confirmation cannot be empty")
+                    .custom((value, { req }) => {
+                        return value === req.body.newPassword;
+                    })
+                    .withMessage("Passwords do not match")
+            ];
+break;
+        // 
         case "sendOtp":
             {
                 return [
