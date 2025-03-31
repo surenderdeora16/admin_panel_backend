@@ -3,6 +3,8 @@ const generalSettingsController = require('../../controllers/admin/generalSettin
 const discountCouponController = require('../../controllers/admin/discountCouponController');
 const usersController = require('../../controllers/admin/usersController');
 const CommonController = require('../../controllers/admin/CommonController');
+const locationController = require('../../controllers/locationController');
+
 
 const { showValidationErrors, authCheckAdmin } = require('../../middelwares');
 const checkValid = require('../../middelwares/validator');
@@ -39,6 +41,12 @@ router.put('/update-settings', uploadSettings.fields([{ name: 'favicon', maxCoun
 router.post('/discount-coupon', checkValid('discountCouponAdd'), showValidationErrors, discountCouponController.create)
 router.put('/discount-coupon', checkValid('discountCouponEdit'), showValidationErrors, discountCouponController.update)
 router.get('/discount-coupons-datatable', discountCouponController.list)
+
+// Location Routes
+router.post('/states', checkValid('addState'), showValidationErrors, locationController.addState);
+router.post('/districts', checkValid('addDistrict'), showValidationErrors, locationController.addDistrict);
+router.put('/states/:id', checkValid('editState'), showValidationErrors, locationController.editState);
+router.put('/districts/:id', checkValid('editDistrict'), showValidationErrors, locationController.editDistrict);
 
 router.get('/users-datatable', usersController.list);
 router.get('/contact-us-datatable', CommonController.contactUsList)

@@ -12,6 +12,7 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 // const csurf = require("csurf");
 const winston = require("winston");
+const { seedDatabase } = require('./src/database/seed');
 
 const app = express();
 
@@ -56,6 +57,17 @@ app.all("/uploads/*", (req, res) => res.sendFile(path.resolve(__dirname, './publ
 app.get("/", async (req, res) => res.json({ status: true, message: "Api Working fine..!!" }));
 app.use('/api-v1', require('./src/routes/index.routes'));
 
+
+
+// Seed database route (optional, remove if you want to run separately)
+app.get('/seed-database', async (req, res) => {
+    try {
+      await seedDatabase();
+      res.json({ status: true, message: "Database seeded successfully" });
+    } catch (error) {
+      res.status(500).json({ status: false, message: "Database seeding failed" });
+    }
+  });
 
 // Error handling
 app.use((err, req, res, next) => {

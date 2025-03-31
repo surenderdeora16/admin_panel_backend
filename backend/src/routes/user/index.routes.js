@@ -1,6 +1,7 @@
 const authController = require('../../controllers/user/authController');
 const commonController = require('../../controllers/user/commonController');
 const bookingController = require('../../controllers/user/bookingController');
+const locationController = require('../../controllers/locationController');
 
 const { showValidationErrors, authCheck } = require('../../middelwares')
 const checkValid = require('../../middelwares/validator');
@@ -15,6 +16,11 @@ router.post('/forgot-password', checkValid('forgotPassword'), showValidationErro
 router.post('/verify-otp', checkValid('verifyOtp'), showValidationErrors, authController.verifyOtp);
 router.post('/reset-password', checkValid('resetPassword'), showValidationErrors, authController.resetPassword);
 router.post('/change-password', checkValid('changePassword'), showValidationErrors, authController.changePassword);
+
+
+// location Routes 
+router.get('/states', locationController.getStates);
+router.get('/districts/:stateId', locationController.getDistricts);
 
 // >>>>
 router.post('/send-otp', checkValid('sendOtp'), showValidationErrors, authController.sendotp);
