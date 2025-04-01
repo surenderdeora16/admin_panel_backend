@@ -36,7 +36,7 @@ const AccountSettings: React.FC = () => {
   const handleSubmit = async (values: FormData, { resetForm }: { resetForm: () => void }) => {
     setIsSubmitting(true);
     try {
-      const response = await AxiosHelper.postData('/admin/change-password', {
+      const response = await AxiosHelper.postData('change-password', {
         password: values.currentPassword,
         new_password: values.newPassword
       });

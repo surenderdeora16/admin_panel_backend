@@ -41,10 +41,10 @@ const retryRequest = async (fn: () => Promise<any>, retries: number) => {
 
 
 export const loginAdmin = createAsyncThunk(
-    'admin/login',
+    'login',
     async (credentials: { mobile: string; password: string }, { rejectWithValue }) => {
         try {
-            const response = await AxiosHelper.postData('/admin/login', credentials);
+            const response = await AxiosHelper.postData('login', credentials);
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('adminName', response.data.name);
             localStorage.setItem('adminEmail', response.data.email);
@@ -59,10 +59,10 @@ export const loginAdmin = createAsyncThunk(
 );
 
 export const logoutAdmin = createAsyncThunk(
-    'admin/logout',
+    'logout',
     async (_, { rejectWithValue }) => {
         try {
-            await AxiosHelper.getData('/admin/logout');
+            await AxiosHelper.getData('logout');
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('adminName');
             localStorage.removeItem('adminEmail');
@@ -76,10 +76,10 @@ export const logoutAdmin = createAsyncThunk(
 );
 
 export const fetchAdminProfile = createAsyncThunk(
-    'admin/fetchProfile',
+    'fetchProfile',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await retryRequest(() => AxiosHelper.getData('admin/profile'), 3);
+            const response = await retryRequest(() => AxiosHelper.getData('profile'), 3);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response.data);

@@ -21,10 +21,10 @@ export const SUPPORTED_FORMATS_DOC = [
 ];
 
 export const SETTING_API_ENDPOINTS = {
-    GENERAL_SETTINGS: '/admin/settings-list/1',
-    SMS_SETTINGS: '/admin/settings-list/4',
-    EMAIL_SETTINGS: '/admin/settings-list/2',
-    SOCIAL_SETTINGS: '/admin/settings-list/3',
-    UPDATE_SETTINGS: '/admin/update-settings',
+    GENERAL_SETTINGS: 'settings-list/1',
+    SMS_SETTINGS: 'settings-list/4',
+    EMAIL_SETTINGS: 'settings-list/2',
+    SOCIAL_SETTINGS: 'settings-list/3',
+    UPDATE_SETTINGS: 'update-settings',
 };
 

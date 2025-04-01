@@ -56,14 +56,14 @@ module.exports = (method) => {
             .exists()
             .withMessage("Please select your state")
             .notEmpty()
-            .withMessage("State cannot be empty"),
+            .withMessage("State cannot be empty")
             .isMongoId().withMessage('Invalid State ID'),
 
           check("district")
             .exists()
             .withMessage("Please select your district")
             .notEmpty()
-            .withMessage("District cannot be empty"),
+            .withMessage("District cannot be empty")
             .isMongoId().withMessage('Invalid District ID'),
         ];
       }

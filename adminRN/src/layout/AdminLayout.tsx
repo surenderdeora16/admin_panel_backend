@@ -16,7 +16,7 @@ const AdminLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
   useEffect(() => {
     const updateDataAdmin = async () => {
       try {
-        const { data } = await AxiosHelper.getData('admin/profile');
+        const { data } = await AxiosHelper.getData('profile');
         if (data?.status === true) {
           dispatch(updateAdmin(data?.data));
         }
@@ -40,7 +40,7 @@ const AdminLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
         <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
           <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
           <main>
-            <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+            <div className="mx-auto max-w-full ">
               {children}
             </div>
           </main>

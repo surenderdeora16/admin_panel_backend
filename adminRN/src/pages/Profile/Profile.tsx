@@ -31,7 +31,7 @@ const Profile = () => {
       var formData = new FormData();
 
       formData.append('image', file);
-      var { data } = await AxiosHelper.postData("admin/change-profile-image", formData, true);
+      var { data } = await AxiosHelper.postData("change-profile-image", formData, true);
       if (data?.status === true) {
         dispatch(updateAdmin(data?.data))
         setAvatar(URL.createObjectURL(file))

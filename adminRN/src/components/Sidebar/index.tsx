@@ -52,6 +52,22 @@ const MENU_CONFIG = {
     //   ],
     // },
     {
+      name: 'Location',
+      icon: IoSettingsSharp,
+      children: [
+        {
+          name: 'State',
+          path: '/state',
+          icon: MdOutlineDisplaySettings,
+        },
+        {
+          name: 'District',
+          path: '/district',
+          icon: HiOutlineChatBubbleLeftRight,
+        },
+      ],
+    },
+    {
       name: 'Settings',
       icon: IoSettingsSharp,
       children: [

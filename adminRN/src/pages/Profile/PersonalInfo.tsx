@@ -38,7 +38,7 @@ export default function PersonalInfo() {
 
   const handleProfileUpdate = async (values: typeof initialValues, { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void }) => {
     try {
-      const response = await AxiosHelper.postData('admin/update-profile', values)
+      const response = await AxiosHelper.postData('update-profile', values)
       if (response?.data?.status === true) {
         dispatch(updateAdmin(response.data))
         toast.success(response?.data?.message)

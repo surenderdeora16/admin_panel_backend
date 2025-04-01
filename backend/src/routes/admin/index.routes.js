@@ -43,6 +43,7 @@ router.put('/discount-coupon', checkValid('discountCouponEdit'), showValidationE
 router.get('/discount-coupons-datatable', discountCouponController.list)
 
 // Location Routes
+router.get('/states-datatable', locationController.state_json_list);
 router.post('/states', checkValid('addState'), showValidationErrors, locationController.addState);
 router.post('/districts', checkValid('addDistrict'), showValidationErrors, locationController.addDistrict);
 router.put('/states/:id', checkValid('editState'), showValidationErrors, locationController.editState);
