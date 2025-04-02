@@ -296,7 +296,7 @@ const StateDashboard = () => {
           animate={{ opacity: 1 }}
           className="bg-white dark:bg-gray-800 rounded-3xl  drop-shadow-2xl overflow-hidden"
         >
-          <div className="px-8 py-6 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#192231]">
+          <div className="px-8 py-6 border-b border-gray-200 dark:border-gray-700 bg-gray-200/60 dark:bg-[#212d3b]">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
                 {pagination?.totalItems} States
@@ -340,14 +340,14 @@ const StateDashboard = () => {
           ) : (
             <>
               <table className="w-full">
-                <thead className="bg-gray-100 dark:bg-gray-900">
+                <thead className="bg-gray-200/60 dark:bg-gray-900">
                   <tr>
                     {['Name', 'Code', 'Actions'].map((header, idx) => (
                       <th
                         key={header}
-                        className={`px-8 py-6 text-left text-sm font-semibold dark:bg-[#192231] text-gray-600 dark:text-gray-400 ${
+                        className={`px-8 py-6 text-left text-sm font-semibold dark:bg-[#24303f] text-gray-600 dark:text-gray-400 ${
                           idx < 2
-                            ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800'
+                            ? 'cursor-pointer hover:bg-gray-200/35 dark:hover:bg-[#24303ff4]'
                             : ''
                         }`}
                         onClick={() =>
@@ -385,7 +385,7 @@ const StateDashboard = () => {
                   {states?.map((state) => (
                     <tr
                       key={state._id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
+                      className="hover:bg-gray-100/50 dark:hover:bg-gray-900/10 transition-colors"
                     >
                       <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
                         {state.name}
@@ -411,7 +411,8 @@ const StateDashboard = () => {
                             }}
                             className="text-blue-500 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                           >
-                            <PencilIcon className="w-6 h-6" />
+                            Edit
+                            {/* <PencilIcon className="w-6 h-6" /> */}
                           </motion.button>
                         </div>
                       </td>
