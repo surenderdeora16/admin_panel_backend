@@ -52,6 +52,58 @@ exports.state_json_list = async (req, res) => {
   }
 };
 
+exports.district_json_list = async (req, res) => {
+  try {
+      const { 
+          limit = 10, 
+          pageNo = 1, 
+          query = '', 
+          orderBy = 'name', 
+          orderDirection = -1 
+      } = req.query;
+
+      const skip = (pageNo - 1) * limit;
+      const sortOrder = orderDirection === '1' ? 1 : -1;
+
+      // Search filter
+      const searchFilter = query ? {
+          $or: [
+              { name: { $regex: query, $options: 'i' } },
+              { code: { $regex: query, $options: 'i' } }
+          ]
+      } : {};
+
+      // Get total count
+      const totalCount = await District.countDocuments(searchFilter);
+
+      // Get paginated results
+      const district = await District.find(searchFilter)
+          .sort({ [orderBy]: sortOrder })
+          .skip(skip)
+          .limit(Number(limit))
+          .lean();
+
+      if (!district || district.length === 0) return res.noRecords();
+
+      // Transform response format
+      const response = {
+          status: true,
+          data: district,
+          totalCount,
+          currentPage: Number(pageNo),
+          totalPages: Math.ceil(totalCount / limit),
+          limit: Number(limit)
+      };
+
+      return res.status(200).json(response);
+
+  } catch (error) {
+      return res.someThingWentWrong(error);
+  }
+};
+
+
+
 (exports.getStates = async (req, res) => {
   try {
     const states = await State.find().sort("name").lean();
