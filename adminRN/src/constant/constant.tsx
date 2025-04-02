@@ -27,4 +27,3 @@ export const SETTING_API_ENDPOINTS = {
     SOCIAL_SETTINGS: 'settings-list/3',
     UPDATE_SETTINGS: 'update-settings',
 };
-
