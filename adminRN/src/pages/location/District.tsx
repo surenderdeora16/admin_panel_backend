@@ -43,7 +43,10 @@ const District = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [selectedDistricts, setSelectedDistricts] = useState<District | null>(null);
+  const [states, setStates] = useState<{ name: string; id: string }[]>([]);
+  const [selectedDistricts, setSelectedDistricts] = useState<District | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   const districtSchema = Yup.object().shape({
@@ -58,14 +61,58 @@ const District = () => {
   });
 
   const fields = [
-    { label: 'Name', name: 'name', type: 'text', col: 6 },
-    { label: 'Code', name: 'code', type: 'text', col: 6 },
+    {
+      label: 'Select State',
+      name: 'state',
+      type: 'select2',
+      options: states,
+      col: 12,
+    },
+    { label: 'District Name', name: 'name', type: 'text', col: 6 },
+    { label: 'District Code', name: 'code', type: 'text', col: 6 },
     {
       label: modalMode === 'add' ? 'Add District' : 'Update District',
       name: 'submit',
       type: 'submit',
     },
   ];
+
+  const fetchStates = useCallback(
+    debounce(async () => {
+      try {
+        const paramsState = {
+          pageNo: 1,
+          limit: 50,
+          query: '',
+          orderBy: 'name',
+          orderDirection: 1,
+        };
+
+        const { data } = await AxiosHelper.getData(
+          'states-datatable',
+          paramsState,
+        );
+
+        if (data?.status) {
+          setStates(
+            data.data.map((state: { name: string; _id: string }) => ({
+              name: state.name,
+              id: state._id,
+            })),
+          );
+        }
+      } catch (err: unknown) {
+        const errorMessage =
+          (err as any)?.response?.data?.message || 'Failed to fetch states';
+        toast.error(errorMessage);
+      }
+    }, 300),
+    [],
+  );
+
+  useEffect(() => {
+    fetchStates();
+  }, [fetchStates]);
 
   const fetchDistricts = useCallback(
     debounce(async (params: any) => {
@@ -79,7 +126,10 @@ const District = () => {
           orderBy: params.orderBy,
           orderDirection: params.orderDirection,
         };
-        const response = await AxiosHelper.getData('district-datatable', paramsData);
+        const response = await AxiosHelper.getData(
+          'district-datatable',
+          paramsData,
+        );
 
         if (!response?.data) throw new Error('No data received from server');
 
@@ -143,7 +193,9 @@ const District = () => {
           values,
         );
         if (!response?.data?.status) {
-          throw new Error(response?.data?.message || 'Failed to update district');
+          throw new Error(
+            response?.data?.message || 'Failed to update district',
+          );
         }
         toast.success('District updated successfully');
       }
@@ -190,7 +242,10 @@ const District = () => {
       modalMode === 'add'
         ? { name: '', code: '' }
         : selectedDistricts
-        ? { name: selectedDistricts.name || '', code: selectedDistricts.code || '' }
+        ? {
+            name: selectedDistricts.name || '',
+            code: selectedDistricts.code || '',
+          }
         : { name: '', code: '' };
 
     return (
@@ -201,7 +256,7 @@ const District = () => {
         className="relative w-full max-w-[97%] md:max-w-[50%] max-h-[90vh] bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-y-auto"
       >
         <div className="w-full">
-          <div className="relative px-5 md:px-8 py-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">
+          <div className="relative px-4 md:px-6 py-4 border-b border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">
             <div className="flex items-center justify-between">
               <h2 className="text-[26px] font-bold text-gray-900/85 dark:text-white">
                 {modalMode === 'add' ? 'Add District' : 'Update District'}
@@ -215,7 +270,7 @@ const District = () => {
             </div>
           </div>
 
-          <div className="p-5 md:p-8 space-y-6 overflow-hidden">
+          <div className="px-4 md:px-6 pt-4 pb-6 space-y-7 overflow-hidden">
             <MyForm
               fields={fields}
               initialValues={initialValues}
@@ -239,7 +294,7 @@ const District = () => {
         >
           <div>
             <h1 className="text-4xl font-bold text-gray-900/90 dark:text-white mb-2">
-            Districts Management
+              Districts Management
             </h1>
           </div>
           <motion.button
@@ -316,21 +371,21 @@ const District = () => {
               <table className="w-full">
                 <thead className="bg-gray-200/70 dark:bg-gray-900">
                   <tr>
-                    {['Name', 'Code', 'Actions'].map((header, idx) => (
+                    {['Districts', 'District Code', 'States', 'Actions'].map((header, idx) => (
                       <th
                         key={header}
                         className={`px-8 py-6 text-left text-sm font-semibold dark:bg-[#24303f] text-gray-600 dark:text-gray-400 ${
-                          idx < 2
+                          idx < 3
                             ? 'cursor-pointer hover:bg-gray-200/35 dark:hover:bg-[#24303ff4]'
                             : ''
                         }`}
                         onClick={() =>
-                          idx < 2 && handleSort(header.toLowerCase())
+                          idx < 3 && handleSort(header.toLowerCase())
                         }
                       >
                         <div className="flex items-center gap-2">
                           {header}
-                          {idx < 2 && (
+                          {idx < 3 && (
                             <div className="flex flex-col">
                               <ArrowUpIcon
                                 className={`w-4 h-4 mb-[-2px] ${
@@ -368,6 +423,9 @@ const District = () => {
                         <span className="inline-flex items-center px-4 py-2 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200 text-sm font-medium">
                           {district.code}
                         </span>
+                      </td>
+                      <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
+                        {district.name}
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">

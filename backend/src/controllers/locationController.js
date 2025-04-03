@@ -1,7 +1,7 @@
 const State = require("../models/State");
 const District = require("../models/District");
 
-
+// ................................ State .....................................
 exports.state_json_list = async (req, res) => {
   try {
       const { 
@@ -15,7 +15,6 @@ exports.state_json_list = async (req, res) => {
       const skip = (pageNo - 1) * limit;
       const sortOrder = orderDirection === '1' ? 1 : -1;
 
-      // Search filter
       const searchFilter = query ? {
           $or: [
               { name: { $regex: query, $options: 'i' } },
@@ -23,10 +22,8 @@ exports.state_json_list = async (req, res) => {
           ]
       } : {};
 
-      // Get total count
       const totalCount = await State.countDocuments(searchFilter);
 
-      // Get paginated results
       const states = await State.find(searchFilter)
           .sort({ [orderBy]: sortOrder })
           .skip(skip)
@@ -35,7 +32,6 @@ exports.state_json_list = async (req, res) => {
 
       if (!states || states.length === 0) return res.noRecords();
 
-      // Transform response format
       const response = {
           status: true,
           data: states,
@@ -52,6 +48,74 @@ exports.state_json_list = async (req, res) => {
   }
 };
 
+
+(exports.getStates = async (req, res) => {
+  try {
+    const states = await State.find().sort("name").lean();
+    if (!states.length) {
+      return res.noRecords("No states found");
+    }
+    return res.success(states, "States fetched successfully");
+  } catch (error) {
+    return res.someThingWentWrong(error);
+  }
+}),
+
+(exports.addState = async (req, res) => {
+  const { name, code } = req.body;
+
+  try {
+    const state = new State({ name, code });
+    await state.save();
+
+    return res.successInsert([state], "State added successfully");
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        status: false,
+        message: "State or code already exists",
+      });
+    }
+    return res.someThingWentWrong(error);
+  }
+}),
+
+(exports.editState = async (req, res) => {
+  const { id } = req.params;
+  const { name, code } = req.body;
+
+  try {
+    if (!id) {
+      return res.status(400).json({
+        status: false,
+        message: "State ID is required",
+      });
+    }
+
+    const state = await State.findByIdAndUpdate(
+      id,
+      { name, code, updatedAt: Date.now() },
+      { new: true, runValidators: true }
+    );
+
+    if (!state) {
+      return res.noRecords("State not found");
+    }
+
+    return res.successUpdate([state], "State updated successfully");
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        status: false,
+        message: "State or code already exists",
+      });
+    }
+    return res.someThingWentWrong(error);
+  }
+}),
+
+
+// ................................ Distrcit .....................................
 exports.district_json_list = async (req, res) => {
   try {
       const { 
@@ -65,7 +129,6 @@ exports.district_json_list = async (req, res) => {
       const skip = (pageNo - 1) * limit;
       const sortOrder = orderDirection === '1' ? 1 : -1;
 
-      // Search filter
       const searchFilter = query ? {
           $or: [
               { name: { $regex: query, $options: 'i' } },
@@ -73,11 +136,10 @@ exports.district_json_list = async (req, res) => {
           ]
       } : {};
 
-      // Get total count
       const totalCount = await District.countDocuments(searchFilter);
 
-      // Get paginated results
       const district = await District.find(searchFilter)
+          .populate('stateId', 'name code') 
           .sort({ [orderBy]: sortOrder })
           .skip(skip)
           .limit(Number(limit))
@@ -85,7 +147,6 @@ exports.district_json_list = async (req, res) => {
 
       if (!district || district.length === 0) return res.noRecords();
 
-      // Transform response format
       const response = {
           status: true,
           data: district,
@@ -103,18 +164,6 @@ exports.district_json_list = async (req, res) => {
 };
 
 
-
-(exports.getStates = async (req, res) => {
-  try {
-    const states = await State.find().sort("name").lean();
-    if (!states.length) {
-      return res.noRecords("No states found");
-    }
-    return res.success(states, "States fetched successfully");
-  } catch (error) {
-    return res.someThingWentWrong(error);
-  }
-}),
   (exports.getDistricts = async (req, res) => {
     const { stateId } = req.params;
 
@@ -136,24 +185,7 @@ exports.district_json_list = async (req, res) => {
       return res.someThingWentWrong(error);
     }
   }),
-  (exports.addState = async (req, res) => {
-    const { name, code } = req.body;
 
-    try {
-      const state = new State({ name, code });
-      await state.save();
-
-      return res.successInsert([state], "State added successfully");
-    } catch (error) {
-      if (error.code === 11000) {
-        return res.status(409).json({
-          status: false,
-          message: "State or code already exists",
-        });
-      }
-      return res.someThingWentWrong(error);
-    }
-  }),
   (exports.addDistrict = async (req, res) => {
     const { name, stateId, code } = req.body;
 
@@ -180,39 +212,7 @@ exports.district_json_list = async (req, res) => {
       return res.someThingWentWrong(error);
     }
   }),
-  (exports.editState = async (req, res) => {
-    const { id } = req.params;
-    const { name, code } = req.body;
-
-    try {
-      if (!id) {
-        return res.status(400).json({
-          status: false,
-          message: "State ID is required",
-        });
-      }
-
-      const state = await State.findByIdAndUpdate(
-        id,
-        { name, code, updatedAt: Date.now() },
-        { new: true, runValidators: true }
-      );
-
-      if (!state) {
-        return res.noRecords("State not found");
-      }
-
-      return res.successUpdate([state], "State updated successfully");
-    } catch (error) {
-      if (error.code === 11000) {
-        return res.status(409).json({
-          status: false,
-          message: "State or code already exists",
-        });
-      }
-      return res.someThingWentWrong(error);
-    }
-  }),
+  
   (exports.editDistrict = async (req, res) => {
     const { id } = req.params;
     const { name, stateId, code } = req.body;

@@ -58,8 +58,8 @@ const StateDashboard = () => {
   });
 
   const fields = [
-    { label: 'Name', name: 'name', type: 'text', col: 6 },
-    { label: 'Code', name: 'code', type: 'text', col: 6 },
+    { label: 'State Name', name: 'name', type: 'text', col: 6 },
+    { label: 'State Code', name: 'code', type: 'text', col: 6 },
     {
       label: modalMode === 'add' ? 'Add State' : 'Update State',
       name: 'submit',
@@ -201,7 +201,7 @@ const StateDashboard = () => {
         className="relative w-full max-w-[97%] md:max-w-[50%] max-h-[90vh] bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-y-auto"
       >
         <div className="w-full">
-          <div className="relative px-5 md:px-8 py-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">
+          <div className="relative px-4 md:px-6 py-4 border-b border-gray-200/80 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">
             <div className="flex items-center justify-between">
               <h2 className="text-[26px] font-bold text-gray-900/85 dark:text-white">
                 {modalMode === 'add' ? 'Add State' : 'Update State'}
@@ -215,7 +215,7 @@ const StateDashboard = () => {
             </div>
           </div>
 
-          <div className="p-5 md:p-8 space-y-6 overflow-hidden">
+          <div className="px-4 md:px-6 pt-4 pb-6 space-y-7 overflow-hidden">
             <MyForm
               fields={fields}
               initialValues={initialValues}
