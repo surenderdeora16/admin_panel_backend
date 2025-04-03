@@ -53,19 +53,35 @@ const District = () => {
     name: Yup.string()
       .required('Name is required')
       .min(3, 'Minimum 3 characters')
-      .max(50, 'Maximum 50 characters'),
+      .max(50, 'Maximum 50 characters')
+      .test('not-empty', 'District name cannot be empty', (value) => {
+        return value !== undefined && value.trim() !== '';
+      }),
     code: Yup.string()
       .required('Code is required')
-      .length(2, 'Must be exactly 2 characters')
-      .matches(/^[A-Z]+$/, 'Must be uppercase letters'),
+      .test('not-empty', 'District code cannot be empty', (value) => {
+        return value !== undefined && value.trim() !== '';
+      }),
+    stateId: Yup.string()
+      .required('State is required')
+      .test('not-empty', 'State cannot be empty', (value) => {
+        return value !== undefined && value.trim() !== '';
+      })
+      .test('is-mongo-id', 'Invalid State ID', (value) => {
+        const mongoIdRegex = /^[a-f\d]{24}$/i;
+        return value ? mongoIdRegex.test(value) : false;
+      }),
   });
 
   const fields = [
     {
       label: 'Select State',
-      name: 'state',
+      name: 'stateId',
       type: 'select2',
-      options: states,
+      options:
+        modalMode === 'add'
+          ? [{ id: '', name: 'Select District' }, ...states]
+          : states,
       col: 12,
     },
     { label: 'District Name', name: 'name', type: 'text', col: 6 },
@@ -95,7 +111,7 @@ const District = () => {
 
         if (data?.status) {
           setStates(
-            data.data.map((state: { name: string; _id: string }) => ({
+            data?.data?.record?.map((state: { name: string; _id: string }) => ({
               name: state.name,
               id: state._id,
             })),
@@ -131,20 +147,30 @@ const District = () => {
           paramsData,
         );
 
-        if (!response?.data) throw new Error('No data received from server');
-
-        setDistricts(response.data.data || []);
-        setPagination({
-          currentPage: response.data.currentPage || 1,
-          totalPages: response.data.totalPages || 1,
-          totalItems: response.data.totalCount || 0,
-          limit: response.data.limit || 10,
-        });
+        if (response?.data?.status) {
+          setDistricts(response?.data?.data?.record || []);
+          setPagination({
+            currentPage: response?.data?.data?.current_page || 1,
+            totalPages: response?.data?.data?.totalPages || 1,
+            totalItems: response?.data?.data?.count || 0,
+            limit: response?.data?.data?.limit || 10,
+          });
+        } else if (response?.status === 404) {
+          setDistricts([]);
+          setPagination({
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0,
+            limit: params.limit,
+          });
+        }
       } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message || 'Failed to fetch districts';
-        setError(errorMessage);
-        toast.error(errorMessage);
+        if (err.response?.status !== 404) {
+          const errorMessage =
+            err.response?.data?.data?.message || 'Failed to fetch districts';
+          setError(errorMessage);
+          toast.error(errorMessage);
+        }
         setDistricts([]);
       } finally {
         setLoading(false);
@@ -179,7 +205,7 @@ const District = () => {
     }
   };
 
-  const handleFormSubmit = async (values: { name: string; code: string }) => {
+  const handleFormSubmit = async (values: { name: string; code: string; stateId:any }) => {
     try {
       if (modalMode === 'add') {
         const response = await AxiosHelper.postData('districts', values);
@@ -360,91 +386,135 @@ const District = () => {
             <div className="p-8 text-center text-red-500 dark:text-red-400 text-lg">
               ⚠️ {error}
             </div>
-          ) : loading ? (
-            <SkeletonLoader />
           ) : districts.length === 0 ? (
             <div className="p-8 text-center text-gray-500 dark:text-gray-400 text-lg">
-              No districts found.
+              {loading ? (
+                <SkeletonLoader />
+              ) : (
+                <div>
+                  {' '}
+                  No record found{' '}
+                  {searchQuery ? (
+                    <>
+                      for "<b>{searchQuery}</b>"
+                    </>
+                  ) : (
+                    ``
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <>
               <table className="w-full">
                 <thead className="bg-gray-200/70 dark:bg-gray-900">
                   <tr>
-                    {['Districts', 'District Code', 'States', 'Actions'].map((header, idx) => (
-                      <th
-                        key={header}
-                        className={`px-8 py-6 text-left text-sm font-semibold dark:bg-[#24303f] text-gray-600 dark:text-gray-400 ${
-                          idx < 3
-                            ? 'cursor-pointer hover:bg-gray-200/35 dark:hover:bg-[#24303ff4]'
-                            : ''
-                        }`}
-                        onClick={() =>
-                          idx < 3 && handleSort(header.toLowerCase())
-                        }
-                      >
-                        <div className="flex items-center gap-2">
-                          {header}
-                          {idx < 3 && (
-                            <div className="flex flex-col">
-                              <ArrowUpIcon
-                                className={`w-4 h-4 mb-[-2px] ${
-                                  orderBy === header.toLowerCase() &&
-                                  orderDirection === 1
-                                    ? 'text-sky-500'
-                                    : 'text-gray-300 dark:text-gray-600'
-                                }`}
-                              />
-                              <ArrowDownIcon
-                                className={`w-4 h-4 ${
-                                  orderBy === header.toLowerCase() &&
-                                  orderDirection === -1
-                                    ? 'text-sky-500'
-                                    : 'text-gray-300 dark:text-gray-600'
-                                }`}
-                              />
-                            </div>
-                          )}
+                    <th className="px-8 py-6 text-left text-sm font-semibold dark:bg-[#24303f] text-gray-600 dark:text-gray-400">
+                      Sr No.
+                    </th>
+                    <th
+                      className="px-8 py-6 text-left text-sm font-semibold dark:bg-[#24303f] text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-200/35 dark:hover:bg-[#24303ff4]"
+                      onClick={() => handleSort('name')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Districts
+                        <div className="flex flex-col">
+                          <ArrowUpIcon
+                            className={`w-4 h-4 mb-[-2px] ${
+                              orderBy === 'name' && orderDirection === 1
+                                ? 'text-sky-500'
+                                : 'text-gray-300 dark:text-gray-600'
+                            }`}
+                          />
+                          <ArrowDownIcon
+                            className={`w-4 h-4 ${
+                              orderBy === 'name' && orderDirection === -1
+                                ? 'text-sky-500'
+                                : 'text-gray-300 dark:text-gray-600'
+                            }`}
+                          />
                         </div>
-                      </th>
-                    ))}
+                      </div>
+                    </th>
+                    <th
+                      className="px-8 py-6 text-left text-sm font-semibold dark:bg-[#24303f] text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-200/35 dark:hover:bg-[#24303ff4]"
+                      onClick={() => handleSort('code')}
+                    >
+                      <div className="flex items-center gap-2">
+                        District Code
+                        <div className="flex flex-col">
+                          <ArrowUpIcon
+                            className={`w-4 h-4 mb-[-2px] ${
+                              orderBy === 'code' && orderDirection === 1
+                                ? 'text-sky-500'
+                                : 'text-gray-300 dark:text-gray-600'
+                            }`}
+                          />
+                          <ArrowDownIcon
+                            className={`w-4 h-4 ${
+                              orderBy === 'code' && orderDirection === -1
+                                ? 'text-sky-500'
+                                : 'text-gray-300 dark:text-gray-600'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    </th>
+                    <th className="px-8 py-6 text-left text-sm font-semibold dark:bg-[#24303f] text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-200/35 dark:hover:bg-[#24303ff4]">
+                      States
+                    </th>
+                    <th className="px-8 py-6 text-left text-sm font-semibold dark:bg-[#24303f] text-gray-600 dark:text-gray-400">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {districts.map((district) => (
-                    <tr
-                      key={district._id}
-                      className="hover:bg-gray-100/50 dark:hover:bg-gray-900/10 transition-colors"
-                    >
-                      <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
-                        {district.name}
-                      </td>
-                      <td className="px-8 py-6">
-                        <span className="inline-flex items-center px-4 py-2 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200 text-sm font-medium">
-                          {district.code}
-                        </span>
-                      </td>
-                      <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
-                        {district.name}
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => {
-                              setModalMode('edit');
-                              setSelectedDistricts(district);
-                              setShowModal(true);
-                            }}
-                            className="text-sky-500 hover:text-sky-600 dark:hover:text-sky-400 p-2 rounded-lg transition-colors"
-                          >
-                            Edit
-                          </motion.button>
-                        </div>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5}>
+                        <SkeletonLoader />
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    districts.map((district: any, index) => (
+                      <tr
+                        key={index}
+                        className="hover:bg-gray-100/50 dark:hover:bg-gray-900/10 transition-colors"
+                      >
+                        <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
+                          {index < 9 ? '0' : ''}
+                          {index + 1}
+                        </td>
+                        <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
+                          {district.name}
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className="inline-flex items-center px-4 py-2 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200 text-sm font-medium">
+                            {district.code}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
+                          {district?.stateId?.name}
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-4">
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => {
+                                setModalMode('edit');
+                                setSelectedDistricts(district);
+                                setShowModal(true);
+                              }}
+                              className="text-sky-500 hover:text-sky-600 dark:hover:text-sky-400 p-2 rounded-lg transition-colors"
+                            >
+                              Edit
+                            </motion.button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
 

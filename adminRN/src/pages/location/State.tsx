@@ -53,7 +53,6 @@ const StateDashboard = () => {
       .max(50, 'Maximum 50 characters'),
     code: Yup.string()
       .required('Code is required')
-      .length(2, 'Must be exactly 2 characters')
       .matches(/^[A-Z]+$/, 'Must be uppercase letters'),
   });
 
@@ -79,22 +78,35 @@ const StateDashboard = () => {
           orderBy: params.orderBy,
           orderDirection: params.orderDirection,
         };
-        const response = await AxiosHelper.getData('states-datatable', paramsData);
+        const response = await AxiosHelper.getData(
+          'states-datatable',
+          paramsData,
+        );
 
-        if (!response?.data) throw new Error('No data received from server');
-
-        setStates(response.data.data || []);
-        setPagination({
-          currentPage: response.data.currentPage || 1,
-          totalPages: response.data.totalPages || 1,
-          totalItems: response.data.totalCount || 0,
-          limit: response.data.limit || 10,
-        });
+        if (response?.data?.data) {
+          setStates(response?.data?.data?.record || []);
+          setPagination({
+            currentPage: response?.data?.data?.current_page || 1,
+            totalPages: response?.data?.data?.totalPages || 1,
+            totalItems: response?.data?.data?.count || 0,
+            limit: response?.data?.data?.limit || 10,
+          });
+        } else if (response?.status === 404) {
+          setStates([]);
+          setPagination({
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0,
+            limit: params.limit,
+          });
+        }
       } catch (err: any) {
-        const errorMessage =
-          err.response?.data?.message || 'Failed to fetch states';
-        setError(errorMessage);
-        toast.error(errorMessage);
+        if (err.response?.status !== 404) {
+          const errorMessage =
+            err.response?.data?.message || 'Failed to fetch states';
+          setError(errorMessage);
+          toast.error(errorMessage);
+        }
         setStates([]);
       } finally {
         setLoading(false);
@@ -305,88 +317,116 @@ const StateDashboard = () => {
             <div className="p-8 text-center text-red-500 dark:text-red-400 text-lg">
               ⚠️ {error}
             </div>
-          ) : loading ? (
-            <SkeletonLoader />
           ) : states.length === 0 ? (
             <div className="p-8 text-center text-gray-500 dark:text-gray-400 text-lg">
-              No states found.
+              {loading ? (
+                <SkeletonLoader />
+              ) : (
+                <div>
+                  {' '}
+                  No record found{' '}
+                  {searchQuery ? (
+                    <>
+                      for "<b>{searchQuery}</b>"
+                    </>
+                  ) : (
+                    ``
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <>
               <table className="w-full">
                 <thead className="bg-gray-200/70 dark:bg-gray-900">
                   <tr>
-                    {['Name', 'Code', 'Actions'].map((header, idx) => (
-                      <th
-                        key={header}
-                        className={`px-8 py-6 text-left text-sm font-semibold dark:bg-[#24303f] text-gray-600 dark:text-gray-400 ${
-                          idx < 2
-                            ? 'cursor-pointer hover:bg-gray-200/35 dark:hover:bg-[#24303ff4]'
-                            : ''
-                        }`}
-                        onClick={() =>
-                          idx < 2 && handleSort(header.toLowerCase())
-                        }
-                      >
-                        <div className="flex items-center gap-2">
-                          {header}
-                          {idx < 2 && (
-                            <div className="flex flex-col">
-                              <ArrowUpIcon
-                                className={`w-4 h-4 mb-[-2px] ${
-                                  orderBy === header.toLowerCase() &&
-                                  orderDirection === 1
-                                    ? 'text-sky-500'
-                                    : 'text-gray-300 dark:text-gray-600'
-                                }`}
-                              />
-                              <ArrowDownIcon
-                                className={`w-4 h-4 ${
-                                  orderBy === header.toLowerCase() &&
-                                  orderDirection === -1
-                                    ? 'text-sky-500'
-                                    : 'text-gray-300 dark:text-gray-600'
-                                }`}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </th>
-                    ))}
+                    {['Sr No.', 'Name', 'Code', 'Actions'].map(
+                      (header, idx) => (
+                        <th
+                          key={header}
+                          className={`px-8 py-6 text-left text-sm font-semibold dark:bg-[#24303f] text-gray-600 dark:text-gray-400 ${
+                            idx > 0 && idx < 3
+                              ? 'cursor-pointer hover:bg-gray-200/35 dark:hover:bg-[#24303ff4]'
+                              : ''
+                          }`}
+                          onClick={() =>
+                            idx > 0 &&
+                            idx < 3 &&
+                            handleSort(header.toLowerCase())
+                          }
+                        >
+                          <div className="flex items-center gap-2">
+                            {header}
+                            {idx > 0 && idx < 3 && (
+                              <div className="flex flex-col">
+                                <ArrowUpIcon
+                                  className={`w-4 h-4 mb-[-2px] ${
+                                    orderBy === header.toLowerCase() &&
+                                    orderDirection === 1
+                                      ? 'text-sky-500'
+                                      : 'text-gray-300 dark:text-gray-600'
+                                  }`}
+                                />
+                                <ArrowDownIcon
+                                  className={`w-4 h-4 ${
+                                    orderBy === header.toLowerCase() &&
+                                    orderDirection === -1
+                                      ? 'text-sky-500'
+                                      : 'text-gray-300 dark:text-gray-600'
+                                  }`}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </th>
+                      ),
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {states.map((state) => (
-                    <tr
-                      key={state._id}
-                      className="hover:bg-gray-100/50 dark:hover:bg-gray-900/10 transition-colors"
-                    >
-                      <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
-                        {state.name}
-                      </td>
-                      <td className="px-8 py-6">
-                        <span className="inline-flex items-center px-4 py-2 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200 text-sm font-medium">
-                          {state.code}
-                        </span>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => {
-                              setModalMode('edit');
-                              setSelectedState(state);
-                              setShowModal(true);
-                            }}
-                            className="text-sky-500 hover:text-sky-600 dark:hover:text-sky-400 p-2 rounded-lg transition-colors"
-                          >
-                            Edit
-                          </motion.button>
-                        </div>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5}>
+                        <SkeletonLoader />
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    states.map((state, index) => (
+                      <tr
+                        key={state._id}
+                        className="hover:bg-gray-100/50 dark:hover:bg-gray-900/10 transition-colors"
+                      >
+                        <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
+                          {index < 9 ? '0' : ''}
+                          {index + 1}
+                        </td>
+                        <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
+                          {state.name}
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className="inline-flex items-center px-4 py-2 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200 text-sm font-medium">
+                            {state.code}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-4">
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => {
+                                setModalMode('edit');
+                                setSelectedState(state);
+                                setShowModal(true);
+                              }}
+                              className="text-sky-500 hover:text-sky-600 dark:hover:text-sky-400 p-2 rounded-lg transition-colors"
+                            >
+                              Edit
+                            </motion.button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
 

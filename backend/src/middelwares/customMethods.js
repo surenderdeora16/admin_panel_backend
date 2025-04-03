@@ -73,6 +73,7 @@ module.exports = (req, res, next) => {
             current_page: pageNo,
             totalPages,
             pagination,
+            limit,
             record: results,
         });
     }

@@ -1,6 +1,6 @@
 const { clean } = require("../../helpers/string");
 const { GeneralSetting, createFromHexString, mongoose } = require("../../models");
-const Storage = require('../../helpers/Storage');
+const Storage = require('../../helpers/storage');
 
 exports.getGeneralSetting = async (req, res) => {
     try {

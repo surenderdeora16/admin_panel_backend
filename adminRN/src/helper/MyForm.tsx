@@ -1,11 +1,11 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import { useEffect, useState, useRef, useMemo } from "react"
-import { Formik, Form as FormikForm, Field, ErrorMessage } from "formik"
-import Select from "react-select"
-import JoditEditor from "jodit-react"
+import { useEffect, useState, useRef, useMemo } from 'react';
+import { Formik, Form as FormikForm, Field, ErrorMessage } from 'formik';
+import Select from 'react-select';
+import JoditEditor from 'jodit-react';
 
 const MyForm = ({
   errors,
@@ -16,16 +16,16 @@ const MyForm = ({
   isReset = false,
   disabled = false,
 }: {
-  errors?: any
-  fields?: any[]
-  initialValues: any
-  validSchema: any
-  onSubmit?: (values: any) => void
-  isReset?: boolean
-  disabled?: boolean
+  errors?: any;
+  fields?: any[];
+  initialValues: any;
+  validSchema: any;
+  onSubmit?: (values: any) => void;
+  isReset?: boolean;
+  disabled?: boolean;
 }) => {
-  const [inactive, setInActive] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
+  const [inactive, setInActive] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   return (
     <Formik
@@ -34,20 +34,23 @@ const MyForm = ({
       validationSchema={validSchema}
       onSubmit={(values, { resetForm }) => {
         if (!disabled) {
-          setSubmitting(true)
-          onSubmit(values)
-          if (isReset) resetForm()
-          setInActive(true)
+          setSubmitting(true);
+          onSubmit(values);
+          if (isReset) resetForm();
+          setInActive(true);
           setTimeout(() => {
-            setInActive(false)
-            setSubmitting(false)
-          }, 2000)
+            setInActive(false);
+            setSubmitting(false);
+          }, 2000);
         }
       }}
     >
       {({ values, setFieldValue, errors: formikErrors, touched }) => {
         return (
-          <FormikForm autoComplete="off" className="w-full max-w-full bg-white rounded-xl">
+          <FormikForm
+            autoComplete="off"
+            className="w-full max-w-full bg-white rounded-xl"
+          >
             <div>
               {/* Global Form Error Display */}
               {errors && errors?.id && (
@@ -78,44 +81,64 @@ const MyForm = ({
               <div className="grid grid-cols-12 gap-x-6 gap-y-4">
                 {fields?.map(({ isDisabled = false, ...field }, i) => {
                   const fieldError =
-                    (formikErrors && formikErrors[field?.name] && touched[field?.name]) ||
-                    (errors && errors[field?.name])
+                    (formikErrors &&
+                      formikErrors[field?.name] &&
+                      touched[field?.name]) ||
+                    (errors && errors[field?.name]);
 
                   return (
-                    <div className={`col-span-${field?.col ? field?.col : 12}`} key={i}>
-                      {field?.type === "line" ? (
+                    <div
+                      className={`${
+                        field?.col == 6 ? 'col-span-6' : 'col-span-12'
+                      }`}
+                      key={i}
+                    >
+                      {field?.type === 'line' ? (
                         <div className="col-span-12 my-6">
                           <div className="flex items-center gap-3">
                             <div className="h-px flex-1 bg-slate-200"></div>
-                            <h3 className="text-base font-medium text-slate-700">{field?.label}</h3>
+                            <h3 className="text-base font-medium text-slate-700">
+                              {field?.label}
+                            </h3>
                             <div className="h-px flex-1 bg-slate-200"></div>
                           </div>
                         </div>
                       ) : (
                         <div className="relative space-y-1">
                           {/* Label for Form Elements */}
-                          {!["submit", "file", "hidden"].includes(field?.type) && (
-                            <label htmlFor={field?.name} className="block text-sm 2xl:text-base font-medium text-slate-700 mb-1">
+                          {!['submit', 'file', 'hidden'].includes(
+                            field?.type,
+                          ) && (
+                            <label
+                              htmlFor={field?.name}
+                              className="block text-sm 2xl:text-base font-medium text-slate-700 mb-1"
+                            >
                               {field?.label}
-                              {field?.required && <span className="ml-1 text-rose-500">*</span>}
+                              {field?.required && (
+                                <span className="ml-1 text-rose-500">*</span>
+                              )}
                             </label>
                           )}
 
                           {/* Field Types Rendering */}
                           {(() => {
-                            delete field?.hideLabel
+                            delete field?.hideLabel;
 
                             switch (field?.type) {
                               // For Select Input
-                              case "select":
-                                var field2 = Object.assign({}, field)
-                                delete field2.options
+                              case 'select':
+                                var field2 = Object.assign({}, field);
+                                delete field2.options;
                                 return (
                                   <div className="relative">
                                     <Field
                                       id={field?.name}
                                       disabled={disabled || isDisabled}
-                                      className={`appearance-none block w-full px-4 py-2.5 bg-white text-slate-900 border ${fieldError ? "border-rose-500 ring-1 ring-rose-500" : "border-slate-300 hover:border-slate-400"} rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-base`}
+                                      className={`appearance-none block w-full px-4 py-2.5 bg-white text-slate-900 border ${
+                                        fieldError
+                                          ? 'border-rose-500 ring-1 ring-rose-500'
+                                          : 'border-slate-300 hover:border-slate-400'
+                                      } rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-base`}
                                       {...field2}
                                       name={field?.name}
                                       as="select"
@@ -123,11 +146,16 @@ const MyForm = ({
                                       <option value="0" disabled>
                                         Select {field?.label}
                                       </option>
-                                      {field?.options.map((option: any, i: any) => (
-                                        <option value={option?.id} key={option?.id}>
-                                          {option?.name}
-                                        </option>
-                                      ))}
+                                      {field?.options.map(
+                                        (option: any, i: any) => (
+                                          <option
+                                            value={option?.id}
+                                            key={option?.id}
+                                          >
+                                            {option?.name}
+                                          </option>
+                                        ),
+                                      )}
                                     </Field>
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
                                       <svg
@@ -145,10 +173,10 @@ const MyForm = ({
                                       </svg>
                                     </div>
                                   </div>
-                                )
+                                );
 
                               // For Select2 Input
-                              case "select2":
+                              case 'select2':
                                 return (
                                   <Field
                                     id={field?.name}
@@ -158,10 +186,10 @@ const MyForm = ({
                                     component={Select2}
                                     error={fieldError}
                                   />
-                                )
+                                );
 
                               // For Select Multiple Input
-                              case "select-multiple":
+                              case 'select-multiple':
                                 return (
                                   <Field
                                     id={field?.name}
@@ -172,23 +200,27 @@ const MyForm = ({
                                     component={SelectMultiple}
                                     error={fieldError}
                                   />
-                                )
+                                );
 
                               // For Textarea Input
-                              case "textarea":
+                              case 'textarea':
                                 return (
                                   <Field
                                     id={field?.name}
                                     disabled={disabled || isDisabled}
-                                    className={`appearance-none block w-full px-4 py-2.5 bg-white text-slate-900 border ${fieldError ? "border-rose-500 ring-1 ring-rose-500" : "border-slate-300 hover:border-slate-400"} rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed resize-none min-h-[120px] text-base`}
+                                    className={`appearance-none block w-full px-4 py-2.5 bg-white text-slate-900 border ${
+                                      fieldError
+                                        ? 'border-rose-500 ring-1 ring-rose-500'
+                                        : 'border-slate-300 hover:border-slate-400'
+                                    } rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed resize-none min-h-[120px] text-base`}
                                     placeholder={field?.label}
                                     as="textarea"
                                     {...field}
                                   />
-                                )
+                                );
 
                               // For Html Editor Input
-                              case "text-editer":
+                              case 'text-editer':
                                 return (
                                   <Field
                                     id={field?.name}
@@ -198,10 +230,10 @@ const MyForm = ({
                                     {...field}
                                     error={fieldError}
                                   />
-                                )
+                                );
 
                               // For File Input
-                              case "file":
+                              case 'file':
                                 return (
                                   <Field
                                     id={field?.name}
@@ -211,9 +243,9 @@ const MyForm = ({
                                     {...field}
                                     error={fieldError}
                                   />
-                                )
+                                );
 
-                              case "multi-file":
+                              case 'multi-file':
                                 return (
                                   <Field
                                     id={field?.name}
@@ -224,9 +256,9 @@ const MyForm = ({
                                     {...field}
                                     error={fieldError}
                                   />
-                                )
+                                );
 
-                              case "check":
+                              case 'check':
                                 return (
                                   <Field
                                     id={field?.name}
@@ -237,10 +269,10 @@ const MyForm = ({
                                     component={Checkbox}
                                     error={fieldError}
                                   />
-                                )
+                                );
 
                               // For Read Only Input
-                              case "readOnly":
+                              case 'readOnly':
                                 return (
                                   <div>
                                     <Field
@@ -252,53 +284,62 @@ const MyForm = ({
                                       readOnly
                                       className="appearance-none block w-full px-4 py-2.5 bg-slate-50 text-slate-500 border border-slate-300 rounded-lg focus:outline-none text-base"
                                     />
-                                    <Field type="hidden" name={field?.name} value={field?.hiddenValue} />
+                                    <Field
+                                      type="hidden"
+                                      name={field?.name}
+                                      value={field?.hiddenValue}
+                                    />
                                   </div>
-                                )
+                                );
 
                               // For Submit Input
-                              case "submit":
+                              case 'submit':
                                 return (
                                   <div className="flex justify-end mt-2">
-                                  <button
-                                    type="submit"
-                                    disabled={disabled || isDisabled || inactive || submitting}
-                                    value="submit"
-                                    className="inline-flex justify-center items-center gap-2 w-full sm:w-auto px-6 py-2.5 font-medium text-white bg-sky-600 rounded-lg shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors duration-200"
-                                    {...field}
-                                  >
-                                    {submitting ? (
-                                      <>
-                                        <svg
-                                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          fill="none"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <circle
-                                            className="opacity-25"
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            strokeWidth="4"
-                                          ></circle>
-                                          <path
-                                            className="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                          ></path>
-                                        </svg>
-                                        Processing...
-                                      </>
-                                    ) : (
-                                      field?.label
-                                    )}
-                                  </button>
+                                    <button
+                                      type="submit"
+                                      disabled={
+                                        disabled ||
+                                        isDisabled ||
+                                        inactive ||
+                                        submitting
+                                      }
+                                      value="submit"
+                                      className="inline-flex justify-center items-center gap-2 w-full sm:w-auto px-6 py-2.5 font-medium text-white bg-sky-600 rounded-lg shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors duration-200"
+                                      {...field}
+                                    >
+                                      {submitting ? (
+                                        <>
+                                          <svg
+                                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <circle
+                                              className="opacity-25"
+                                              cx="12"
+                                              cy="12"
+                                              r="10"
+                                              stroke="currentColor"
+                                              strokeWidth="4"
+                                            ></circle>
+                                            <path
+                                              className="opacity-75"
+                                              fill="currentColor"
+                                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            ></path>
+                                          </svg>
+                                          Processing...
+                                        </>
+                                      ) : (
+                                        field?.label
+                                      )}
+                                    </button>
                                   </div>
-                                )
+                                );
 
-                              case "features":
+                              case 'features':
                                 return (
                                   <div>
                                     <FeatureManager
@@ -308,7 +349,7 @@ const MyForm = ({
                                       error={fieldError}
                                     />
                                   </div>
-                                )
+                                );
 
                               // For Rest of Input Fields (Default)
                               default:
@@ -316,12 +357,16 @@ const MyForm = ({
                                   <Field
                                     id={field?.name}
                                     disabled={disabled || isDisabled}
-                                    className={`appearance-none block w-full px-4 py-2.5 bg-white text-slate-900 border ${fieldError ? "border-rose-500 ring-1 ring-rose-500" : "border-slate-300 hover:border-slate-400"} rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-base`}
+                                    className={`appearance-none block w-full px-4 py-2.5 bg-white text-slate-900 border ${
+                                      fieldError
+                                        ? 'border-rose-500 ring-1 ring-rose-500'
+                                        : 'border-slate-300 hover:border-slate-400'
+                                    } rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-base`}
                                     placeholder={field?.label}
                                     {...field}
                                     autoComplete="off"
                                   />
-                                )
+                                );
                             }
                           })()}
 
@@ -347,16 +392,16 @@ const MyForm = ({
                         </div>
                       )}
                     </div>
-                  )
+                  );
                 })}
               </div>
             </div>
           </FormikForm>
-        )
+        );
       }}
     </Formik>
-  )
-}
+  );
+};
 
 // Picture Input Component with Attachment Display
 const PictureInput = ({
@@ -366,25 +411,32 @@ const PictureInput = ({
   label,
   disabled,
   error,
-}: { form: any; field: any; multiple?: boolean; label?: string; disabled?: boolean; error?: boolean }) => {
-  const [url, setUrl] = useState("")
-  const [urls, setUrls] = useState<string[]>([])
-  const [fileSelected, setFileSelected] = useState(false)
+}: {
+  form: any;
+  field: any;
+  multiple?: boolean;
+  label?: string;
+  disabled?: boolean;
+  error?: boolean;
+}) => {
+  const [url, setUrl] = useState('');
+  const [urls, setUrls] = useState<string[]>([]);
+  const [fileSelected, setFileSelected] = useState(false);
 
   useEffect(() => {
-    var data = field?.value
+    var data = field?.value;
     if (data != null && Array.isArray(data)) {
-      setUrls(data)
-    } else if (data != null && typeof data != "object") {
-      setUrl(data)
+      setUrls(data);
+    } else if (data != null && typeof data != 'object') {
+      setUrl(data);
     }
-  }, [field])
+  }, [field]);
 
   return (
     <>
       <label className="block text-sm 2xl:text-base font-medium text-slate-700 mb-1">
         {label}
-        {![undefined, null, ""].includes(url) && (
+        {![undefined, null, ''].includes(url) && (
           <a
             className="ml-2 text-xs font-normal text-sky-600 hover:text-sky-800 transition-colors duration-200"
             target="_blank"
@@ -398,11 +450,23 @@ const PictureInput = ({
 
       <div className="relative group">
         <div
-          className={`flex flex-col rounded-lg border-2 border-dashed ${error ? "border-rose-400 bg-rose-50" : fileSelected ? "border-sky-400 bg-sky-50" : "border-slate-300 bg-slate-50"} transition-all duration-200 hover:border-sky-400 hover:bg-sky-50 focus-within:border-sky-500 focus-within:bg-sky-50`}
+          className={`flex flex-col rounded-lg border-2 border-dashed ${
+            error
+              ? 'border-rose-400 bg-rose-50'
+              : fileSelected
+              ? 'border-sky-400 bg-sky-50'
+              : 'border-slate-300 bg-slate-50'
+          } transition-all duration-200 hover:border-sky-400 hover:bg-sky-50 focus-within:border-sky-500 focus-within:bg-sky-50`}
         >
           <div className="flex flex-col items-center justify-center py-5 px-4 text-center">
             <svg
-              className={`mb-3 h-10 w-10 ${error ? "text-rose-400" : fileSelected ? "text-sky-500" : "text-slate-400"}`}
+              className={`mb-3 h-10 w-10 ${
+                error
+                  ? 'text-rose-400'
+                  : fileSelected
+                  ? 'text-sky-500'
+                  : 'text-slate-400'
+              }`}
               stroke="currentColor"
               fill="none"
               viewBox="0 0 48 48"
@@ -415,7 +479,15 @@ const PictureInput = ({
                 strokeLinejoin="round"
               />
             </svg>
-            <div className={`text-sm 2xl:text-base ${error ? "text-rose-500" : fileSelected ? "text-sky-600" : "text-slate-600"}`}>
+            <div
+              className={`text-sm 2xl:text-base ${
+                error
+                  ? 'text-rose-500'
+                  : fileSelected
+                  ? 'text-sky-600'
+                  : 'text-slate-600'
+              }`}
+            >
               <label
                 htmlFor={`file-upload-${field.name}`}
                 className="relative cursor-pointer rounded-md font-medium text-sky-600 hover:text-sky-700 focus-within:outline-none"
@@ -430,20 +502,24 @@ const PictureInput = ({
                   className="sr-only"
                   onChange={(e: any) => {
                     if (e.target.files && e.target.files.length > 0) {
-                      setFileSelected(true)
+                      setFileSelected(true);
                       multiple
                         ? form.setFieldValue(field?.name, e.target.files)
-                        : form.setFieldValue(field?.name, e.target.files[0])
+                        : form.setFieldValue(field?.name, e.target.files[0]);
                     } else {
-                      setFileSelected(false)
+                      setFileSelected(false);
                     }
                   }}
                 />
               </label>
               <p className="pl-1">or drag and drop</p>
             </div>
-            <p className={`text-xs ${error ? "text-rose-500" : "text-slate-500"}`}>
-              {fileSelected ? "File selected" : "PDF, PNG, JPG, GIF up to 10MB"}
+            <p
+              className={`text-xs ${
+                error ? 'text-rose-500' : 'text-slate-500'
+              }`}
+            >
+              {fileSelected ? 'File selected' : 'PDF, PNG, JPG, GIF up to 10MB'}
             </p>
           </div>
         </div>
@@ -452,7 +528,9 @@ const PictureInput = ({
       {/* Previous Attachments Display */}
       {urls.length > 0 && (
         <div className="mt-3">
-          <p className="text-sm 2xl:text-base font-medium text-slate-700 mb-2">Previous Attachments:</p>
+          <p className="text-sm 2xl:text-base font-medium text-slate-700 mb-2">
+            Previous Attachments:
+          </p>
           <div className="flex flex-wrap gap-2">
             {urls?.map((item, i) => (
               <a
@@ -483,8 +561,8 @@ const PictureInput = ({
         </div>
       )}
     </>
-  )
-}
+  );
+};
 
 // Picture Input Preview Component
 const PictureInputPreview = ({
@@ -494,43 +572,68 @@ const PictureInputPreview = ({
   label,
   disabled,
   error,
-}: { form: any; field: any; multiple?: boolean; label?: string; disabled?: boolean; error?: boolean }) => {
-  const [previews, setPreviews] = useState<any>([])
-  const [fileSelected, setFileSelected] = useState(false)
+}: {
+  form: any;
+  field: any;
+  multiple?: boolean;
+  label?: string;
+  disabled?: boolean;
+  error?: boolean;
+}) => {
+  const [previews, setPreviews] = useState<any>([]);
+  const [fileSelected, setFileSelected] = useState(false);
 
   useEffect(() => {
     if (field?.value && Array.isArray(field?.value)) {
-      setPreviews(field.value.map((file: any) => (typeof file === "string" ? file : URL.createObjectURL(file))))
-      if (field.value.length > 0) setFileSelected(true)
+      setPreviews(
+        field.value.map((file: any) =>
+          typeof file === 'string' ? file : URL.createObjectURL(file),
+        ),
+      );
+      if (field.value.length > 0) setFileSelected(true);
     }
-  }, [field?.value])
+  }, [field?.value]);
 
   const handleFileChange = (e: any) => {
-    const files = Array.from(e.target.files)
+    const files = Array.from(e.target.files);
     if (files.length > 0) {
-      setFileSelected(true)
+      setFileSelected(true);
       if (multiple) {
-        form.setFieldValue(field?.name, files)
+        form.setFieldValue(field?.name, files);
       } else {
-        form.setFieldValue(field?.name, files[0])
+        form.setFieldValue(field?.name, files[0]);
       }
-      setPreviews(files.map((file: any) => URL.createObjectURL(file)))
+      setPreviews(files.map((file: any) => URL.createObjectURL(file)));
     } else {
-      setFileSelected(false)
+      setFileSelected(false);
     }
-  }
+  };
 
   return (
     <>
-      <label className="block text-sm 2xl:text-base font-medium text-slate-700 mb-1">{label}</label>
+      <label className="block text-sm 2xl:text-base font-medium text-slate-700 mb-1">
+        {label}
+      </label>
 
       <div className="relative group">
         <div
-          className={`flex flex-col rounded-lg border-2 border-dashed ${error ? "border-rose-400 bg-rose-50" : fileSelected ? "border-sky-400 bg-sky-50" : "border-slate-300 bg-slate-50"} transition-all duration-200 hover:border-sky-400 hover:bg-sky-50 focus-within:border-sky-500 focus-within:bg-sky-50`}
+          className={`flex flex-col rounded-lg border-2 border-dashed ${
+            error
+              ? 'border-rose-400 bg-rose-50'
+              : fileSelected
+              ? 'border-sky-400 bg-sky-50'
+              : 'border-slate-300 bg-slate-50'
+          } transition-all duration-200 hover:border-sky-400 hover:bg-sky-50 focus-within:border-sky-500 focus-within:bg-sky-50`}
         >
           <div className="flex flex-col items-center justify-center py-5 px-4 text-center">
             <svg
-              className={`mb-3 h-10 w-10 ${error ? "text-rose-400" : fileSelected ? "text-sky-500" : "text-slate-400"}`}
+              className={`mb-3 h-10 w-10 ${
+                error
+                  ? 'text-rose-400'
+                  : fileSelected
+                  ? 'text-sky-500'
+                  : 'text-slate-400'
+              }`}
               stroke="currentColor"
               fill="none"
               viewBox="0 0 48 48"
@@ -543,7 +646,15 @@ const PictureInputPreview = ({
                 strokeLinejoin="round"
               />
             </svg>
-            <div className={`text-sm 2xl:text-base ${error ? "text-rose-500" : fileSelected ? "text-sky-600" : "text-slate-600"}`}>
+            <div
+              className={`text-sm 2xl:text-base ${
+                error
+                  ? 'text-rose-500'
+                  : fileSelected
+                  ? 'text-sky-600'
+                  : 'text-slate-600'
+              }`}
+            >
               <label
                 htmlFor={`file-upload-multi-${field.name}`}
                 className="relative cursor-pointer rounded-md font-medium text-sky-600 hover:text-sky-700 focus-within:outline-none"
@@ -562,10 +673,16 @@ const PictureInputPreview = ({
               </label>
               <p className="pl-1">or drag and drop</p>
             </div>
-            <p className={`text-xs ${error ? "text-rose-500" : "text-slate-500"}`}>
+            <p
+              className={`text-xs ${
+                error ? 'text-rose-500' : 'text-slate-500'
+              }`}
+            >
               {fileSelected
-                ? `${previews.length} image${previews.length !== 1 ? "s" : ""} selected`
-                : "PNG, JPG, GIF up to 10MB"}
+                ? `${previews.length} image${
+                    previews.length !== 1 ? 's' : ''
+                  } selected`
+                : 'PNG, JPG, GIF up to 10MB'}
             </p>
           </div>
         </div>
@@ -574,17 +691,24 @@ const PictureInputPreview = ({
       {/* Image Preview Gallery */}
       {previews.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm 2xl:text-base font-medium text-slate-700 mb-2">Image Preview:</p>
+          <p className="text-sm 2xl:text-base font-medium text-slate-700 mb-2">
+            Image Preview:
+          </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {previews.map((src: any, index: number) => (
-              <div key={index} className="relative group overflow-hidden rounded-lg shadow-sm border border-slate-200">
+              <div
+                key={index}
+                className="relative group overflow-hidden rounded-lg shadow-sm border border-slate-200"
+              >
                 <img
-                  src={src || "/placeholder.svg"}
+                  src={src || '/placeholder.svg'}
                   alt={`Preview ${index + 1}`}
                   className="h-24 w-full object-cover transition-transform duration-200 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-center p-2">
-                  <span className="text-white text-xs font-medium">{`Image ${index + 1}`}</span>
+                  <span className="text-white text-xs font-medium">{`Image ${
+                    index + 1
+                  }`}</span>
                 </div>
               </div>
             ))}
@@ -592,8 +716,8 @@ const PictureInputPreview = ({
         </div>
       )}
     </>
-  )
-}
+  );
+};
 
 // Small Picture Input Component
 const PictureInputSmall = ({
@@ -601,18 +725,33 @@ const PictureInputSmall = ({
   field,
   multiple,
   disabled,
-  className = "",
-}: { form: any; field: any; multiple?: boolean; disabled?: boolean; className?: string }) => {
-  const random = Math.random()
-  const [selected, setSelected] = useState(false)
+  className = '',
+}: {
+  form: any;
+  field: any;
+  multiple?: boolean;
+  disabled?: boolean;
+  className?: string;
+}) => {
+  const random = Math.random();
+  const [selected, setSelected] = useState(false);
 
   return (
     <>
       <label
-        className={`inline-flex items-center justify-center p-2 rounded-md border ${selected ? "bg-sky-50 border-sky-300 text-sky-700 " + className : "border-slate-300 bg-white text-slate-700"} shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 cursor-pointer`}
+        className={`inline-flex items-center justify-center p-2 rounded-md border ${
+          selected
+            ? 'bg-sky-50 border-sky-300 text-sky-700 ' + className
+            : 'border-slate-300 bg-white text-slate-700'
+        } shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 cursor-pointer`}
         htmlFor={`random-${random}`}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
           <path
             fillRule="evenodd"
             d="M8 4a3 3 0 00-3 3v4a3 3 0 006 0V7a1 1 0 112 0v4a5 5 0 01-10 0V7a5 5 0 0110 0v1.5a1.5 1.5 0 01-3 0V7a1 1 0 012 0v1.5a3.5 3.5 0 01-7 0V7a3 3 0 013-3h6a3 3 0 013 3v4a3 3 0 01-3 3H8a1 1 0 100 2h2a5 5 0 005-5V7a5 5 0 00-5-5H8z"
@@ -630,66 +769,66 @@ const PictureInputSmall = ({
         disabled={disabled}
         onChange={(e: any) => {
           if (e.target.files && e.target.files.length > 0) {
-            setSelected(true)
+            setSelected(true);
             multiple
               ? form.setFieldValue(field?.name, e.target.files)
-              : form.setFieldValue(field?.name, e.target.files[0])
+              : form.setFieldValue(field?.name, e.target.files[0]);
           } else {
-            setSelected(false)
+            setSelected(false);
           }
         }}
       />
     </>
-  )
-}
+  );
+};
 
 // Custom Checkbox Component
 const Checkbox = ({
   form,
   field,
   disabled,
-  size = "lg",
+  size = 'lg',
   onChangeCustom = () => null,
-  className = "",
+  className = '',
   checked = false,
   error = false,
 }: {
-  form: any
-  field: any
-  disabled?: boolean
-  size?: string
-  onChangeCustom?: (value: number) => void
-  className?: string
-  checked?: boolean
-  error?: boolean
+  form: any;
+  field: any;
+  disabled?: boolean;
+  size?: string;
+  onChangeCustom?: (value: number) => void;
+  className?: string;
+  checked?: boolean;
+  error?: boolean;
 }) => {
-  const [isChecked, setIsChecked] = useState(checked || field.value === 1)
+  const [isChecked, setIsChecked] = useState(checked || field.value === 1);
 
   useEffect(() => {
-    setIsChecked(field.value === 1 || checked)
-  }, [field.value, checked])
+    setIsChecked(field.value === 1 || checked);
+  }, [field.value, checked]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = Number(e.target.checked)
-    setIsChecked(e.target.checked)
-    onChangeCustom(newValue)
-    form.setFieldValue(field?.name, newValue)
-  }
+    const newValue = Number(e.target.checked);
+    setIsChecked(e.target.checked);
+    onChangeCustom(newValue);
+    form.setFieldValue(field?.name, newValue);
+  };
 
   const sizeClasses = {
     sm: {
-      wrapper: "w-8 h-4",
-      toggle: "after:h-3 after:w-3 after:left-0.5",
+      wrapper: 'w-8 h-4',
+      toggle: 'after:h-3 after:w-3 after:left-0.5',
     },
     md: {
-      wrapper: "w-10 h-5",
-      toggle: "after:h-4 after:w-4 after:left-0.5",
+      wrapper: 'w-10 h-5',
+      toggle: 'after:h-4 after:w-4 after:left-0.5',
     },
     lg: {
-      wrapper: "w-12 h-6",
-      toggle: "after:h-5 after:w-5 after:left-0.5",
+      wrapper: 'w-12 h-6',
+      toggle: 'after:h-5 after:w-5 after:left-0.5',
     },
-  }
+  };
 
   return (
     <div className={`flex items-center ${className}`}>
@@ -704,8 +843,15 @@ const Checkbox = ({
         />
         <div
           className={`
-          ${sizeClasses[size as keyof typeof sizeClasses]?.wrapper || sizeClasses.md.wrapper}
-          ${error ? "bg-rose-100 peer-checked:bg-rose-500" : "bg-slate-200 peer-checked:bg-sky-500"}
+          ${
+            sizeClasses[size as keyof typeof sizeClasses]?.wrapper ||
+            sizeClasses.md.wrapper
+          }
+          ${
+            error
+              ? 'bg-rose-100 peer-checked:bg-rose-500'
+              : 'bg-slate-200 peer-checked:bg-sky-500'
+          }
           rounded-full 
           peer 
           peer-focus:outline-none 
@@ -721,27 +867,30 @@ const Checkbox = ({
           after:border-slate-300 
           after:border 
           after:rounded-full 
-          ${sizeClasses[size as keyof typeof sizeClasses]?.toggle || sizeClasses.md.toggle}
+          ${
+            sizeClasses[size as keyof typeof sizeClasses]?.toggle ||
+            sizeClasses.md.toggle
+          }
           after:transition-all 
           peer-disabled:opacity-50
           peer-disabled:cursor-not-allowed
         `}
         ></div>
       </label>
-      <span className="sr-only">{field?.label || "Toggle"}</span>
+      <span className="sr-only">{field?.label || 'Toggle'}</span>
     </div>
-  )
-}
+  );
+};
 
 // Custom Select Component
 const Select2 = ({
   form,
   field,
   options = [],
-  label = "",
+  label = '',
   menuPortalTarget = null,
-  className = "",
-  classNamePrefix = "react-select",
+  className = '',
+  classNamePrefix = 'react-select',
   disabled = false,
   onChange = () => null,
   onChangeCustom = () => null,
@@ -749,77 +898,94 @@ const Select2 = ({
   onChangeUpdateToNull = false,
   error = false,
 }: {
-  form: any
-  field: any
-  options: any
-  label: any
-  menuPortalTarget: any
-  className: any
-  classNamePrefix: any
-  disabled: any
-  onChange: any
-  onChangeCustom: any
-  onBlur: any
-  onChangeUpdateToNull: any
-  error: any
+  form: any;
+  field: any;
+  options: any;
+  label: any;
+  menuPortalTarget: any;
+  className: any;
+  classNamePrefix: any;
+  disabled: any;
+  onChange: any;
+  onChangeCustom: any;
+  onBlur: any;
+  onChangeUpdateToNull: any;
+  error: any;
 }) => {
-  const [myValue, setMyValue] = useState(null)
+  const [myValue, setMyValue] = useState(null);
 
   useEffect(() => {
     if (onChangeUpdateToNull) {
-      var selected = options.filter((row: any) => [row.id, row._id].includes(field?.value))
-      selected.length === 1 ? setMyValue(selected?.[0]) : setMyValue(null)
+      var selected = options.filter((row: any) =>
+        [row.id, row._id].includes(field?.value),
+      );
+      selected.length === 1 ? setMyValue(selected?.[0]) : setMyValue(null);
     } else {
-      setMyValue(options.find((row: any) => [row.id, row._id].includes(field?.value)))
+      setMyValue(
+        options.find((row: any) => [row.id, row._id].includes(field?.value)),
+      );
     }
-  }, [field?.value, options, onChangeUpdateToNull])
+  }, [field?.value, options, onChangeUpdateToNull]);
 
   const customStyles = {
     control: (provided: any, state: any) => ({
       ...provided,
-      borderColor: error ? "#F43F5E" : state.isFocused ? "#0EA5E9" : "#D1D5DB",
-      boxShadow: error ? "0 0 0 1px #F43F5E" : state.isFocused ? "0 0 0 1px #0EA5E9" : "none",
-      "&:hover": {
-        borderColor: error ? "#F43F5E" : state.isFocused ? "#0EA5E9" : "#9CA3AF",
+      borderColor: error ? '#F43F5E' : state.isFocused ? '#0EA5E9' : '#D1D5DB',
+      boxShadow: error
+        ? '0 0 0 1px #F43F5E'
+        : state.isFocused
+        ? '0 0 0 1px #0EA5E9'
+        : 'none',
+      '&:hover': {
+        borderColor: error
+          ? '#F43F5E'
+          : state.isFocused
+          ? '#0EA5E9'
+          : '#9CA3AF',
       },
-      borderRadius: "0.5rem",
-      backgroundColor: disabled ? "#F3F4F6" : "white",
-      padding: "2px 4px",
-      minHeight: "42px",
+      borderRadius: '0.5rem',
+      backgroundColor: disabled ? '#F3F4F6' : 'white',
+      padding: '2px 4px',
+      minHeight: '42px',
     }),
     option: (provided: any, state: any) => ({
       ...provided,
-      backgroundColor: state.isSelected ? "#0EA5E9" : state.isFocused ? "#E0F2FE" : null,
-      color: state.isSelected ? "white" : "#111827",
-      "&:active": {
-        backgroundColor: "#38BDF8",
+      backgroundColor: state.isSelected
+        ? '#0EA5E9'
+        : state.isFocused
+        ? '#E0F2FE'
+        : null,
+      color: state.isSelected ? 'white' : '#111827',
+      '&:active': {
+        backgroundColor: '#38BDF8',
       },
-      padding: "10px 12px",
+      padding: '10px 12px',
     }),
     menu: (provided: any) => ({
       ...provided,
-      borderRadius: "0.5rem",
-      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+      borderRadius: '0.5rem',
+      boxShadow:
+        '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
       zIndex: 9999,
-      overflow: "hidden",
+      overflow: 'hidden',
     }),
     placeholder: (provided: any) => ({
       ...provided,
-      color: "#9CA3AF",
+      color: '#9CA3AF',
     }),
     indicatorSeparator: (provided: any) => ({
       ...provided,
-      display: "none",
+      display: 'none',
     }),
     dropdownIndicator: (provided: any) => ({
       ...provided,
-      color: "#6B7280",
+      color: '#6B7280',
     }),
     singleValue: (provided: any) => ({
       ...provided,
-      color: disabled ? "#9CA3AF" : "#111827",
+      color: disabled ? '#9CA3AF' : '#111827',
     }),
-  }
+  };
 
   return (
     <Select
@@ -831,22 +997,24 @@ const Select2 = ({
       className={className}
       classNamePrefix={classNamePrefix}
       styles={customStyles}
-      isOptionSelected={(option: any, selectValue: any) => selectValue.some((i: any) => i === option)}
+      isOptionSelected={(option: any, selectValue: any) =>
+        selectValue.some((i: any) => i === option)
+      }
       getOptionLabel={(option: any) => option?.name}
       getOptionValue={(option: any) => option?.id || option?._id}
       value={myValue}
       onBlur={() => {
-        onBlur(myValue?.[0])
+        onBlur(myValue?.[0]);
       }}
       onChange={(value: any) => {
-        onChange(value)
-        onChangeCustom(value)
-        setMyValue(value)
-        form.setFieldValue(field?.name, value?.id || value?._id)
+        onChange(value);
+        onChangeCustom(value);
+        setMyValue(value);
+        form.setFieldValue(field?.name, value?.id || value?._id);
       }}
     />
-  )
-}
+  );
+};
 
 // Multi-Select Component
 const SelectMultiple = ({
@@ -859,93 +1027,109 @@ const SelectMultiple = ({
   isMulti = false,
   error = false,
 }: {
-  className: any
-  placeholder: any
-  field: any
-  form: any
-  disabled: any
-  options: any
-  isMulti: any
-  error: any
+  className: any;
+  placeholder: any;
+  field: any;
+  form: any;
+  disabled: any;
+  options: any;
+  isMulti: any;
+  error: any;
 }) => {
   const onChange = (option: any) => {
-    form.setFieldValue(field?.name, isMulti ? option.map((item: any) => item.id) : option.id)
-  }
+    form.setFieldValue(
+      field?.name,
+      isMulti ? option.map((item: any) => item.id) : option.id,
+    );
+  };
 
   const getValue = () => {
     if (options) {
       return isMulti
         ? options.filter((option: any) => field?.value.indexOf(option?.id) >= 0)
-        : options.find((option: any) => option?.id === field?.value)
+        : options.find((option: any) => option?.id === field?.value);
     } else {
-      return isMulti ? [] : ""
+      return isMulti ? [] : '';
     }
-  }
+  };
 
   const customStyles = {
     control: (provided: any, state: any) => ({
       ...provided,
-      borderColor: error ? "#F43F5E" : state.isFocused ? "#0EA5E9" : "#D1D5DB",
-      boxShadow: error ? "0 0 0 1px #F43F5E" : state.isFocused ? "0 0 0 1px #0EA5E9" : "none",
-      "&:hover": {
-        borderColor: error ? "#F43F5E" : state.isFocused ? "#0EA5E9" : "#9CA3AF",
+      borderColor: error ? '#F43F5E' : state.isFocused ? '#0EA5E9' : '#D1D5DB',
+      boxShadow: error
+        ? '0 0 0 1px #F43F5E'
+        : state.isFocused
+        ? '0 0 0 1px #0EA5E9'
+        : 'none',
+      '&:hover': {
+        borderColor: error
+          ? '#F43F5E'
+          : state.isFocused
+          ? '#0EA5E9'
+          : '#9CA3AF',
       },
-      borderRadius: "0.5rem",
-      backgroundColor: disabled ? "#F3F4F6" : "white",
-      padding: "2px 4px",
-      minHeight: "42px",
+      borderRadius: '0.5rem',
+      backgroundColor: disabled ? '#F3F4F6' : 'white',
+      padding: '2px 4px',
+      minHeight: '42px',
     }),
     multiValue: (provided: any) => ({
       ...provided,
-      backgroundColor: "#E0F2FE",
-      borderRadius: "0.375rem",
-      padding: "1px 2px",
-      margin: "2px",
+      backgroundColor: '#E0F2FE',
+      borderRadius: '0.375rem',
+      padding: '1px 2px',
+      margin: '2px',
     }),
     multiValueLabel: (provided: any) => ({
       ...provided,
-      color: "#0369A1",
-      fontSize: "0.875rem",
-      padding: "0 4px",
+      color: '#0369A1',
+      fontSize: '0.875rem',
+      padding: '0 4px',
     }),
     multiValueRemove: (provided: any) => ({
       ...provided,
-      color: "#0EA5E9",
-      borderRadius: "0 0.375rem 0.375rem 0",
-      "&:hover": {
-        backgroundColor: "#BAE6FD",
-        color: "#0369A1",
+      color: '#0EA5E9',
+      borderRadius: '0 0.375rem 0.375rem 0',
+      '&:hover': {
+        backgroundColor: '#BAE6FD',
+        color: '#0369A1',
       },
     }),
     option: (provided: any, state: any) => ({
       ...provided,
-      backgroundColor: state.isSelected ? "#0EA5E9" : state.isFocused ? "#E0F2FE" : null,
-      color: state.isSelected ? "white" : "#111827",
-      "&:active": {
-        backgroundColor: "#38BDF8",
+      backgroundColor: state.isSelected
+        ? '#0EA5E9'
+        : state.isFocused
+        ? '#E0F2FE'
+        : null,
+      color: state.isSelected ? 'white' : '#111827',
+      '&:active': {
+        backgroundColor: '#38BDF8',
       },
-      padding: "10px 12px",
+      padding: '10px 12px',
     }),
     menu: (provided: any) => ({
       ...provided,
-      borderRadius: "0.5rem",
-      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+      borderRadius: '0.5rem',
+      boxShadow:
+        '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
       zIndex: 9999,
-      overflow: "hidden",
+      overflow: 'hidden',
     }),
     placeholder: (provided: any) => ({
       ...provided,
-      color: "#9CA3AF",
+      color: '#9CA3AF',
     }),
     indicatorSeparator: (provided: any) => ({
       ...provided,
-      display: "none",
+      display: 'none',
     }),
     dropdownIndicator: (provided: any) => ({
       ...provided,
-      color: "#6B7280",
+      color: '#6B7280',
     }),
-  }
+  };
 
   return (
     <Select
@@ -961,81 +1145,95 @@ const SelectMultiple = ({
       getOptionValue={(option: any) => option?.id}
       isMulti={isMulti}
     />
-  )
-}
+  );
+};
 
 // Rich Text Editor Component
-const TextEditer = ({ form, field, disabled, error }: { form: any; field: any; disabled: any; error: any }) => {
-  const editor = useRef(null)
-  const [canUpdate, setCanUpdate] = useState(true)
-  const [content, setContent] = useState<any>("")
+const TextEditer = ({
+  form,
+  field,
+  disabled,
+  error,
+}: {
+  form: any;
+  field: any;
+  disabled: any;
+  error: any;
+}) => {
+  const editor = useRef(null);
+  const [canUpdate, setCanUpdate] = useState(true);
+  const [content, setContent] = useState<any>('');
 
   useEffect(() => {
-    if (canUpdate && field?.value !== "") {
-      setContent(field?.value)
-      setCanUpdate(false)
+    if (canUpdate && field?.value !== '') {
+      setContent(field?.value);
+      setCanUpdate(false);
     }
-  }, [field?.value, canUpdate])
+  }, [field?.value, canUpdate]);
 
   return useMemo(() => {
     const config = {
       readonly: disabled,
-      theme: "default",
-      width: "100%",
+      theme: 'default',
+      width: '100%',
       height: 300,
-      toolbarButtonSize: "medium",
+      toolbarButtonSize: 'medium',
       buttons: [
-        "bold",
-        "italic",
-        "underline",
-        "strikethrough",
-        "|",
-        "ul",
-        "ol",
-        "|",
-        "font",
-        "fontsize",
-        "brush",
-        "paragraph",
-        "|",
-        "link",
-        "image",
-        "table",
-        "|",
-        "align",
-        "undo",
-        "redo",
-        "|",
-        "hr",
-        "eraser",
-        "fullsize",
-        "source",
+        'bold',
+        'italic',
+        'underline',
+        'strikethrough',
+        '|',
+        'ul',
+        'ol',
+        '|',
+        'font',
+        'fontsize',
+        'brush',
+        'paragraph',
+        '|',
+        'link',
+        'image',
+        'table',
+        '|',
+        'align',
+        'undo',
+        'redo',
+        '|',
+        'hr',
+        'eraser',
+        'fullsize',
+        'source',
       ],
       uploader: {
         insertImageAsBase64URI: true,
       },
-      colorPickerDefaultTab: "background",
+      colorPickerDefaultTab: 'background',
       controls: {
         font: {
           list: {
-            Arial: "Arial",
-            "Courier New": "Courier New",
-            Georgia: "Georgia",
-            Impact: "Impact",
-            Tahoma: "Tahoma",
-            "Times New Roman": "Times New Roman",
-            Verdana: "Verdana",
+            Arial: 'Arial',
+            'Courier New': 'Courier New',
+            Georgia: 'Georgia',
+            Impact: 'Impact',
+            Tahoma: 'Tahoma',
+            'Times New Roman': 'Times New Roman',
+            Verdana: 'Verdana',
           },
         },
       },
       style: {
-        borderRadius: "0.5rem",
-        boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        borderRadius: '0.5rem',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
       },
-    }
+    };
 
     return (
-      <div className={`jodit-wrapper rounded-lg overflow-hidden ${error ? "ring-2 ring-rose-500" : ""}`}>
+      <div
+        className={`jodit-wrapper rounded-lg overflow-hidden ${
+          error ? 'ring-2 ring-rose-500' : ''
+        }`}
+      >
         <JoditEditor
           ref={editor}
           value={content}
@@ -1043,9 +1241,9 @@ const TextEditer = ({ form, field, disabled, error }: { form: any; field: any; d
           onBlur={(content: any) => form.setFieldValue(field?.name, content)}
         />
       </div>
-    )
-  }, [content, form, field?.name, disabled, error])
-}
+    );
+  }, [content, form, field?.name, disabled, error]);
+};
 
 // Feature Manager Component
 const FeatureManager = ({
@@ -1053,24 +1251,29 @@ const FeatureManager = ({
   values,
   setFieldValue,
   error,
-}: { options: any; values: any; setFieldValue: any; error: any }) => {
-  const [selectedFeature, setSelectedFeature] = useState<any>(null)
-  const [featureValue, setFeatureValue] = useState("")
-  const [featureDescription, setFeatureDescription] = useState("")
-  const [formError, setFormError] = useState("")
+}: {
+  options: any;
+  values: any;
+  setFieldValue: any;
+  error: any;
+}) => {
+  const [selectedFeature, setSelectedFeature] = useState<any>(null);
+  const [featureValue, setFeatureValue] = useState('');
+  const [featureDescription, setFeatureDescription] = useState('');
+  const [formError, setFormError] = useState('');
 
   const handleAddFeature = () => {
     if (!selectedFeature) {
-      setFormError("Please select a feature")
-      return
+      setFormError('Please select a feature');
+      return;
     }
 
     if (!featureValue) {
-      setFormError("Please enter a value")
-      return
+      setFormError('Please enter a value');
+      return;
     }
 
-    setFormError("")
+    setFormError('');
     const newFeatures = {
       ...values.features,
       [selectedFeature.id]: {
@@ -1078,39 +1281,48 @@ const FeatureManager = ({
         description: featureDescription,
         value: Number.parseInt(featureValue),
       },
-    }
+    };
 
-    setFieldValue("features", newFeatures)
-    setSelectedFeature(null)
-    setFeatureValue("")
-    setFeatureDescription("")
-  }
+    setFieldValue('features', newFeatures);
+    setSelectedFeature(null);
+    setFeatureValue('');
+    setFeatureDescription('');
+  };
 
   const handleRemoveFeature = (featureKey: any) => {
-    const newFeatures = { ...values.features }
-    delete newFeatures[featureKey]
-    setFieldValue("features", newFeatures)
-  }
+    const newFeatures = { ...values.features };
+    delete newFeatures[featureKey];
+    setFieldValue('features', newFeatures);
+  };
 
   const editFeature = (key: string, feature: any) => {
     setSelectedFeature(
-      options.find((option: any) => option.id === Number.parseInt(key) || option.name === feature.name),
-    )
-    setFeatureValue(feature.value.toString())
-    setFeatureDescription(feature.description || "")
+      options.find(
+        (option: any) =>
+          option.id === Number.parseInt(key) || option.name === feature.name,
+      ),
+    );
+    setFeatureValue(feature.value.toString());
+    setFeatureDescription(feature.description || '');
 
     // Remove the feature so we can re-add it
-    handleRemoveFeature(key)
-  }
+    handleRemoveFeature(key);
+  };
 
   return (
     <div className="space-y-4">
-      <div className={`p-5 rounded-lg border ${error ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-slate-50"}`}>
+      <div
+        className={`p-5 rounded-lg border ${
+          error ? 'border-rose-300 bg-rose-50' : 'border-slate-200 bg-slate-50'
+        }`}
+      >
         <h3 className="font-medium text-slate-800 mb-3">Add Features</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
           <div className="md:col-span-4">
-            <label className="block text-sm 2xl:text-base font-medium text-slate-700 mb-1">Feature</label>
+            <label className="block text-sm 2xl:text-base font-medium text-slate-700 mb-1">
+              Feature
+            </label>
             <Field
               name="featureSelector"
               component={Select2}
@@ -1122,7 +1334,9 @@ const FeatureManager = ({
             />
           </div>
           <div className="md:col-span-5">
-            <label className="block text-sm 2xl:text-base font-medium text-slate-700 mb-1">Description</label>
+            <label className="block text-sm 2xl:text-base font-medium text-slate-700 mb-1">
+              Description
+            </label>
             <input
               type="text"
               name="feature_description"
@@ -1133,7 +1347,9 @@ const FeatureManager = ({
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm 2xl:text-base font-medium text-slate-700 mb-1">Value</label>
+            <label className="block text-sm 2xl:text-base font-medium text-slate-700 mb-1">
+              Value
+            </label>
             <input
               type="number"
               name="featureValue"
@@ -1149,7 +1365,12 @@ const FeatureManager = ({
               className="w-full flex justify-center items-center px-4 py-2.5 bg-sky-600 text-white font-medium rounded-lg hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors duration-200"
               onClick={handleAddFeature}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
                 <path
                   fillRule="evenodd"
                   d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
@@ -1219,13 +1440,28 @@ const FeatureManager = ({
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
                 {Object.entries(values.features || {}).map(([key, feature]) => {
-                  const typedFeature = feature as { name: string; description: string; value: number }
+                  const typedFeature = feature as {
+                    name: string;
+                    description: string;
+                    value: number;
+                  };
                   return (
-                    <tr key={key} className="hover:bg-slate-50 transition-colors duration-150">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm 2xl:text-base font-medium text-slate-700">{key}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm 2xl:text-base text-slate-600">{typedFeature.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm 2xl:text-base text-slate-600">{typedFeature.description}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm 2xl:text-base text-slate-600">{typedFeature.value}</td>
+                    <tr
+                      key={key}
+                      className="hover:bg-slate-50 transition-colors duration-150"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm 2xl:text-base font-medium text-slate-700">
+                        {key}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm 2xl:text-base text-slate-600">
+                        {typedFeature.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm 2xl:text-base text-slate-600">
+                        {typedFeature.description}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm 2xl:text-base text-slate-600">
+                        {typedFeature.value}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm 2xl:text-base font-medium">
                         <div className="flex justify-end gap-2">
                           <button
@@ -1245,7 +1481,7 @@ const FeatureManager = ({
                         </div>
                       </td>
                     </tr>
-                  )
+                  );
                 })}
               </tbody>
             </table>
@@ -1253,9 +1489,16 @@ const FeatureManager = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export { PictureInput, PictureInputSmall, Checkbox, Select2, SelectMultiple, TextEditer, PictureInputPreview }
-export default MyForm
-
+export {
+  PictureInput,
+  PictureInputSmall,
+  Checkbox,
+  Select2,
+  SelectMultiple,
+  TextEditer,
+  PictureInputPreview,
+};
+export default MyForm;
