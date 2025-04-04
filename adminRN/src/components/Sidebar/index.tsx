@@ -2,17 +2,25 @@ import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import SidebarLinkGroup from './SidebarLinkGroup';
 import Logo from '../../images/logo/logo.svg';
-import { 
-  MdOutlineDisplaySettings, 
-  MdOutlineMailOutline,
-} from 'react-icons/md';
-import { LuLayoutDashboard } from "react-icons/lu";
+import { MdOutlineDisplaySettings, MdOutlineMailOutline } from 'react-icons/md';
+import { LuLayoutDashboard } from 'react-icons/lu';
 import { HiOutlineChatBubbleLeftRight } from 'react-icons/hi2';
 import { IoShareSocialOutline } from 'react-icons/io5';
-import { FiGrid, FiCalendar, FiUsers, FiEdit, FiSettings, FiPieChart, FiLayout, FiLogIn } from 'react-icons/fi';
-import { SlCalender } from "react-icons/sl";
-import { FaUsersCog } from "react-icons/fa";
-import { IoSettingsSharp } from "react-icons/io5";
+import {
+  FiGrid,
+  FiCalendar,
+  FiUsers,
+  FiEdit,
+  FiSettings,
+  FiPieChart,
+  FiLayout,
+  FiLogIn,
+} from 'react-icons/fi';
+import { FaMapLocationDot } from 'react-icons/fa6';
+import { FaMapPin } from 'react-icons/fa';
+import { SlCalender } from 'react-icons/sl';
+import { FaUsersCog } from 'react-icons/fa';
+import { IoSettingsSharp } from 'react-icons/io5';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -43,27 +51,24 @@ const MENU_CONFIG = {
     //   path: '/role-manage',
     //   icon: FaUsersCog,
     // },
-    // {
-    //   name: 'Forms',
-    //   icon: FiEdit,
-    //   children: [
-    //     { name: 'Form Elements', path: '/forms/form-elements' },
-    //     { name: 'Form Layout', path: '/forms/form-layout' },
-    //   ],
-    // },
+    {
+      name: 'App Banner',
+      path: '/app-banner',
+      icon: FiEdit,
+    },
     {
       name: 'Location',
-      icon: IoSettingsSharp,
+      icon: FaMapLocationDot,
       children: [
         {
           name: 'State',
           path: '/state',
-          icon: MdOutlineDisplaySettings,
+          icon: FaMapPin,
         },
         {
           name: 'District',
           path: '/district',
-          icon: HiOutlineChatBubbleLeftRight,
+          icon: FaMapPin,
         },
       ],
     },
@@ -128,7 +133,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
   const storedSidebarExpanded = localStorage.getItem('sidebar-expanded');
   const [sidebarExpanded, setSidebarExpanded] = useState(
-    storedSidebarExpanded === null ? false : storedSidebarExpanded === 'true'
+    storedSidebarExpanded === null ? false : storedSidebarExpanded === 'true',
   );
 
   // Close on click outside
@@ -167,14 +172,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   }, [sidebarExpanded]);
 
   const renderMenuItems = (items: MenuItem[]) => {
-    return items.map((item:any, index:number) => {
+    return items.map((item: any, index: number) => {
       if (item.children) {
         return (
           <SidebarLinkGroup
             key={index}
-            activeCondition={
-              item.path ? pathname.includes(item.path) : false
-            }
+            activeCondition={item.path ? pathname.includes(item.path) : false}
           >
             {(handleClick, open) => (
               <React.Fragment>
@@ -188,9 +191,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                     sidebarExpanded ? handleClick() : setSidebarExpanded(true);
                   }}
                 >
-                  {item.icon && (
-                    <item.icon className="w-5 h-5 fill-current" />
-                  )}
+                  {item.icon && <item.icon className="w-5 h-5 fill-current" />}
                   {item.name}
                   <svg
                     className={`absolute right-4 top-1/2 -translate-y-1/2 fill-current ${
@@ -216,7 +217,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   }`}
                 >
                   <ul className="mt-4 mb-5.5 flex flex-col gap-2.5 pl-6">
-                    {item.children.map((child:any, childIndex:number) => (
+                    {item.children.map((child: any, childIndex: number) => (
                       <li key={childIndex}>
                         <NavLink
                           to={child.path!}

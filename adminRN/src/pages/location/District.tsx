@@ -72,7 +72,6 @@ const District = () => {
         return value ? mongoIdRegex.test(value) : false;
       }),
   });
-
   const fields = [
     {
       label: 'Select State',
@@ -92,6 +91,8 @@ const District = () => {
       type: 'submit',
     },
   ];
+
+console.log("selectedDistricts:::::", selectedDistricts)
 
   const fetchStates = useCallback(
     debounce(async () => {
@@ -266,11 +267,13 @@ const District = () => {
   const ModalContent = () => {
     const initialValues =
       modalMode === 'add'
-        ? { name: '', code: '' }
+        ? { name: '', code: '', stateId: '' }
         : selectedDistricts
         ? {
             name: selectedDistricts.name || '',
             code: selectedDistricts.code || '',
+            stateId: selectedDistricts?.stateId?._id
+
           }
         : { name: '', code: '' };
 
@@ -438,21 +441,21 @@ const District = () => {
                     </th>
                     <th
                       className="px-8 py-6 text-left text-sm font-semibold dark:bg-[#24303f] text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-200/35 dark:hover:bg-[#24303ff4]"
-                      onClick={() => handleSort('code')}
+                      onClick={() => handleSort('createdAt')}
                     >
                       <div className="flex items-center gap-2">
                         District Code
                         <div className="flex flex-col">
                           <ArrowUpIcon
                             className={`w-4 h-4 mb-[-2px] ${
-                              orderBy === 'code' && orderDirection === 1
+                              orderBy === 'createdAt' && orderDirection === 1
                                 ? 'text-sky-500'
                                 : 'text-gray-300 dark:text-gray-600'
                             }`}
                           />
                           <ArrowDownIcon
                             className={`w-4 h-4 ${
-                              orderBy === 'code' && orderDirection === -1
+                              orderBy === 'createdAt' && orderDirection === -1
                                 ? 'text-sky-500'
                                 : 'text-gray-300 dark:text-gray-600'
                             }`}

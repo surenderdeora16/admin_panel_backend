@@ -19,6 +19,7 @@ import EmailSettings from './pages/Setting/EmailSettings';
 import SocialMediaSettings from './pages/Setting/SocialMediaSettings';
 import State from './pages/location/state';
 import District from './pages/location/District';
+import AppBanner from './pages/AppBanner';
 
 function App() {
   return (
@@ -75,6 +76,15 @@ function App() {
             <>
               <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
               <Tables />
+            </>
+          }
+        />
+        <Route
+          path="/app-banner"
+          element={
+            <>
+              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <AppBanner />
             </>
           }
         />

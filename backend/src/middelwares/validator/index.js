@@ -2,6 +2,7 @@ const { check } = require("express-validator");
 
 module.exports = (method) => {
   switch (method) {
+    // Authentication
     case "register":
       {
         return [
@@ -57,14 +58,16 @@ module.exports = (method) => {
             .withMessage("Please select your state")
             .notEmpty()
             .withMessage("State cannot be empty")
-            .isMongoId().withMessage('Invalid State ID'),
+            .isMongoId()
+            .withMessage("Invalid State ID"),
 
           check("district")
             .exists()
             .withMessage("Please select your district")
             .notEmpty()
             .withMessage("District cannot be empty")
-            .isMongoId().withMessage('Invalid District ID'),
+            .isMongoId()
+            .withMessage("Invalid District ID"),
         ];
       }
       break;
@@ -169,7 +172,8 @@ module.exports = (method) => {
           .withMessage("Passwords do not match"),
       ];
       break;
-    // admin
+
+    // Location
     case "addState":
       return [
         check("name")
@@ -181,7 +185,7 @@ module.exports = (method) => {
           .exists()
           .withMessage("State code is required")
           .notEmpty()
-          .withMessage("State code cannot be empty")
+          .withMessage("State code cannot be empty"),
       ];
     case "addDistrict":
       return [
@@ -201,7 +205,7 @@ module.exports = (method) => {
           .exists()
           .withMessage("District code is required")
           .notEmpty()
-          .withMessage("District code cannot be empty")
+          .withMessage("District code cannot be empty"),
       ];
     case "editState":
       return [
@@ -212,7 +216,7 @@ module.exports = (method) => {
         check("code")
           .optional()
           .notEmpty()
-          .withMessage("State code cannot be empty")
+          .withMessage("State code cannot be empty"),
       ];
     case "editDistrict":
       return [
@@ -229,9 +233,32 @@ module.exports = (method) => {
         check("code")
           .optional()
           .notEmpty()
-          .withMessage("District code cannot be empty")
+          .withMessage("District code cannot be empty"),
       ];
-    //
+
+    // Banner
+    // case "createBanner":
+    //   return [
+    //     check("images")
+    //       .custom((value, { req }) => req.files?.length > 0)
+    //       .withMessage("At least one image is required"),
+    //   ];
+    case "updateBanner":
+      return [
+        check("images")
+          .custom((value, { req }) => req.files?.length > 0)
+          .withMessage("At least one image is required"),
+        check("imageOrders")
+          .optional()
+          .isArray()
+          .withMessage("Image orders must be an array")
+          .custom((value) =>
+            value.every((item) => typeof item.order === "number" && item.id)
+          )
+          .withMessage("Each image order must have id and order number"),
+      ];
+
+    // ..............................
     case "sendOtp":
       {
         return [

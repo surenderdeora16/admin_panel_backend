@@ -10,7 +10,9 @@ exports.uploadTo = class {
         const maxAllowSize = fileSize * Math.pow(1024, 2);
 
         const fileFilter = (req, file, cb) => {
-
+ // Log file information for debugging
+ console.log("Processing file:", file.fieldname, file.originalname, file.mimetype)
+ 
             // Check uploaded file not exceed permitted size.
             const reqSize = parseInt(req.headers["content-length"]);
 
@@ -53,7 +55,7 @@ exports.uploadTo = class {
         return this.upload.single(fieldName);
     }
 
-    array(fieldName = 'image', maxCount = 5) {
+    array(fieldName = 'images', maxCount = 10) {
         return this.upload.array(fieldName, maxCount);
     }
 

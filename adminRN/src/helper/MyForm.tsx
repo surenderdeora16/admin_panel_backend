@@ -33,6 +33,7 @@ const MyForm = ({
       enableReinitialize={true}
       validationSchema={validSchema}
       onSubmit={(values, { resetForm }) => {
+        console.log("values>>>", values)
         if (!disabled) {
           setSubmitting(true);
           onSubmit(values);
