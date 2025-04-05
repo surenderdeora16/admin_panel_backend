@@ -4,7 +4,7 @@ const imageSchema = new mongoose.Schema({
     url: {
         type: String,
         default: "default-banner.png",
-        get: (value) => `${process.env.BASEURL}/uploads/banners/${value}`
+        get: (value) => `${process.env.BASEURL}/uploads/main_banner/${value}`
     },
     order: {
         type: Number,

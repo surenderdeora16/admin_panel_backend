@@ -246,16 +246,27 @@ module.exports = (method) => {
     case "updateBanner":
       return [
         check("images")
-          .custom((value, { req }) => req.files?.length > 0)
+          .custom((value, { req }) => {
+            if (req.body.orderUpdateOnly === "true") {
+              return true; // Skip validation if only reordering images
+            }
+            return req.files?.length > 0;
+          })
           .withMessage("At least one image is required"),
         check("imageOrders")
           .optional()
-          .isArray()
-          .withMessage("Image orders must be an array")
-          .custom((value) =>
-            value.every((item) => typeof item.order === "number" && item.id)
-          )
-          .withMessage("Each image order must have id and order number"),
+          .custom((value, { req }) => {
+            if (typeof value === "string") {
+              try {
+                const parsed = JSON.parse(value);
+                return Array.isArray(parsed);
+              } catch (e) {
+                return false;
+              }
+            }
+            return true;
+          })
+          .withMessage("Image orders must be a valid JSON array"),
       ];
 
     // ..............................

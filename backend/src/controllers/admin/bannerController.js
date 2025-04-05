@@ -17,6 +17,13 @@ class BannerController {
         });
       }
 
+      // Create directory if it doesn't exist
+      const uploadDir = path.join(
+        __dirname,
+        "../../../public/uploads/main_banner"
+      );
+      await fs.mkdir(uploadDir, { recursive: true });
+
       const images = req.files.map((file, index) => ({
         url: file.filename,
         order: index,
@@ -40,7 +47,7 @@ class BannerController {
               .unlink(
                 path.join(
                   __dirname,
-                  "../../../public/uploads/banners",
+                  "../../../public/uploads/main_banner",
                   file.filename
                 )
               )
@@ -56,16 +63,41 @@ class BannerController {
   async update(req, res) {
     try {
       const { id } = req.params;
-      const { imageOrders, isActive } = req.body;
+      let { imageOrders, isActive, orderUpdateOnly } = req.body;
       const newImages = req.files || [];
+
+      console.log("Files received:", req.files);
+      console.log("Body received:", req.body);
 
       const banner = await Banner.findById(id);
       if (!banner) {
         return res.noRecords("Banner not found");
       }
+      // Skip image validation if we're only updating order
+      const isOrderUpdateOnly = orderUpdateOnly === "true";
 
-      if (typeof isActive === "boolean") {
-        banner.isActive = isActive;
+      // Only validate images if we're not doing an order-only update
+      if (!isOrderUpdateOnly && !newImages.length && banner.images.filter(img => !img.deletedAt && img.isActive).length === 0) {
+        return res.status(400).json({
+          status: false,
+          message: "Invalid Input Provided..!!",
+          data: {
+            images: "At least one image is required"
+          }
+        });
+      }
+
+     if (typeof isActive === "boolean" || isActive === "true" || isActive === "false") {
+        banner.isActive = isActive === "true" ? true : isActive === "false" ? false : isActive;
+      }
+
+      // Create directory if it doesn't exist
+      if (newImages.length) {
+        const uploadDir = path.join(
+          __dirname,
+          "../../../public/uploads/main_banner"
+        );
+        await fs.mkdir(uploadDir, { recursive: true });
       }
 
       if (newImages.length) {
@@ -78,12 +110,28 @@ class BannerController {
         banner.images.push(...newImageDocs);
       }
 
+      // Parse imageOrders if it's a string
+      if (typeof imageOrders === "string") {
+        try {
+          imageOrders = JSON.parse(imageOrders);
+        } catch (e) {
+          console.error("Error parsing imageOrders:", e);
+          imageOrders = [];
+        }
+      }
+
       // Update image orders
-      if (imageOrders?.length) {
-        for (const { id: imageId, order } of imageOrders) {
-          const image = banner.images.id(imageId);
-          if (image && !image.deletedAt) {
-            image.order = order;
+      if (Array.isArray(imageOrders) && imageOrders.length > 0) {
+        for (const orderItem of imageOrders) {
+          if (
+            orderItem &&
+            orderItem.id &&
+            typeof orderItem.order === "number"
+          ) {
+            const image = banner.images.id(orderItem.id);
+            if (image && !image.deletedAt) {
+              image.order = orderItem.order;
+            }
           }
         }
       }
@@ -94,6 +142,7 @@ class BannerController {
 
       return res.successUpdate(banner, "Banner updated successfully");
     } catch (error) {
+      console.error("Banner update error:", error);
       // Cleanup new uploaded files on error
       if (req.files) {
         await Promise.all(
@@ -102,13 +151,73 @@ class BannerController {
               .unlink(
                 path.join(
                   __dirname,
-                  "../../../public/uploads/banners",
+                  "../../../public/uploads/main_banner",
                   file.filename
                 )
               )
               .catch(() => {})
           )
         );
+      }
+      return res.someThingWentWrong(error);
+    }
+  }
+
+  // Update a single image in a banner
+  async updateSingleImage(req, res) {
+    try {
+      const { id } = req.params;
+      const { imageId } = req.body;
+
+      if (!req.file) {
+        return res.status(400).json({
+          status: false,
+          message: "No image file provided",
+          data: [],
+        });
+      }
+
+      const banner = await Banner.findById(id);
+      if (!banner) {
+        return res.noRecords("Banner not found");
+      }
+
+      const image = banner.images.id(imageId);
+      if (!image || image.deletedAt) {
+        return res.noRecords("Image not found or already deleted");
+      }
+
+      // Create directory if it doesn't exist
+      const uploadDir = path.join(
+        __dirname,
+        "../../../public/uploads/main_banner"
+      );
+      await fs.mkdir(uploadDir, { recursive: true });
+
+      // Delete old image file if it exists
+      try {
+        await fs.unlink(path.join(uploadDir, image.url));
+      } catch (err) {
+        console.error("Error deleting old image:", err);
+        // Continue even if old file deletion fails
+      }
+
+      // Update image with new file
+      image.url = req.file.filename;
+      await banner.save();
+
+      return res.successUpdate(banner, "Image updated successfully");
+    } catch (error) {
+      console.error("Image update error:", error);
+      // Cleanup new uploaded file on error
+      if (req.file) {
+        fs.unlink(
+          path.join(
+            __dirname,
+            "../../../public/uploads/main_banner",
+            req.file.filename
+          )
+        ).catch((err) => console.error("File cleanup error:", err));
       }
       return res.someThingWentWrong(error);
     }
@@ -133,12 +242,18 @@ class BannerController {
       await banner.save();
 
       // Async file deletion
-      fs.unlink(
-        path.join(__dirname, "../../../public/uploads/banners", image.url)
-      ).catch((err) => console.error("File deletion failed:", err));
+      const filePath = path.join(
+        __dirname,
+        "../../../public/uploads/main_banner",
+        image.url
+      );
+      fs.access(filePath)
+        .then(() => fs.unlink(filePath))
+        .catch((err) => console.error("File deletion failed:", err));
 
       return res.successDelete(banner, "Image deleted successfully");
     } catch (error) {
+      console.error("Image deletion error:", error);
       return res.someThingWentWrong(error);
     }
   }
@@ -151,7 +266,6 @@ class BannerController {
 
       const query = {
         isActive: true,
-        "images.deletedAt": null,
       };
 
       const [banners, totalCount] = await Promise.all([
@@ -159,7 +273,7 @@ class BannerController {
           .populate("createdBy", "name email")
           .sort({ createdAt: -1 })
           .skip(skip)
-          .limit(parseInt(limit))
+          .limit(Number.parseInt(limit))
           .lean(),
         Banner.countDocuments(query),
       ]);
@@ -174,37 +288,18 @@ class BannerController {
 
       return res.pagination(processedBanners, totalCount, limit, Number(page));
     } catch (error) {
+      console.error("Banner list error:", error);
       return res.someThingWentWrong(error);
     }
   }
 
-  // Get single banner
-  //   async get(req, res) {
-  //     try {
-  //       const { id } = req.params;
-  //       const banner = await Banner.findById(id)
-  //         .populate("createdBy", "name email")
-  //         .lean();
-
-  //       if (!banner) {
-  //         return res.noRecords("Banner not found");
-  //       }
-
-  //       banner.images = banner.images
-  //         .filter((img) => !img.deletedAt && img.isActive)
-  //         .sort((a, b) => a.order - b.order);
-
-  //       return res.success(banner, "Banner fetched successfully");
-  //     } catch (error) {
-  //       return res.someThingWentWrong(error);
-  //     }
-  //   }
+  // Get single banner with latest record
   async getSingleBannerWithImages(req, res) {
     try {
       const banner = await Banner.findOne({
         isActive: true,
-        "images.deletedAt": null,
       })
+        .sort({ createdAt: -1 })
         .populate("createdBy", "name email")
         .lean();
 
@@ -218,6 +313,7 @@ class BannerController {
 
       return res.success(banner, "Banner with images fetched successfully");
     } catch (error) {
+      console.error("Banner fetch error:", error);
       return res.someThingWentWrong(error);
     }
   }

@@ -133,10 +133,11 @@ router.put(
 );
 
 // Banner Routes ......................................................
-router.post("/create", uploadBanner.array("images", 10), showValidationErrors, bannerController.create);
-router.put( "/update/:id", uploadBanner.array("images", 10), checkValid("updateBanner"), showValidationErrors, bannerController.update);
-router.delete("/delete-image/:bannerId/:imageId", bannerController.deleteImage);
-router.get("/list", bannerController.list);
+router.post("/banner-create", uploadBanner.array("images", 10), showValidationErrors, bannerController.create);
+router.put( "/banner-update/:id", uploadBanner.array("images", 10), checkValid("updateBanner"), showValidationErrors, bannerController.update);
+router.put("/update-single-image/:id", uploadBanner.single("image"), bannerController.updateSingleImage)
+router.delete("/banner-delete-image/:bannerId/:imageId", bannerController.deleteImage);
+router.get("/banner-list", bannerController.list);
 // router.get("/:id", bannerController.get);
 router.get("/getSingleBannerWithImages", bannerController.getSingleBannerWithImages);
 
