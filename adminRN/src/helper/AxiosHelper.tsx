@@ -81,12 +81,19 @@ const AxiosHelper = {
       : { 'Content-Type': 'application/json' };
     return axios.post(url, data, { headers }).catch(errorHandler);
   },
-  putData: async (url: any, data: any, isMultipart = false) => {
+  putData: async (url: any, data: any, isMultipart = false, config: any = {}) => {
     commonHeaders();
     const headers = isMultipart
       ? { 'Content-Type': 'multipart/form-data' }
       : { 'Content-Type': 'application/json' };
-    return axios.put(url, data, { headers }).catch(errorHandler);
+
+        // Merge the provided config with our default config
+        const mergedConfig = {
+          headers,
+          ...config,
+        }
+
+    return axios.put(url, data, mergedConfig).catch(errorHandler);
   },
   deleteData: async (url: any) => {
     commonHeaders();

@@ -16,6 +16,7 @@ import {
   FiLayout,
   FiLogIn,
 } from 'react-icons/fi';
+import { IoMdImages } from "react-icons/io";
 import { FaMapLocationDot } from 'react-icons/fa6';
 import { FaMapPin } from 'react-icons/fa';
 import { SlCalender } from 'react-icons/sl';
@@ -54,7 +55,7 @@ const MENU_CONFIG = {
     {
       name: 'App Banner',
       path: '/app-banner',
-      icon: FiEdit,
+      icon: IoMdImages,
     },
     {
       name: 'Location',

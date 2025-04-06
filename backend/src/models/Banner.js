@@ -4,7 +4,13 @@ const imageSchema = new mongoose.Schema({
     url: {
         type: String,
         default: "default-banner.png",
-        get: (value) => `${process.env.BASEURL}/uploads/main_banner/${value}`
+        set: (value) => {
+            if (!value.startsWith(`${process.env.BASEURL}/uploads/main_banner/`)) {
+                return `${process.env.BASEURL}/uploads/main_banner/${value}`;
+            }
+            return value;
+        },
+        get: (value) => value 
     },
     order: {
         type: Number,
