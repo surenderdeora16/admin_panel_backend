@@ -33,7 +33,7 @@ const MyForm = ({
       enableReinitialize={true}
       validationSchema={validSchema}
       onSubmit={(values, { resetForm }) => {
-        console.log("values>>>", values)
+        console.log('values>>>', values);
         if (!disabled) {
           setSubmitting(true);
           onSubmit(values);
@@ -86,7 +86,6 @@ const MyForm = ({
                       formikErrors[field?.name] &&
                       touched[field?.name]) ||
                     (errors && errors[field?.name]);
-
                   return (
                     <div
                       className={`${
@@ -203,6 +202,23 @@ const MyForm = ({
                                   />
                                 );
 
+                                  // For Date Input
+                                  case 'date':
+                                  return (
+                                    <Field
+                                    id={field?.name}
+                                    disabled={disabled || isDisabled}
+                                    type="date"
+                                    name={field?.name}
+                                    className={`appearance-none block w-full px-4 py-2.5 bg-white text-slate-900 border ${
+                                      fieldError
+                                      ? 'border-rose-500 ring-1 ring-rose-500'
+                                      : 'border-slate-300 hover:border-slate-400'
+                                    } rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-base`}
+                                    {...field}
+                                    />
+                                  );
+
                               // For Textarea Input
                               case 'textarea':
                                 return (
@@ -259,6 +275,17 @@ const MyForm = ({
                                   />
                                 );
 
+                              case 'image-file':
+                                return (
+                                  <Field
+                                    id={field?.name}
+                                    disabled={disabled || isDisabled}
+                                    name={field?.name}
+                                    component={PictureInputPreview}
+                                    {...field}
+                                    error={fieldError}
+                                  />
+                                );
                               case 'check':
                                 return (
                                   <Field
@@ -612,9 +639,9 @@ const PictureInputPreview = ({
 
   return (
     <>
-      <label className="block text-sm 2xl:text-base font-medium text-slate-700 mb-1">
+      {/* <label className="block text-sm 2xl:text-base font-medium text-slate-700 mb-1">
         {label}
-      </label>
+      </label> */}
 
       <div className="relative group">
         <div

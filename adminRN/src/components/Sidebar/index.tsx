@@ -47,11 +47,11 @@ const MENU_CONFIG = {
     //   path: '/calendar',
     //   icon: SlCalender,
     // },
-    // {
-    //   name: 'Role Management',
-    //   path: '/role-manage',
-    //   icon: FaUsersCog,
-    // },
+    {
+      name: 'Upcomg Govt. Exam',
+      path: '/upcoming-govt-exam',
+      icon: FaUsersCog,
+    },
     {
       name: 'App Banner',
       path: '/app-banner',

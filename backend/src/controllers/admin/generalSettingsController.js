@@ -81,9 +81,15 @@ exports.updateGeneralSetting = async (req, res) => {
 
 exports.toggleStatus = async (req, res) => {
     try {
-
-
-        var record = await mongoose.connection.db.collection(req.params.table).findOne({ _id: createFromHexString(req.params.id) });
+        console.log("req.params", req.params)
+        var record = await mongoose.connection.db.collection(req.params.table)
+        .findOne({ 
+            $or: [
+            { _id: createFromHexString(req?.params?.id) }, 
+            { id: req?.params?.id }
+            ] 
+        });
+        console.log("record", record)
         if (record) {
             await mongoose.connection.db.collection(req.params.table).updateOne({ _id: createFromHexString(req.params.id) }, { $set: { status: !record.status } });
             return res.success(record);

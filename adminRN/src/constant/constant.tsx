@@ -27,3 +27,8 @@ export const SETTING_API_ENDPOINTS = {
     SOCIAL_SETTINGS: 'settings-list/3',
     UPDATE_SETTINGS: 'update-settings',
 };
+
+export const STATUS = [
+    { id: 1, name: "Active" },
+    { id: 2, name: "In-Active" },
+]

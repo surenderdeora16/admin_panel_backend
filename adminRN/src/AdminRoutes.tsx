@@ -20,6 +20,7 @@ import SocialMediaSettings from './pages/Setting/SocialMediaSettings';
 import State from './pages/location/state';
 import District from './pages/location/District';
 import AppBanner from './pages/AppBanner';
+import UpcomingGovtExam from './pages/UpcomingGovtExam';
 
 function App() {
   return (
@@ -88,7 +89,15 @@ function App() {
             </>
           }
         />
-
+        <Route
+          path="/upcoming-govt-exam"
+          element={
+            <>
+              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <UpcomingGovtExam />
+            </>
+          }
+        />
         <Route
           path="/state"
           element={

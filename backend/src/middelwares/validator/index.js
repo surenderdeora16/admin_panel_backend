@@ -236,13 +236,6 @@ module.exports = (method) => {
           .withMessage("District code cannot be empty"),
       ];
 
-    // Banner
-    // case "createBanner":
-    //   return [
-    //     check("images")
-    //       .custom((value, { req }) => req.files?.length > 0)
-    //       .withMessage("At least one image is required"),
-    //   ];
     case "updateBanner":
       return [
         check("images")
@@ -269,6 +262,38 @@ module.exports = (method) => {
           .withMessage("Image orders must be a valid JSON array"),
       ];
 
+    // Upcoming Government Exam
+    case "addUpcomingGovtExam":
+      return [
+        check("title")
+          .exists()
+          .withMessage("Exam title is required")
+          .notEmpty()
+          .withMessage("Exam title cannot be empty")
+          .isLength({ max: 200 })
+          .withMessage("Title must be less than 200 characters"),
+
+        check("examDate")
+          .optional()
+          .isISO8601()
+          .withMessage("Invalid date format. Use YYYY-MM-DD"),
+      ];
+
+    case "updateUpcomingGovtExam":
+      return [
+        check("title")
+          .optional()
+          .notEmpty()
+          .withMessage("Exam title cannot be empty")
+          .isLength({ max: 200 })
+          .withMessage("Title must be less than 200 characters"),
+
+        check("examDate")
+          .optional()
+          .isISO8601()
+          .withMessage("Invalid date format. Use YYYY-MM-DD"),
+      ];
+      
     // ..............................
     case "sendOtp":
       {

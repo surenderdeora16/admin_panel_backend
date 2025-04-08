@@ -1,3 +1,5 @@
+const router = require("express").Router();
+const { showValidationErrors, authCheckAdmin } = require("../../middelwares");
 const authController = require("../../controllers/admin/authController");
 const generalSettingsController = require("../../controllers/admin/generalSettingsController");
 const discountCouponController = require("../../controllers/admin/discountCouponController");
@@ -5,16 +7,23 @@ const usersController = require("../../controllers/admin/usersController");
 const CommonController = require("../../controllers/admin/CommonController");
 const locationController = require("../../controllers/locationController");
 
-const { showValidationErrors, authCheckAdmin } = require("../../middelwares");
 const checkValid = require("../../middelwares/validator");
-const router = require("express").Router();
 const Storage = require("../../helpers/Storage");
 const bannerController = require("../../controllers/admin/bannerController");
 const upload = new Storage.uploadTo({ dir: "admins", isImage: true });
 const uploadSettings = new Storage.uploadTo({ dir: "settings", isImage: true });
 const retreatSettings = new Storage.uploadTo({ dir: "retreat" });
-const uploadBanner = new Storage.uploadTo({ dir: "main_banner", isImage: true, fileSize: 10, });
-
+const uploadBanner = new Storage.uploadTo({
+  dir: "main_banner",
+  isImage: true,
+  fileSize: 10,
+});
+const UpcomingGovtExam = require("../../controllers/admin/UpcomingGovtExam");
+const uploadUpcomingGovtExamImage = new Storage.uploadTo({
+  dir: "upcoming_govt_exam",
+  isImage: true,
+  fileSize: 10,
+});
 
 // User Auth
 router.post(
@@ -133,15 +142,53 @@ router.put(
 );
 
 // Banner Routes ......................................................
-router.post("/banner-create", uploadBanner.array("images", 10), showValidationErrors, bannerController.create);
-router.put( "/banner-update/:id", uploadBanner.array("images", 10), checkValid("updateBanner"), showValidationErrors, bannerController.update);
-router.put("/update-single-image/:id", uploadBanner.single("image"), bannerController.updateSingleImage)
-router.delete("/banner-delete-image/:bannerId/:imageId", bannerController.deleteImage);
+router.post(
+  "/banner-create",
+  uploadBanner.array("images", 10),
+  showValidationErrors,
+  bannerController.create
+);
+router.put(
+  "/banner-update/:id",
+  uploadBanner.array("images", 10),
+  checkValid("updateBanner"),
+  showValidationErrors,
+  bannerController.update
+);
+router.put(
+  "/update-single-image/:id",
+  uploadBanner.single("image"),
+  bannerController.updateSingleImage
+);
+router.delete(
+  "/banner-delete-image/:bannerId/:imageId",
+  bannerController.deleteImage
+);
 router.get("/banner-list", bannerController.list);
+router.get(
+  "/getSingleBannerWithImages",
+  bannerController.getSingleBannerWithImages
+);
 // router.get("/:id", bannerController.get);
-router.get("/getSingleBannerWithImages", bannerController.getSingleBannerWithImages);
 
+// Upcomg Govt Exam Routes ............................................
+router.post(
+  "/create-upcoming-govt-exam",
+  uploadUpcomingGovtExamImage.single("image"),
+  checkValid("addUpcomingGovtExam"),
+  showValidationErrors,
+  UpcomingGovtExam.create
+);
+router.put(
+  "/update-upcoming-govt-exam/:id",
+  uploadUpcomingGovtExamImage.single("image"),
+  checkValid("updateUpcomingGovtExam"),
+  showValidationErrors,
+  UpcomingGovtExam.update
+);
+router.get("/list-upcoming-govt-exam", UpcomingGovtExam.list);
 
+//
 router.get("/users-datatable", usersController.list);
 router.get("/contact-us-datatable", CommonController.contactUsList);
 
