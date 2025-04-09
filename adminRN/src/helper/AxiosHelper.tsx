@@ -74,12 +74,17 @@ const AxiosHelper = {
     commonHeaders();
     return axios.get(url, { params }).catch(errorHandler);
   },
-  postData: async (url: any, data: any, isMultipart = false) => {
+  postData: async (url: any, data: any, isMultipart = false, config: any = {}) => {
     commonHeaders();
     const headers = isMultipart
       ? { 'Content-Type': 'multipart/form-data' }
       : { 'Content-Type': 'application/json' };
-    return axios.post(url, data, { headers }).catch(errorHandler);
+
+      const mergedConfig = {
+        headers,
+        ...config,
+      }
+    return axios.post(url, data, mergedConfig).catch(errorHandler);
   },
   putData: async (url: any, data: any, isMultipart = false, config: any = {}) => {
     commonHeaders();

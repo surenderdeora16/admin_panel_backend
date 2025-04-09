@@ -69,26 +69,40 @@ exports.update = async (req, res) => {
 
 exports.list = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-    const skip = (page - 1) * limit;
+    const {
+      limit = 10,
+      pageNo = 1,
+      query = "",
+      orderBy = "title",
+      orderDirection = -1,
+    } = req.query;
 
-    const query = {
-      isActive: true,
-      deletedAt: null,
-    };
+    const skip = (pageNo - 1) * limit;
+    const sortOrder = Number(orderDirection) === 1 ? 1 : -1;
 
-    const [exams, totalCount] = await Promise.all([
-      UpcomingGovtExam.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number.parseInt(limit))
-        .lean(),
-      UpcomingGovtExam.countDocuments(query),
-    ]);
+    const searchFilter = query
+      ? {
+          deletedAt: null,
+          $or: [
+            { title: { $regex: query, $options: "i" } },
+            { description: { $regex: query, $options: "i" } },
+          ],
+        }
+      : { deletedAt: null };
 
-    const processedExams = exams.map((exam) => this.formatExamResponse(exam));
+    const totalCount = await UpcomingGovtExam.countDocuments(searchFilter);
 
-    return res.pagination(processedExams, totalCount, limit, Number(page));
+    const exams = await UpcomingGovtExam.find(searchFilter)
+      .sort({ [orderBy]: sortOrder })
+      .skip(skip)
+      .limit(Number(limit))
+      .lean();
+
+    if (!exams || exams.length === 0) return res.noRecords();
+
+    const results = exams.map((exam) => this.formatExamResponse(exam));
+
+    return res.pagination(results, totalCount, limit, Number(pageNo));
   } catch (error) {
     return res.someThingWentWrong(error);
   }
@@ -106,13 +120,13 @@ exports.toggleStatus = async (req, res) => {
       });
     }
 
-    exam.isActive = !exam.isActive;
+    exam.status = !exam.status;
     await exam.save();
 
     res.json({
       status: true,
       message: `Exam ${
-        exam.isActive ? "activated" : "deactivated"
+        exam.status ? "activated" : "deactivated"
       } successfully`,
     });
   } catch (error) {
@@ -154,7 +168,7 @@ exports.softDelete = async (req, res) => {
 // Helper method to format response
 exports.formatExamResponse = (exam) => {
   return {
-    id: exam._id,
+    _id: exam._id,
     title: exam.title,
     description: exam.description,
     // image: exam.image ? `/uploads/exams/${exam.image}` : null,
@@ -163,7 +177,7 @@ exports.formatExamResponse = (exam) => {
     dateStatus: exam.examDate
       ? `Exam Date: ${exam.examDate.toLocaleDateString("en-IN")}`
       : "Date to be announced soon",
-    isActive: exam.isActive,
+    status: exam.status,
     createdAt: exam.createdAt,
   };
 };

@@ -29,6 +29,6 @@ export const SETTING_API_ENDPOINTS = {
 };
 
 export const STATUS = [
-    { id: 1, name: "Active" },
-    { id: 2, name: "In-Active" },
+    { id: true, name: "Active" },
+    { id: false, name: "In-Active" },
 ]

@@ -10,7 +10,7 @@ import {
   PlusIcon,
 } from '@heroicons/react/24/solid'; // Corrected import
 import { motion, AnimatePresence } from 'framer-motion';
-import { debounce } from 'lodash';
+import { debounce, values } from 'lodash';
 import AxiosHelper from '../helper/AxiosHelper';
 import { STATUS } from '../constant/constant';
 import Status from '../helper/Status';
@@ -37,8 +37,8 @@ const UpcomingGovtExam = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [selectedGovtExam, setSelectedGovtExam] = useState<any>(null);
+  const [uploadProgress, setUploadProgress] = useState<any>(0);
   const [error, setError] = useState<string | null>(null);
-
   const upcomingExamValidation = Yup.object().shape({
     title: Yup.string()
       .required('Exam title is required')
@@ -47,10 +47,11 @@ const UpcomingGovtExam = () => {
     examDate: Yup.date()
       .optional()
       .typeError('Invalid date format. Use YYYY-MM-DD'),
-    isActive: Yup.boolean().required('Status is required'),
+    status: Yup.boolean().required('Status is required'),
     image: Yup.mixed().optional(),
   });
 
+  console.log('selectedGovtExam>>', selectedGovtExam);
   const fields = [
     { label: 'Exam Title', name: 'title', type: 'text', col: 12 },
     {
@@ -59,10 +60,17 @@ const UpcomingGovtExam = () => {
       type: 'text-editer',
       col: 12,
     },
-    { label: 'Exam Date', name: 'examDate', type: 'date', col: 6 },
+    {
+      label: 'Exam Date',
+      name: 'examDate',
+      // value: {modalMode === 'add' ? ``: `${selectedGovtExam?.examDate}},
+      // value: selectedGovtExam?.examDate,
+      type: 'date',
+      col: 6,
+    },
     {
       label: 'Status',
-      name: 'isActive',
+      name: 'status',
       type: 'select2',
       options: STATUS,
       col: 6,
@@ -152,31 +160,52 @@ const UpcomingGovtExam = () => {
   };
 
   const handleFormSubmit = async (values: { name: string; code: string }) => {
-    console.log('Okay   z');
     try {
       if (modalMode === 'add') {
         const response = await AxiosHelper.postData(
           'create-upcoming-govt-exam',
           values,
+          true,
+          {
+            onUploadProgress: (progressEvent: any) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total,
+              );
+              setUploadProgress(percentCompleted);
+            },
+          },
         );
         if (!response?.data?.status) {
+          setUploadProgress(0);
           throw new Error(
             response?.data?.message || 'Failed to add Upcoming Government Exam',
           );
         }
         toast.success('Upcoming Exam added successfully');
+        setUploadProgress(0);
       } else if (modalMode === 'edit' && selectedGovtExam) {
         const response = await AxiosHelper.putData(
           `update-upcoming-govt-exam/${selectedGovtExam._id}`,
           values,
+          true,
+          {
+            onUploadProgress: (progressEvent: any) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total,
+              );
+              setUploadProgress(percentCompleted);
+            },
+          },
         );
         if (!response?.data?.status) {
+          setUploadProgress(0);
           throw new Error(
             response?.data?.message ||
               'Failed to update Upcoming Government Exam',
           );
         }
         toast.success('Upcoming Government Exam updated successfully');
+        setUploadProgress(0);
       }
       fetchUpcomigExam({
         pageNo: pagination.currentPage,
@@ -224,22 +253,22 @@ const UpcomingGovtExam = () => {
             title: '',
             description: '',
             examDate: '',
-            isActive: true,
+            status: true,
             image: null,
           }
         : selectedGovtExam
         ? {
-            title: selectedGovtExam.name || '',
-            description: selectedGovtExam.code || '',
+            title: selectedGovtExam.title || '',
+            description: selectedGovtExam.description || '',
             examDate: selectedGovtExam.examDate || '',
-            isActive: selectedGovtExam.isActive || true,
+            status: selectedGovtExam.status || true,
             image: selectedGovtExam?.image,
           }
         : {
             title: '',
             description: '',
             examDate: '',
-            isActive: true,
+            status: true,
             image: null,
           };
 
@@ -391,31 +420,38 @@ const UpcomingGovtExam = () => {
                     ].map((header, idx) => (
                       <th
                         key={header}
-                        className={`px-8 py-6 text-left text-sm font-semibold dark:bg-[#24303f] text-gray-600 dark:text-gray-400 ${
-                          idx > 0 && idx < 3
-                            ? 'cursor-pointer hover:bg-gray-200/35 dark:hover:bg-[#24303ff4]'
-                            : ''
+                        className={`px-8 py-6 text-nowrap text-left text-sm font-semibold dark:bg-[#24303f] text-gray-600 dark:text-gray-400 ${
+                          (header === 'Exam Title' || header === 'Exam Date') &&
+                          'cursor-pointer hover:bg-gray-200/35 dark:hover:bg-[#24303ff4]'
                         }`}
                         onClick={() =>
-                          idx > 0 && idx < 3 && handleSort(header.toLowerCase())
+                          (header === 'Exam Title' || header === 'Exam Date') &&
+                          handleSort(
+                            header == 'Exam Title' ? 'title' : 'examDate',
+                          )
                         }
                       >
                         <div className="flex items-center gap-2">
                           {header}
-                          {idx > 0 && idx < 3 && (
+                          {(header === 'Exam Title' ||
+                            header === 'Exam Date') && (
                             <div className="flex flex-col">
                               <ArrowUpIcon
                                 className={`w-4 h-4 mb-[-2px] ${
-                                  orderBy === header.toLowerCase() &&
-                                  orderDirection === 1
+                                  orderBy ===
+                                    (header === 'Exam Title'
+                                      ? 'title'
+                                      : 'examDate') && orderDirection === 1
                                     ? 'text-sky-500'
                                     : 'text-gray-300 dark:text-gray-600'
                                 }`}
                               />
                               <ArrowDownIcon
                                 className={`w-4 h-4 ${
-                                  orderBy === header.toLowerCase() &&
-                                  orderDirection === -1
+                                  orderBy ===
+                                    (header === 'Exam Title'
+                                      ? 'title'
+                                      : 'examDate') && orderDirection === -1
                                     ? 'text-sky-500'
                                     : 'text-gray-300 dark:text-gray-600'
                                 }`}
@@ -449,12 +485,14 @@ const UpcomingGovtExam = () => {
                             <img
                               src={exam?.image}
                               alt={exam?.title}
-                              className="w-full h-full"
+                              className="w-full h-full object-cover object-center"
                             />
                           </div>
                         </td>
                         <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
-                          {exam.title}
+                          <div className="max-w-[300px] line-clamp-4 text-ellipsis overflow-hidden ">
+                            {exam.title}
+                          </div>
                         </td>
                         <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
                           <div
@@ -466,7 +504,7 @@ const UpcomingGovtExam = () => {
                             {exam.description.replace(/<[^>]*>?/gm, '')}
                           </div>
                         </td>
-                        <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
+                        <td className="px-8 py-6 text-nowrap font-medium text-gray-900 dark:text-white">
                           {new Date(exam.examDate).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'long',
@@ -476,8 +514,8 @@ const UpcomingGovtExam = () => {
                         <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
                           <Status
                             table="upcominggovtexams"
-                            status={exam?.isActive}
-                            data_id={exam?.id}
+                            status={exam?.status}
+                            data_id={exam?._id}
                           />
                         </td>
                         <td className="px-8 py-6">

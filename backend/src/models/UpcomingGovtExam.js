@@ -25,7 +25,7 @@ const UpcomingGovtExam = new mongoose.Schema({
         type: Date,
         default: null
     },
-    isActive: {
+    status: {
         type: Boolean,
         default: true
     },

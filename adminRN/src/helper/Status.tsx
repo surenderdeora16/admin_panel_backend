@@ -78,7 +78,7 @@ const Status = ({ data_id, status: defaultStatus, table }: StatusProps) => {
   const [isFocused, setIsFocused] = useState(false)
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([])
 
-  const isActive = status === 1
+  const isActive = status === true
 
   // Handle ripple effect on click
   const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -112,7 +112,7 @@ const Status = ({ data_id, status: defaultStatus, table }: StatusProps) => {
       const { data } = await AxiosHelper.deleteData(`toggle-status/${table}/${data_id}`)
 
       if (data?.status === true) {
-        const newStatus = status === 1 ? 2 : 1
+        const newStatus = status === true ? false : true
         setStatus(newStatus)
         toast.success(`Status ${isActive ? "In-activate" : "activate"} successfully`)
       } else {

@@ -6,6 +6,7 @@ const discountCouponController = require("../../controllers/admin/discountCoupon
 const usersController = require("../../controllers/admin/usersController");
 const CommonController = require("../../controllers/admin/CommonController");
 const locationController = require("../../controllers/locationController");
+const UpcomingGovtExam = require("../../controllers/admin/UpcomingGovtExam");
 
 const checkValid = require("../../middelwares/validator");
 const Storage = require("../../helpers/Storage");
@@ -18,11 +19,10 @@ const uploadBanner = new Storage.uploadTo({
   isImage: true,
   fileSize: 10,
 });
-const UpcomingGovtExam = require("../../controllers/admin/UpcomingGovtExam");
 const uploadUpcomingGovtExamImage = new Storage.uploadTo({
   dir: "upcoming_govt_exam",
   isImage: true,
-  fileSize: 10,
+  // fileSize: 10,
 });
 
 // User Auth
