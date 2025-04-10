@@ -7,6 +7,10 @@ const usersController = require("../../controllers/admin/usersController");
 const CommonController = require("../../controllers/admin/CommonController");
 const locationController = require("../../controllers/locationController");
 const UpcomingGovtExam = require("../../controllers/admin/UpcomingGovtExam");
+const subjectController = require("../../controllers/admin/subjectController")
+const chapterController = require("../../controllers/admin/chapterController")
+const topicController = require("../../controllers/admin/topicController")
+const questionController = require("../../controllers/admin/questionController")
 
 const checkValid = require("../../middelwares/validator");
 const Storage = require("../../helpers/Storage");
@@ -24,6 +28,50 @@ const uploadUpcomingGovtExamImage = new Storage.uploadTo({
   isImage: true,
   // fileSize: 10,
 });
+
+
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// Configure multer for file uploads
+const multer = require("multer")
+const path = require("path")
+const crypto = require("crypto")
+
+const storageQues = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, "../../../temp")
+    // Create directory if it doesn't exist
+    require("fs").mkdirSync(uploadDir, { recursive: true })
+    cb(null, uploadDir)
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = crypto.randomBytes(8).toString("hex")
+    cb(null, `${Date.now()}-${uniqueSuffix}${path.extname(file.originalname)}`)
+  },
+})
+
+const uploadQues = multer({
+  storage: storageQues,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept only excel files
+    const filetypes = /xlsx|xls/
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase())
+    const mimetype = filetypes.test(file.mimetype)
+
+    if (extname && mimetype) {
+      return cb(null, true)
+    } else {
+      cb(new Error("Only Excel files (.xlsx, .xls) are allowed"))
+    }
+  },
+})
+
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 
 // User Auth
 router.post(
@@ -188,7 +236,45 @@ router.put(
 );
 router.get("/list-upcoming-govt-exam", UpcomingGovtExam.list);
 
-//
+
+
+// Exam Library Routes ....................................................................................................
+// Subject Routes
+router.get("/subjects", subjectController.getSubjects)
+router.get("/subjects/:id", subjectController.getSubjectById)
+router.post("/subjects", checkValid("createSubject"), showValidationErrors, subjectController.createSubject)
+router.put("/subjects/:id", checkValid("updateSubject"), showValidationErrors, subjectController.updateSubject)
+router.delete("/subjects/:id", subjectController.deleteSubject)
+
+// Chapter Routes
+router.get("/chapters", chapterController.getChapters)
+router.get("/chapters/:id", chapterController.getChapterById)
+router.post("/chapters", checkValid("createChapter"), showValidationErrors, chapterController.createChapter)
+router.put("/chapters/:id", checkValid("updateChapter"), showValidationErrors, chapterController.updateChapter)
+router.delete("/chapters/:id", chapterController.deleteChapter)
+
+// Topic Routes
+router.get("/topics", topicController.getTopics)
+router.get("/topics/:id", topicController.getTopicById)
+router.post("/topics", checkValid("createTopic"), showValidationErrors, topicController.createTopic)
+router.put("/topics/:id", checkValid("updateTopic"), showValidationErrors, topicController.updateTopic)
+router.delete("/topics/:id", topicController.deleteTopic)
+
+// Question Routes
+router.get("/questions", questionController.getQuestions)
+router.get("/questions/:id", questionController.getQuestionById)
+router.post("/questions", checkValid("createQuestion"), showValidationErrors, questionController.createQuestion)
+router.put("/questions/:id", checkValid("updateQuestion"), showValidationErrors, questionController.updateQuestion)
+router.delete("/questions/:id", questionController.deleteQuestion)
+router.post("/questions/bulk-delete", questionController.bulkDeleteQuestions)
+
+// Import/Export Routes
+router.post("/questions/import", uploadQues.single("file"), questionController.importQuestions)
+router.get("/questions/template/download", questionController.downloadTemplate)
+
+
+
+//-------------------------
 router.get("/users-datatable", usersController.list);
 router.get("/contact-us-datatable", CommonController.contactUsList);
 

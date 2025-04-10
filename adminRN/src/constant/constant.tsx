@@ -32,3 +32,17 @@ export const STATUS = [
     { id: true, name: "Active" },
     { id: false, name: "In-Active" },
 ]
+
+
+export const QUESTION_TYPES = [
+    { value: 'MULTIPLE_CHOICE', label: 'Multiple Choice' },
+    { value: 'TRUE_FALSE', label: 'True/False' },
+    { value: 'FILL_IN_BLANK', label: 'Fill in the Blank' },
+    { value: 'DESCRIPTIVE', label: 'Descriptive' },
+  ];
+  
+  export const DIFFICULTY_LEVELS = [
+    { value: 'EASY', label: 'Easy' },
+    { value: 'MEDIUM', label: 'Medium' },
+    { value: 'HARD', label: 'Hard' },
+  ];

@@ -293,7 +293,261 @@ module.exports = (method) => {
           .isISO8601()
           .withMessage("Invalid date format. Use YYYY-MM-DD"),
       ];
-      
+
+    // Exam Library ............................................................................
+     // Subject Validation
+     case "createSubject":
+      return [
+        check("name")
+          .exists()
+          .withMessage("Subject name is required")
+          .notEmpty()
+          .withMessage("Subject name cannot be empty"),
+
+        check("description").optional().isLength({ max: 1000 }).withMessage("Description cannot exceed 500 characters"),
+      ]
+
+    case "updateSubject":
+      return [
+        check("name")
+          .optional()
+          .notEmpty()
+          .withMessage("Subject name cannot be empty")
+          .isLength({ min: 2, max: 100 })
+          .withMessage("Subject name should be between 2 and 100 characters"),
+
+        check("description").optional().isLength({ max: 1000 }).withMessage("Description cannot exceed 500 characters"),
+
+        check("status").optional().isBoolean().withMessage("Status must be a boolean value"),
+      ] 
+
+    // Chapter Validation
+    case "createChapter":
+      return [
+        check("name")
+          .exists()
+          .withMessage("Chapter name is required")
+          .notEmpty()
+          .withMessage("Chapter name cannot be empty")
+          .isLength({ min: 2, max: 100 })
+          .withMessage("Chapter name should be between 2 and 100 characters"),
+
+        check("description").optional().isLength({ max: 1000 }).withMessage("Description cannot exceed 500 characters"),
+
+        check("subjectId")
+          .exists()
+          .withMessage("Subject ID is required")
+          .notEmpty()
+          .withMessage("Subject ID cannot be empty"),
+          // .custom((value) => {
+          //   console.log("value", subjectId)
+          //   return mongoose.Types.ObjectId.isValid(value)
+          // })
+          // .withMessage("Invalid Subject ID format"),
+
+        check("sequence").optional().isInt({ min: 0 }).withMessage("Sequence must be a non-negative integer"),
+      ]
+
+    case "updateChapter":
+      return [
+        check("name")
+          .optional()
+          .notEmpty()
+          .withMessage("Chapter name cannot be empty")
+          .isLength({ min: 2, max: 100 })
+          .withMessage("Chapter name should be between 2 and 100 characters"),
+
+        check("description").optional().isLength({ max: 1000 }).withMessage("Description cannot exceed 500 characters"),
+
+        check("subjectId")
+          .optional()
+          .notEmpty()
+          .withMessage("Subject ID cannot be empty"),
+          // .custom((value) => {
+          //   return mongoose.Types.ObjectId.isValid(value)
+          // })
+          // .withMessage("Invalid Subject ID format"),
+
+        check("sequence").optional().isInt({ min: 0 }).withMessage("Sequence must be a non-negative integer"),
+
+        check("status").optional().isBoolean().withMessage("Status must be a boolean value"),
+      ]
+
+    // Topic Validation
+    case "createTopic":
+      return [
+        check("name")
+          .exists()
+          .withMessage("Topic name is required")
+          .notEmpty()
+          .withMessage("Topic name cannot be empty")
+          .isLength({ min: 2, max: 100 })
+          .withMessage("Topic name should be between 2 and 100 characters"),
+
+        check("description").optional().isLength({ max: 1000 }).withMessage("Description cannot exceed 500 characters"),
+
+        check("chapterId")
+          .exists()
+          .withMessage("Chapter ID is required")
+          .notEmpty()
+          .withMessage("Chapter ID cannot be empty"),
+          // .custom((value) => {
+          //   return mongoose.Types.ObjectId.isValid(value)
+          // })
+          // .withMessage("Invalid Chapter ID format"),
+
+        check("sequence").optional().isInt({ min: 0 }).withMessage("Sequence must be a non-negative integer"),
+      ]
+
+    case "updateTopic":
+      return [
+        check("name")
+          .optional()
+          .notEmpty()
+          .withMessage("Topic name cannot be empty")
+          .isLength({ min: 2, max: 100 })
+          .withMessage("Topic name should be between 2 and 100 characters"),
+
+        check("description").optional().isLength({ max: 1000 }).withMessage("Description cannot exceed 500 characters"),
+
+        check("chapterId")
+          .optional()
+          .notEmpty()
+          .withMessage("Chapter ID cannot be empty")
+          .custom((value) => {
+            return mongoose.Types.ObjectId.isValid(value)
+          })
+          .withMessage("Invalid Chapter ID format"),
+
+        check("sequence").optional().isInt({ min: 0 }).withMessage("Sequence must be a non-negative integer"),
+
+        check("status").optional().isBoolean().withMessage("Status must be a boolean value"),
+      ]
+
+    // Question Validation
+    case "createQuestion":
+      return [
+        check("questionText")
+          .exists()
+          .withMessage("Question text is required")
+          .notEmpty()
+          .withMessage("Question text cannot be empty")
+          .isLength({ min: 2, max: 2000 })
+          .withMessage("Question text should be between 2 and 2000 characters"),
+
+        check("questionType")
+          .optional()
+          .isIn(["MULTIPLE_CHOICE", "TRUE_FALSE", "FILL_IN_BLANK", "DESCRIPTIVE"])
+          .withMessage("Invalid question type"),
+
+        check("options")
+          .optional()
+          .isArray()
+          .withMessage("Options must be an array")
+          .custom((value, { req }) => {
+            if (req.body.questionType === "MULTIPLE_CHOICE" && (!value || value.length < 2)) {
+              throw new Error("Multiple choice questions must have at least 2 options")
+            }
+            if (req.body.questionType === "TRUE_FALSE" && (!value || value.length !== 2)) {
+              throw new Error("True/False questions must have exactly 2 options")
+            }
+            return true
+          }),
+
+        check("options.*.optionText").optional().notEmpty().withMessage("Option text cannot be empty"),
+
+        check("options.*.isCorrect").optional().isBoolean().withMessage("isCorrect must be a boolean value"),
+
+        check("correctAnswer").optional().notEmpty().withMessage("Correct answer cannot be empty"),
+
+        check("explanation")
+          .optional()
+          .isLength({ max: 2000 })
+          .withMessage("Explanation cannot exceed 2000 characters"),
+
+        check("difficultyLevel").optional().isIn(["EASY", "MEDIUM", "HARD"]).withMessage("Invalid difficulty level"),
+
+        check("marks").optional().isObject().withMessage("Marks must be an object"),
+
+        check("marks.correct").optional().isNumeric().withMessage("Correct marks must be a number"),
+
+        check("marks.negative").optional().isNumeric().withMessage("Negative marks must be a number"),
+
+        check("topicId")
+          .exists()
+          .withMessage("Topic ID is required")
+          .notEmpty()
+          .withMessage("Topic ID cannot be empty")
+          .custom((value) => {
+            return mongoose.Types.ObjectId.isValid(value)
+          })
+          .withMessage("Invalid Topic ID format"),
+
+        check("tags").optional().isArray().withMessage("Tags must be an array"),
+      ]
+
+    case "updateQuestion":
+      return [
+        check("questionText")
+          .optional()
+          .notEmpty()
+          .withMessage("Question text cannot be empty")
+          .isLength({ min: 2, max: 2000 })
+          .withMessage("Question text should be between 2 and 2000 characters"),
+
+        check("questionType")
+          .optional()
+          .isIn(["MULTIPLE_CHOICE", "TRUE_FALSE", "FILL_IN_BLANK", "DESCRIPTIVE"])
+          .withMessage("Invalid question type"),
+
+        check("options")
+          .optional()
+          .isArray()
+          .withMessage("Options must be an array")
+          .custom((value, { req }) => {
+            if (req.body.questionType === "MULTIPLE_CHOICE" && (!value || value.length < 2)) {
+              throw new Error("Multiple choice questions must have at least 2 options")
+            }
+            if (req.body.questionType === "TRUE_FALSE" && (!value || value.length !== 2)) {
+              throw new Error("True/False questions must have exactly 2 options")
+            }
+            return true
+          }),
+
+        check("options.*.optionText").optional().notEmpty().withMessage("Option text cannot be empty"),
+
+        check("options.*.isCorrect").optional().isBoolean().withMessage("isCorrect must be a boolean value"),
+
+        check("correctAnswer").optional(),
+
+        check("explanation")
+          .optional()
+          .isLength({ max: 2000 })
+          .withMessage("Explanation cannot exceed 2000 characters"),
+
+        check("difficultyLevel").optional().isIn(["EASY", "MEDIUM", "HARD"]).withMessage("Invalid difficulty level"),
+
+        check("marks").optional().isObject().withMessage("Marks must be an object"),
+
+        check("marks.correct").optional().isNumeric().withMessage("Correct marks must be a number"),
+
+        check("marks.negative").optional().isNumeric().withMessage("Negative marks must be a number"),
+
+        check("topicId")
+          .optional()
+          .notEmpty()
+          .withMessage("Topic ID cannot be empty")
+          .custom((value) => {
+            return mongoose.Types.ObjectId.isValid(value)
+          })
+          .withMessage("Invalid Topic ID format"),
+
+        check("tags").optional().isArray().withMessage("Tags must be an array"),
+
+        check("status").optional().isBoolean().withMessage("Status must be a boolean value"),
+      ]
+
+
     // ..............................
     case "sendOtp":
       {

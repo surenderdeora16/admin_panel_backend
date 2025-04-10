@@ -57,6 +57,34 @@ const MENU_CONFIG = {
       path: '/app-banner',
       icon: IoMdImages,
     },
+
+    {
+      name: 'Exam Library',
+      icon: IoSettingsSharp,
+      children: [
+        {
+          name: 'Subjects',
+          path: '/exam-library/subjects',
+          icon: MdOutlineDisplaySettings,
+        },
+        {
+          name: 'Chapters',
+          path: '/exam-library/chapters',
+          icon: HiOutlineChatBubbleLeftRight,
+        },
+        {
+          name: 'Topics',
+          path: '/exam-library/topics',
+          icon: MdOutlineMailOutline,
+        },
+        {
+          name: 'Questions',
+          path: '/exam-library/questions',
+          icon: IoShareSocialOutline,
+        },
+      ],
+    },
+
     {
       name: 'Location',
       icon: FaMapLocationDot,

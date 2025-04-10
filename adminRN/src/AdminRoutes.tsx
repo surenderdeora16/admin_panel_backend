@@ -21,6 +21,16 @@ import State from './pages/location/state';
 import District from './pages/location/District';
 import AppBanner from './pages/AppBanner';
 import UpcomingGovtExam from './pages/UpcomingGovtExam';
+import Subjects from './pages/ExamLibrary/pages/Subjects';
+import Chapters from './pages/ExamLibrary/pages/Chapters';
+import Topics from './pages/ExamLibrary/pages/Topics';
+import Questions from './pages/ExamLibrary/pages/Questions';
+// import SubjectsPage from './pages/ExamLibrary/vercel/subjects/page';
+
+// import SubjectsPage from './pages/ExamLibrary/SubjectsPage';
+// import ChaptersPage from './pages/ExamLibrary/ChaptersPage';
+// import TopicsPage from './pages/ExamLibrary/TopicsPage';
+// import QuestionsPage from './pages/ExamLibrary/QuestionsPage';
 
 function App() {
   return (
@@ -98,6 +108,44 @@ function App() {
             </>
           }
         />
+
+        <Route
+          path="/exam-library/subjects"
+          element={
+            <>
+              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <Subjects />
+            </>
+          }
+        />
+        <Route
+          path="/exam-library/chapters"
+          element={
+            <>
+              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <Chapters />
+            </>
+          }
+        />
+        <Route
+          path="/exam-library/topics"
+          element={
+            <>
+              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <Topics />
+            </>
+          }
+        />
+        <Route
+          path="/exam-library/questions"
+          element={
+            <>
+              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <Questions />
+            </>
+          }
+        />
+
         <Route
           path="/state"
           element={
