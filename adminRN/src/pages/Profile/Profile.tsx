@@ -55,10 +55,10 @@ const Profile = () => {
   }, [profile])
 
   return (
-    <>
+    <div className="p-10">
       <Breadcrumb pageName="Profile" />
 
-      <div className="min-h-screen ">
+      <div className="min-h-screen">
         <div className="w-full mx-auto py-4 bg-white dark:bg-boxdark rounded-2xl shadow-xl overflow-hidden">
           <div className="relative h-28 bg-gray-100 dark:bg-boxdark">
             <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
@@ -122,7 +122,7 @@ const Profile = () => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

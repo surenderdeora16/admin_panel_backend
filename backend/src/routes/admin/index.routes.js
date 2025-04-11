@@ -11,6 +11,7 @@ const subjectController = require("../../controllers/admin/subjectController")
 const chapterController = require("../../controllers/admin/chapterController")
 const topicController = require("../../controllers/admin/topicController")
 const questionController = require("../../controllers/admin/questionController")
+const testSeriesController = require("../../controllers/admin/testSeriesController")
 
 const checkValid = require("../../middelwares/validator");
 const Storage = require("../../helpers/Storage");
@@ -32,44 +33,25 @@ const uploadUpcomingGovtExamImage = new Storage.uploadTo({
 
 
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// Configure multer for file uploads
+// Configure multer for memory storage
 const multer = require("multer")
-const path = require("path")
-const crypto = require("crypto")
 
-const storageQues = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, "../../../temp")
-    // Create directory if it doesn't exist
-    require("fs").mkdirSync(uploadDir, { recursive: true })
-    cb(null, uploadDir)
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = crypto.randomBytes(8).toString("hex")
-    cb(null, `${Date.now()}-${uniqueSuffix}${path.extname(file.originalname)}`)
-  },
-})
-
-const uploadQues = multer({
-  storage: storageQues,
+const questionUpload = multer({
+  storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB max file size
+    fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
-    // Accept only excel files
-    const filetypes = /xlsx|xls/
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase())
-    const mimetype = filetypes.test(file.mimetype)
-
-    if (extname && mimetype) {
-      return cb(null, true)
+    if (
+      file.mimetype === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.mimetype === "application/vnd.ms-excel"
+    ) {
+      cb(null, true)
     } else {
-      cb(new Error("Only Excel files (.xlsx, .xls) are allowed"))
+      cb(new Error("Only Excel files are allowed"), false)
     }
   },
 })
-
-
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
@@ -249,6 +231,7 @@ router.delete("/subjects/:id", subjectController.deleteSubject)
 // Chapter Routes
 router.get("/chapters", chapterController.getChapters)
 router.get("/chapters/:id", chapterController.getChapterById)
+router.get("/chapters/subject/:subjectId", chapterController.getChaptersBySubjectId);
 router.post("/chapters", checkValid("createChapter"), showValidationErrors, chapterController.createChapter)
 router.put("/chapters/:id", checkValid("updateChapter"), showValidationErrors, chapterController.updateChapter)
 router.delete("/chapters/:id", chapterController.deleteChapter)
@@ -261,16 +244,50 @@ router.put("/topics/:id", checkValid("updateTopic"), showValidationErrors, topic
 router.delete("/topics/:id", topicController.deleteTopic)
 
 // Question Routes
-router.get("/questions", questionController.getQuestions)
-router.get("/questions/:id", questionController.getQuestionById)
-router.post("/questions", checkValid("createQuestion"), showValidationErrors, questionController.createQuestion)
-router.put("/questions/:id", checkValid("updateQuestion"), showValidationErrors, questionController.updateQuestion)
-router.delete("/questions/:id", questionController.deleteQuestion)
-router.post("/questions/bulk-delete", questionController.bulkDeleteQuestions)
+// router.get("/questions", questionController.getQuestions)
+// router.get("/questions/:id", questionController.getQuestionById)
+// router.post("/questions", checkValid("createQuestion"), showValidationErrors, questionController.createQuestion)
+// router.put("/questions/:id", checkValid("updateQuestion"), showValidationErrors, questionController.updateQuestion)
+// router.delete("/questions/:id", questionController.deleteQuestion)
+// router.post("/questions/bulk-delete", questionController.bulkDeleteQuestions)
 
-// Import/Export Routes
-router.post("/questions/import", uploadQues.single("file"), questionController.importQuestions)
-router.get("/questions/template/download", questionController.downloadTemplate)
+// // Import/Export Routes
+// router.post("/questions/import", uploadQues.single("file"), questionController.importQuestions)
+// router.get("/questions/template/download", questionController.downloadTemplate)
+
+
+// Routes
+// router.post("/questions",  questionController.createQuestion)
+router.get("/questions",  questionController.getQuestions)
+router.get("/questions/sample-excel",  questionController.generateSampleExcel)
+router.post(
+  "/questions/upload-excel",
+  questionUpload.single("file"),
+  questionController.uploadQuestions,
+)
+router.post("/questions", questionController.createQuestion) // add this to create a question
+router.delete("/questions/:id", questionController.deleteQuestion) /
+// router.get("/questions/topic/:topicId",  questionController.getQuestionsByTopic)
+// // router.get("questions/:id",  questionController.getQuestion)
+// router.put("update-questions/:id",  questionController.updateQuestion)
+// // router.delete("/:id",  questionController.deleteQuestion)
+
+
+// Test Series 
+router.post("/testSeries",  testSeriesController.createTestSeries)
+router.get("/testSeries",  testSeriesController.getTestSeries)
+router.get("/testSeries/subjects-chapters-topics",  testSeriesController.getSubjectsChaptersTopics)
+router.get("testSeries/:id",  testSeriesController.getTestSeriesById)
+router.put("/update-testSeries/:id",  testSeriesController.updateTestSeries)
+// router.delete("/:id",  testSeriesController.deleteTestSeries)
+router.post("/testSeries/:testSeriesId/questions",  testSeriesController.addQuestionsToTestSeries)
+// router.delete(
+//   "/:testSeriesId/questions",
+//   
+//  
+//   testSeriesController.removeQuestionsFromTestSeries,
+// )
+router.get("/testSeries/:testSeriesId/questions",  testSeriesController.getTestSeriesQuestions)
 
 
 

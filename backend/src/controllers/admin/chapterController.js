@@ -114,6 +114,67 @@ exports.getChapterById = async (req, res) => {
   }
 }
 
+// Get chapters by subject ID
+exports.getChaptersBySubjectId = async (req, res) => {
+  try {
+    const { subjectId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(subjectId)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid subject ID format",
+      });
+    }
+
+    // Aggregate chapters with topic and question counts
+    const chapters = await Chapter.aggregate([
+      { $match: { subjectId: new mongoose.Types.ObjectId(subjectId), deletedAt: null } },
+      { $sort: { sequence: 1 } }, // Sort by sequence
+      {
+        $lookup: {
+          from: "topics",
+          localField: "_id",
+          foreignField: "chapterId",
+          as: "topics",
+          pipeline: [{ $match: { deletedAt: null } }],
+        },
+      },
+      {
+        $lookup: {
+          from: "questions",
+          localField: "_id",
+          foreignField: "chapterId",
+          as: "questions",
+          pipeline: [{ $match: { deletedAt: null } }],
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          description: 1,
+          subjectId: 1,
+          sequence: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          topicCount: { $size: "$topics" },
+          questionCount: { $size: "$questions" },
+        },
+      },
+    ]);
+
+    if (!chapters || chapters.length === 0) {
+      return res.noRecords("No chapters found for the given subject");
+    }
+
+    return res.success(chapters);
+  } catch (error) {
+    console.error("Error in getChaptersBySubjectId:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
 // Create new chapter
 exports.createChapter = async (req, res) => {
   try {

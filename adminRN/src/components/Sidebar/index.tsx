@@ -16,9 +16,16 @@ import {
   FiLayout,
   FiLogIn,
 } from 'react-icons/fi';
+import { FaBook } from "react-icons/fa";
+import { SlBookOpen } from "react-icons/sl";
+import { RiGovernmentLine } from "react-icons/ri";
+
 import { IoMdImages } from "react-icons/io";
 import { FaMapLocationDot } from 'react-icons/fa6';
 import { FaMapPin } from 'react-icons/fa';
+import { IoLibrary } from "react-icons/io5";
+import { MdNewspaper } from "react-icons/md";
+
 import { SlCalender } from 'react-icons/sl';
 import { FaUsersCog } from 'react-icons/fa';
 import { IoSettingsSharp } from 'react-icons/io5';
@@ -50,7 +57,7 @@ const MENU_CONFIG = {
     {
       name: 'Upcomg Govt. Exam',
       path: '/upcoming-govt-exam',
-      icon: FaUsersCog,
+      icon: RiGovernmentLine,
     },
     {
       name: 'App Banner',
@@ -60,28 +67,28 @@ const MENU_CONFIG = {
 
     {
       name: 'Exam Library',
-      icon: IoSettingsSharp,
+      icon: IoLibrary,
       children: [
         {
           name: 'Subjects',
           path: '/exam-library/subjects',
-          icon: MdOutlineDisplaySettings,
+          icon: FaBook,
         },
         {
           name: 'Chapters',
           path: '/exam-library/chapters',
-          icon: HiOutlineChatBubbleLeftRight,
+          icon: SlBookOpen,
         },
         {
           name: 'Topics',
           path: '/exam-library/topics',
-          icon: MdOutlineMailOutline,
+          icon: MdNewspaper,
         },
-        {
-          name: 'Questions',
-          path: '/exam-library/questions',
-          icon: IoShareSocialOutline,
-        },
+        // {
+        //   name: 'Questions',
+        //   path: '/exam-library/questions',
+        //   icon: IoShareSocialOutline,
+        // },
       ],
     },
 

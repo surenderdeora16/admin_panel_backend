@@ -25,6 +25,8 @@ import Subjects from './pages/ExamLibrary/pages/Subjects';
 import Chapters from './pages/ExamLibrary/pages/Chapters';
 import Topics from './pages/ExamLibrary/pages/Topics';
 import Questions from './pages/ExamLibrary/pages/Questions';
+import ManageTestSeries from './pages/ExamLibrary/ManageTestSeries';
+import TestSeriesQuestions from './pages/ExamLibrary/TestSeriesQuestions';
 // import SubjectsPage from './pages/ExamLibrary/vercel/subjects/page';
 
 // import SubjectsPage from './pages/ExamLibrary/SubjectsPage';
@@ -137,7 +139,7 @@ function App() {
           }
         />
         <Route
-          path="/exam-library/questions"
+          path="/exam-library/topics/manage-questions/:subjectId/:chapterId/:topicId"
           element={
             <>
               <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
@@ -145,7 +147,26 @@ function App() {
             </>
           }
         />
+        <Route
+          path="/exam-library/questions/manageTestSeries"
+          element={
+            <>
+              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <ManageTestSeries />
+            </>
+          }
+        />
+        <Route
+          path="/exam-library/questions/testSeriesQuestions"
+          element={
+            <>
+              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <TestSeriesQuestions />
+            </>
+          }
+        />
 
+        {/* ------------- */}
         <Route
           path="/state"
           element={

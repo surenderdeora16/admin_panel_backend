@@ -7,55 +7,44 @@ const QuestionSchema = new Schema(
       type: String,
       required: [true, "Question text is required"],
       trim: true,
-      maxlength: [2000, "Question text cannot exceed 2000 characters"],
     },
-    questionType: {
+    option1: {
       type: String,
-      enum: ["MULTIPLE_CHOICE", "TRUE_FALSE", "FILL_IN_BLANK", "DESCRIPTIVE"],
-      default: "MULTIPLE_CHOICE",
+      required: [true, "Option 1 is required"],
+      trim: true,
     },
-    options: [
-      {
-        optionText: {
-          type: String,
-          required: true,
-          trim: true,
-          maxlength: [500, "Option text cannot exceed 500 characters"],
-        },
-        isCorrect: {
-          type: Boolean,
-          default: false,
-        },
-      },
-    ],
-    correctAnswer: {
+    option2: {
+      type: String,
+      required: [true, "Option 2 is required"],
+      trim: true,
+    },
+    option3: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    option4: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    option5: {
       type: String,
       trim: true,
+    },
+    rightAnswer: {
+      type: String,
+      required: [true, "Right answer is required"],
+      enum: ["option1", "option2", "option3", "option4", "option5"],
     },
     explanation: {
       type: String,
       trim: true,
-      maxlength: [2000, "Explanation cannot exceed 2000 characters"],
     },
-    difficultyLevel: {
-      type: String,
-      enum: ["EASY", "MEDIUM", "HARD"],
-      default: "MEDIUM",
-    },
-    marks: {
-      correct: {
-        type: Number,
-        default: 1,
-      },
-      negative: {
-        type: Number,
-        default: 0,
-      },
-    },
-    topicId: {
+    subjectId: {
       type: Schema.Types.ObjectId,
-      ref: "Topic",
-      required: [true, "Topic is required"],
+      ref: "Subject",
+      required: [true, "Subject is required"],
       index: true,
     },
     chapterId: {
@@ -64,18 +53,20 @@ const QuestionSchema = new Schema(
       required: [true, "Chapter is required"],
       index: true,
     },
-    subjectId: {
+    topicId: {
       type: Schema.Types.ObjectId,
-      ref: "Subject",
-      required: [true, "Subject is required"],
+      ref: "Topic",
+      required: [true, "Topic is required"],
       index: true,
     },
-    tags: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
+    correctMarks: {
+      type: Number,
+      default: 1,
+    },
+    negativeMarks: {
+      type: Number,
+      default: 0.25,
+    },
     status: {
       type: Boolean,
       default: true,
@@ -93,9 +84,6 @@ const QuestionSchema = new Schema(
 )
 
 // Create text index for search optimization
-QuestionSchema.index({ questionText: "text", explanation: "text", tags: "text" })
-
-// Create compound index for efficient filtering
-QuestionSchema.index({ subjectId: 1, chapterId: 1, topicId: 1, status: 1 })
+QuestionSchema.index({ questionText: "text" })
 
 module.exports = mongoose.model("Question", QuestionSchema)

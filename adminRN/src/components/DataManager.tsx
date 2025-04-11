@@ -488,13 +488,16 @@ const DataManager = ({
                     <th className="px-8 py-6 text-nowrap text-left text-sm font-semibold text-gray-600 dark:text-gray-400">
                       Sr No.
                     </th>
-                    {tableColumns.map((col) => (
+                    {tableColumns?.map((col) => {
+                      
+                      console.log("col", col)
+                      return(
                       <th
                         key={col.header}
                         className={`px-8 py-6 text-nowrap text-left text-sm font-semibold text-gray-600 dark:text-gray-400 ${
                           col.sortable ? 'cursor-pointer hover:bg-gray-200' : ''
                         }`}
-                        onClick={() => col.sortable && handleSort(col.accessor)}
+                        onClick={() => col.sortable && handleSort(col?.accessor)}
                       >
                         <div className="flex items-center gap-2">
                           {col.header}
@@ -502,7 +505,7 @@ const DataManager = ({
                             <div className="flex flex-col">
                               <ArrowUpIcon
                                 className={`w-4 h-4 ${
-                                  orderBy === col.accessor &&
+                                  orderBy === col?.accessor &&
                                   orderDirection === 1
                                     ? 'text-sky-500'
                                     : 'text-gray-300'
@@ -510,7 +513,7 @@ const DataManager = ({
                               />
                               <ArrowDownIcon
                                 className={`w-4 h-4 ${
-                                  orderBy === col.accessor &&
+                                  orderBy === col?.accessor &&
                                   orderDirection === -1
                                     ? 'text-sky-500'
                                     : 'text-gray-300'
@@ -520,7 +523,7 @@ const DataManager = ({
                           )}
                         </div>
                       </th>
-                    ))}
+                    )})}
                     {(showEdit || showDelete || renderActions) && (
                       <th className="px-8 py-6 text-left text-sm font-semibold text-gray-600 dark:text-gray-400">
                         Actions
@@ -536,7 +539,7 @@ const DataManager = ({
                       </td>
                     </tr>
                   ) : (
-                    data.map((item, index) => (
+                    data?.map((item, index) => (
                       <tr
                         key={item._id}
                         className="hover:bg-gray-100 dark:hover:bg-gray-900"
@@ -551,8 +554,8 @@ const DataManager = ({
                             className="px-8 py-6 text-gray-900 dark:text-white"
                           >
                             {col.render
-                              ? col.render(item[col.accessor], item)
-                              : item[col.accessor]}
+                              ? col.render(item[col?.accessor], item)
+                              : item[col?.accessor]}
                           </td>
                         ))}
                         {(showEdit || showDelete || renderActions) && (

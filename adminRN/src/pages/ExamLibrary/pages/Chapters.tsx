@@ -3,6 +3,7 @@ import * as Yup from 'yup';
 import { STATUS } from '../../../constant/constant';
 import AxiosHelper from '../../../helper/AxiosHelper';
 import DataManager from '../../../components/DataManager';
+import Status from '../../../helper/Status';
 
 // Custom hook to fetch subjects
 const useSubjects = () => {
@@ -104,15 +105,21 @@ const Chapters = () => {
   ];
 
   const tableColumns = [
-    { header: 'Name', accessor: 'name', sortable: true },
-    { header: 'Subject', accessor: 'subjectId.name' },
+    { 
+      header: 'Subject', 
+      accessor: 'subjectId',
+      render: (value:any) => value?.name || '-' 
+    },
+    { header: 'Chapter', accessor: 'name', sortable: true },
     { header: 'Topics', accessor: 'topicCount' },
     { header: 'Questions', accessor: 'questionCount' },
     { header: 'Sequence', accessor: 'sequence', sortable: true },
     {
       header: 'Status',
       accessor: 'status',
-      render: (value:any) => (value ? 'Active' : 'Inactive'),
+      render: (value: any, item: any) => (
+        <Status table="chapters" status={value} data_id={item._id} />
+      ),
       sortable: true,
     },
   ];

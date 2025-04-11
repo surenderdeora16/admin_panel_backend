@@ -1,719 +1,837 @@
-const Question = require("../../models/Question")
-const Topic = require("../../models/Topic")
-const Chapter = require("../../models/Chapter")
-const Subject = require("../../models/Subject")
-const mongoose = require("mongoose")
-const { validationResult } = require("express-validator")
-const xlsx = require("xlsx")
-const fs = require("fs")
-const path = require("path")
-const crypto = require("crypto")
+const QUESTION_FORMAT  = require("../../helpers/questionFormat")
+const Question = require("../../models/Question");
+const Topic = require("../../models/Topic");
+const xlsx = require("xlsx");
+const fs = require("fs");
+const path = require("path");
 
-// Get all questions with pagination and search
+// Get questions by topic
 exports.getQuestions = async (req, res) => {
   try {
-    const {
-      limit = 10,
-      pageNo = 1,
-      query = "",
-      subjectId = null,
-      chapterId = null,
-      topicId = null,
-      difficultyLevel = null,
-      questionType = null,
-      orderBy = "createdAt",
-      orderDirection = -1,
-    } = req.query
+    const { page = 1, limit = 10, topicId, search } = req.query
 
-    const skip = (pageNo - 1) * limit
-    const sortOrder = Number(orderDirection) === 1 ? 1 : -1
+    // Build query
+    const query = { status: true }
 
-    // Create search filter
-    const searchFilter = {
-      deletedAt: null // Only active questions
+    if (topicId) {
+      query.topicId = topicId
     }
 
-    if (query) {
-      searchFilter.$or = [
-        { questionText: { $regex: query, $options: "i" } },
-        { explanation: { $regex: query, $options: "i" } },
-        { tags: { $regex: query, $options: "i" } },
+    if (search) {
+      query.$or = [
+        { questionText: { $regex: search, $options: "i" } },
+        { option1: { $regex: search, $options: "i" } },
+        { option2: { $regex: search, $options: "i" } },
+        { option3: { $regex: search, $options: "i" } },
+        { option4: { $regex: search, $options: "i" } },
+        { option5: { $regex: search, $options: "i" } },
       ]
     }
 
-    if (subjectId && mongoose.Types.ObjectId.isValid(subjectId)) {
-      searchFilter.subjectId = mongoose.Types.ObjectId(subjectId)
-    }
-
-    if (chapterId && mongoose.Types.ObjectId.isValid(chapterId)) {
-      searchFilter.chapterId = mongoose.Types.ObjectId(chapterId)
-    }
-
-    if (topicId && mongoose.Types.ObjectId.isValid(topicId)) {
-      searchFilter.topicId = mongoose.Types.ObjectId(topicId)
-    }
-
-    if (difficultyLevel) {
-      searchFilter.difficultyLevel = difficultyLevel
-    }
-
-    if (questionType) {
-      searchFilter.questionType = questionType
-    }
-
-    // Count total documents
-    const totalCount = await Question.countDocuments(searchFilter)
-
-    // Get questions with pagination
-    const questions = await Question.find(searchFilter)
-      .populate("subjectId", "name code")
-      .populate("chapterId", "name code")
-      .populate("topicId", "name code")
-      .sort({ [orderBy]: sortOrder })
-      .skip(skip)
+    // Execute query with pagination
+    const questions = await Question.find(query)
+      .skip((page - 1) * limit)
       .limit(Number(limit))
-      .lean()
+      .sort({ createdAt: -1 })
 
-    if (!questions || questions.length === 0) {
-      return res.noRecords("No questions found")
-    }
-
-    return res.pagination(questions, totalCount, limit, Number(pageNo))
-  } catch (error) {
-    console.error("Error in getQuestions:", error)
-    return res.someThingWentWrong(error)
-  }
-}
-
-// Get question by ID
-exports.getQuestionById = async (req, res) => {
-  try {
-    const { id } = req.params
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        status: false,
-        message: "Invalid question ID format",
-      })
-    }
-
-    const question = await Question.findOne({ _id: id, deletedAt: null })
-      .populate("subjectId", "name code")
-      .populate("chapterId", "name code")
-      .populate("topicId", "name code")
-      .lean()
-
-    if (!question) {
-      return res.noRecords("Question not found or deleted")
-    }
-
-    return res.success(question)
-  } catch (error) {
-    console.error("Error in getQuestionById:", error)
-    return res.someThingWentWrong(error)
-  }
-}
-
-// Create new question
-exports.createQuestion = async (req, res) => {
-  try {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        status: false,
-        message: "Validation failed",
-        errors: errors.array(),
-      })
-    }
-
-    const { questionText, questionType, options, correctAnswer, explanation, difficultyLevel, marks, topicId, tags } =
-      req.body
-
-    if (!mongoose.Types.ObjectId.isValid(topicId)) {
-      return res.status(400).json({
-        status: false,
-        message: "Invalid topic ID format",
-      })
-    }
-
-    // Check if active topic exists
-    const topic = await Topic.findOne({ 
-      _id: topicId, 
-      deletedAt: null 
-    })
-    
-    if (!topic) {
-      return res.status(404).json({
-        status: false,
-        message: "Topic not found or deleted",
-      })
-    }
-
-    // Validate options based on question type
-    if (questionType === "MULTIPLE_CHOICE" && (!options || !Array.isArray(options) || options.length < 2)) {
-      return res.status(400).json({
-        status: false,
-        message: "Multiple choice questions must have at least 2 options",
-      })
-    }
-
-    if (questionType === "TRUE_FALSE" && (!options || !Array.isArray(options) || options.length !== 2)) {
-      return res.status(400).json({
-        status: false,
-        message: "True/False questions must have exactly 2 options",
-      })
-    }
-
-    // Create new question
-    const question = new Question({
-      questionText,
-      questionType: questionType || "MULTIPLE_CHOICE",
-      options: options || [],
-      correctAnswer,
-      explanation,
-      difficultyLevel: difficultyLevel || "MEDIUM",
-      marks: marks || { correct: 1, negative: 0 },
-      topicId,
-      chapterId: topic.chapterId,
-      subjectId: topic.subjectId,
-      tags: tags || [],
-      createdBy: req.admin._id,
-    })
-
-    await question.save()
-
-    // Update question count in topic
-    await Topic.findByIdAndUpdate(topicId, { $inc: { questionCount: 1 } })
-
-    return res.successInsert(question, "Question created successfully")
-  } catch (error) {
-    console.error("Error in createQuestion:", error)
-    return res.someThingWentWrong(error)
-  }
-}
-
-// Update question
-exports.updateQuestion = async (req, res) => {
-  try {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        status: false,
-        message: "Validation failed",
-        errors: errors.array(),
-      })
-    }
-
-    const { id } = req.params
-    const {
-      questionText,
-      questionType,
-      options,
-      correctAnswer,
-      explanation,
-      difficultyLevel,
-      marks,
-      topicId,
-      tags,
-      status,
-    } = req.body
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        status: false,
-        message: "Invalid question ID format",
-      })
-    }
-
-    // Check if active question exists
-    const question = await Question.findOne({ 
-      _id: id, 
-      deletedAt: null 
-    })
-    
-    if (!question) {
-      return res.noRecords("Question not found or deleted")
-    }
-
-    // If topic is being changed, check if it exists
-    let newChapterId = question.chapterId
-    let newSubjectId = question.subjectId
-
-    if (topicId && topicId !== question.topicId.toString()) {
-      if (!mongoose.Types.ObjectId.isValid(topicId)) {
-        return res.status(400).json({
-          status: false,
-          message: "Invalid topic ID format",
-        })
-      }
-
-      const topic = await Topic.findOne({ 
-        _id: topicId, 
-        deletedAt: null 
-      })
-      
-      if (!topic) {
-        return res.status(404).json({
-          status: false,
-          message: "Topic not found or deleted",
-        })
-      }
-
-      newChapterId = topic.chapterId
-      newSubjectId = topic.subjectId
-    }
-
-    // Validate options based on question type
-    const finalQuestionType = questionType || question.questionType
-    const finalOptions = options || question.options
-
-    if (
-      finalQuestionType === "MULTIPLE_CHOICE" &&
-      (!finalOptions || !Array.isArray(finalOptions) || finalOptions.length < 2)
-    ) {
-      return res.status(400).json({
-        status: false,
-        message: "Multiple choice questions must have at least 2 options",
-      })
-    }
-
-    if (
-      finalQuestionType === "TRUE_FALSE" &&
-      (!finalOptions || !Array.isArray(finalOptions) || finalOptions.length !== 2)
-    ) {
-      return res.status(400).json({
-        status: false,
-        message: "True/False questions must have exactly 2 options",
-      })
-    }
-
-    // Update question
-    question.questionText = questionText || question.questionText
-    question.questionType = finalQuestionType
-    question.options = finalOptions
-    question.correctAnswer = correctAnswer !== undefined ? correctAnswer : question.correctAnswer
-    question.explanation = explanation !== undefined ? explanation : question.explanation
-    question.difficultyLevel = difficultyLevel || question.difficultyLevel
-    question.marks = marks || question.marks
-
-    // If topic changed, update topic, chapter, and subject
-    const oldTopicId = question.topicId
-    if (topicId && topicId !== oldTopicId.toString()) {
-      question.topicId = topicId
-      question.chapterId = newChapterId
-      question.subjectId = newSubjectId
-    }
-
-    question.tags = tags || question.tags
-    question.status = status !== undefined ? status : question.status
-    question.updatedBy = req.admin._id
-
-    await question.save()
-
-    // If topic changed, update question counts
-    if (topicId && topicId !== oldTopicId.toString()) {
-      await Topic.findByIdAndUpdate(oldTopicId, { $inc: { questionCount: -1 } })
-
-      await Topic.findByIdAndUpdate(topicId, { $inc: { questionCount: 1 } })
-    }
-
-    return res.successUpdate(question)
-  } catch (error) {
-    console.error("Error in updateQuestion:", error)
-    return res.someThingWentWrong(error)
-  }
-}
-
-// Soft delete question
-exports.deleteQuestion = async (req, res) => {
-  try {
-    const { id } = req.params
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        status: false,
-        message: "Invalid question ID format",
-      })
-    }
-
-    // Check if active question exists
-    const question = await Question.findOne({ 
-      _id: id, 
-      deletedAt: null 
-    })
-    
-    if (!question) {
-      return res.noRecords("Question not found or already deleted")
-    }
-
-    const topicId = question.topicId
-
-    // Perform soft delete
-    await Question.findByIdAndUpdate(
-      id,
-      {
-        $set: {
-          deletedAt: new Date(),
-          updatedBy: req.admin._id
-        }
-      },
-      { new: true }
-    )
-
-    // Update question count in topic
-    await Topic.findByIdAndUpdate(topicId, { $inc: { questionCount: -1 } })
-
-    return res.successDelete([], "Question deleted successfully")
-  } catch (error) {
-    console.error("Error in deleteQuestion:", error)
-    return res.someThingWentWrong(error)
-  }
-}
-
-// Bulk soft delete questions
-exports.bulkDeleteQuestions = async (req, res) => {
-  const session = await mongoose.startSession()
-  session.startTransaction()
-
-  try {
-    const { ids } = req.body
-
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({
-        status: false,
-        message: "No question IDs provided",
-      })
-    }
-
-    // Validate all IDs
-    const validIds = ids.filter((id) => mongoose.Types.ObjectId.isValid(id))
-    if (validIds.length !== ids.length) {
-      return res.status(400).json({
-        status: false,
-        message: "One or more invalid question ID formats",
-      })
-    }
-
-    // Get active questions to be deleted
-    const questions = await Question.find({ 
-      _id: { $in: validIds }, 
-      deletedAt: null 
-    })
-    
-    if (!questions || questions.length === 0) {
-      return res.noRecords("No active questions found with the provided IDs")
-    }
-
-    // Group questions by topic for updating counts
-    const topicCounts = {}
-    questions.forEach((question) => {
-      const topicId = question.topicId.toString()
-      topicCounts[topicId] = (topicCounts[topicId] || 0) + 1
-    })
-
-    // Perform soft delete
-    await Question.updateMany(
-      { _id: { $in: validIds } },
-      {
-        $set: {
-          deletedAt: new Date(),
-          updatedBy: req.admin._id
-        }
-      },
-      { session }
-    )
-
-    // Update question counts in topics
-    for (const [topicId, count] of Object.entries(topicCounts)) {
-      await Topic.findByIdAndUpdate(topicId, { $inc: { questionCount: -count } }, { session })
-    }
-
-    await session.commitTransaction()
-    session.endSession()
-
-    return res.successDelete([], `${questions.length} questions deleted successfully`)
-  } catch (error) {
-    await session.abortTransaction()
-    session.endSession()
-
-    console.error("Error in bulkDeleteQuestions:", error)
-    return res.someThingWentWrong(error)
-  }
-}
-
-// Import questions from Excel
-exports.importQuestions = async (req, res) => {
-  const session = await mongoose.startSession()
-  session.startTransaction()
-
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        status: false,
-        message: "No file uploaded",
-      })
-    }
-
-    // Check file type
-    const fileExtension = path.extname(req.file.originalname).toLowerCase()
-    if (![".xlsx", ".xls"].includes(fileExtension)) {
-      return res.status(400).json({
-        status: false,
-        message: "Only Excel files (.xlsx, .xls) are allowed",
-      })
-    }
-
-    // Read Excel file
-    const workbook = xlsx.readFile(req.file.path)
-    const sheetName = workbook.SheetNames[0]
-    const worksheet = workbook.Sheets[sheetName]
-    const data = xlsx.utils.sheet_to_json(worksheet)
-
-    if (!data || data.length === 0) {
-      return res.status(400).json({
-        status: false,
-        message: "Excel file is empty or has no valid data",
-      })
-    }
-
-    // Validate required fields
-    const requiredFields = ["questionText", "topicId"]
-    const missingFields = []
-
-    for (const field of requiredFields) {
-      if (!data[0].hasOwnProperty(field)) {
-        missingFields.push(field)
-      }
-    }
-
-    if (missingFields.length > 0) {
-      return res.status(400).json({
-        status: false,
-        message: `Missing required fields: ${missingFields.join(", ")}`,
-      })
-    }
-
-    // Process each row
-    const questions = []
-    const errors = []
-    const topicCounts = {}
-
-    for (let i = 0; i < data.length; i++) {
-      const row = data[i]
-      const rowNum = i + 2 // +2 because Excel starts at 1 and we have header row
-
-      try {
-        // Validate topicId
-        if (!mongoose.Types.ObjectId.isValid(row.topicId)) {
-          errors.push(`Row ${rowNum}: Invalid topic ID format`)
-          continue
-        }
-
-        // Get active topic info
-        const topic = await Topic.findOne({ 
-          _id: row.topicId, 
-          deletedAt: null 
-        })
-        
-        if (!topic) {
-          errors.push(`Row ${rowNum}: Topic not found or deleted`)
-          continue
-        }
-
-        // Parse options if provided as string
-        let options = row.options || []
-        if (typeof options === "string") {
-          try {
-            options = JSON.parse(options)
-          } catch (e) {
-            errors.push(`Row ${rowNum}: Invalid options format. Must be valid JSON array`)
-            continue
-          }
-        }
-
-        // Validate options based on question type
-        const questionType = row.questionType || "MULTIPLE_CHOICE"
-
-        if (questionType === "MULTIPLE_CHOICE" && (!options || !Array.isArray(options) || options.length < 2)) {
-          errors.push(`Row ${rowNum}: Multiple choice questions must have at least 2 options`)
-          continue
-        }
-
-        if (questionType === "TRUE_FALSE" && (!options || !Array.isArray(options) || options.length !== 2)) {
-          errors.push(`Row ${rowNum}: True/False questions must have exactly 2 options`)
-          continue
-        }
-
-        // Parse marks if provided as string
-        let marks = row.marks || { correct: 1, negative: 0 }
-        if (typeof marks === "string") {
-          try {
-            marks = JSON.parse(marks)
-          } catch (e) {
-            errors.push(`Row ${rowNum}: Invalid marks format. Must be valid JSON object`)
-            continue
-          }
-        }
-
-        // Parse tags if provided as string
-        let tags = row.tags || []
-        if (typeof tags === "string") {
-          try {
-            tags = JSON.parse(tags)
-          } catch (e) {
-            // Try comma-separated format
-            tags = tags.split(",").map((tag) => tag.trim())
-          }
-        }
-
-        // Create question object
-        const question = new Question({
-          questionText: row.questionText,
-          questionType: questionType,
-          options: options,
-          correctAnswer: row.correctAnswer,
-          explanation: row.explanation || "",
-          difficultyLevel: row.difficultyLevel || "MEDIUM",
-          marks: marks,
-          topicId: row.topicId,
-          chapterId: topic.chapterId,
-          subjectId: topic.subjectId,
-          tags: tags,
-          createdBy: req.admin._id,
-        })
-
-        await question.save({ session })
-        questions.push(question)
-
-        // Track topic counts for updating
-        const topicId = topic._id.toString()
-        topicCounts[topicId] = (topicCounts[topicId] || 0) + 1
-      } catch (error) {
-        errors.push(`Row ${rowNum}: ${error.message}`)
-      }
-    }
-
-    // Update question counts in topics
-    for (const [topicId, count] of Object.entries(topicCounts)) {
-      await Topic.findByIdAndUpdate(topicId, { $inc: { questionCount: count } }, { session })
-    }
-
-    // Clean up the uploaded file
-    fs.unlinkSync(req.file.path)
-
-    await session.commitTransaction()
-    session.endSession()
+    // Get total count
+    const count = await Question.countDocuments(query)
 
     return res.status(200).json({
       status: true,
-      message: `${questions.length} questions imported successfully`,
+      message: "Questions fetched successfully",
       data: {
-        imported: questions.length,
-        errors: errors,
+        record: questions,
+        count,
+        current_page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(count / limit),
       },
     })
   } catch (error) {
-    await session.abortTransaction()
-    session.endSession()
-
-    // Clean up the uploaded file if it exists
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path)
-    }
-
-    console.error("Error in importQuestions:", error)
-    return res.someThingWentWrong(error)
+    console.error("Error fetching questions:", error)
+    return res.status(500).json({
+      status: false,
+      message: "Failed to fetch questions",
+      error: error.message,
+    })
   }
 }
 
-// Download sample Excel template
-exports.downloadTemplate = async (req, res) => {
+// Generate sample Excel template
+exports.generateSampleExcel = (req, res) => {
   try {
-    // Create sample data
-    const sampleData = [
-      {
-        questionText: "What is the capital of France?",
-        questionType: "MULTIPLE_CHOICE",
-        options: JSON.stringify([
-          { optionText: "London", isCorrect: false },
-          { optionText: "Paris", isCorrect: true },
-          { optionText: "Berlin", isCorrect: false },
-          { optionText: "Madrid", isCorrect: false },
-        ]),
-        correctAnswer: "Paris",
-        explanation: "Paris is the capital and most populous city of France.",
-        difficultyLevel: "EASY",
-        marks: JSON.stringify({ correct: 1, negative: 0 }),
-        topicId: "Enter valid Topic ID here",
-        tags: JSON.stringify(["geography", "capitals", "europe"]),
-      },
-      {
-        questionText: "The Earth revolves around the Sun.",
-        questionType: "TRUE_FALSE",
-        options: JSON.stringify([
-          { optionText: "True", isCorrect: true },
-          { optionText: "False", isCorrect: false },
-        ]),
-        correctAnswer: "True",
-        explanation: "The Earth revolves around the Sun in an elliptical orbit.",
-        difficultyLevel: "EASY",
-        marks: JSON.stringify({ correct: 1, negative: 0 }),
-        topicId: "Enter valid Topic ID here",
-        tags: JSON.stringify(["astronomy", "solar system"]),
-      },
-    ]
-
     // Create workbook and worksheet
     const workbook = xlsx.utils.book_new()
-    const worksheet = xlsx.utils.json_to_sheet(sampleData)
 
-    // Add column widths
-    const colWidths = [
-      { wch: 40 }, // questionText
-      { wch: 20 }, // questionType
-      { wch: 50 }, // options
-      { wch: 20 }, // correctAnswer
-      { wch: 40 }, // explanation
-      { wch: 15 }, // difficultyLevel
-      { wch: 20 }, // marks
-      { wch: 24 }, // topicId
-      { wch: 30 }, // tags
+    // Create headers array from config
+    const headers = [
+      QUESTION_FORMAT.HEADERS.QUESTION_TEXT,
+      QUESTION_FORMAT.HEADERS.OPTION_1,
+      QUESTION_FORMAT.HEADERS.OPTION_2,
+      QUESTION_FORMAT.HEADERS.OPTION_3,
+      QUESTION_FORMAT.HEADERS.OPTION_4,
+      QUESTION_FORMAT.HEADERS.OPTION_5,
+      QUESTION_FORMAT.HEADERS.RIGHT_ANSWER,
+      QUESTION_FORMAT.HEADERS.EXPLANATION,
     ]
 
-    worksheet["!cols"] = colWidths
+    // Create worksheet with headers and sample data
+    const data = [headers, ...QUESTION_FORMAT.SAMPLE_DATA]
+    const worksheet = xlsx.utils.aoa_to_sheet(data)
 
     // Add worksheet to workbook
     xlsx.utils.book_append_sheet(workbook, worksheet, "Questions")
 
-    // Create temp file path
-    const tempFilePath = path.join(
-      __dirname,
-      "../../../temp",
-      `question_template_${crypto.randomBytes(4).toString("hex")}.xlsx`,
-    )
-
-    // Ensure temp directory exists
-    const tempDir = path.dirname(tempFilePath)
+    // Create temp directory if it doesn't exist
+    const tempDir = path.join(__dirname, "../temp")
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true })
     }
 
     // Write to file
-    xlsx.writeFile(workbook, tempFilePath)
+    const filePath = path.join(tempDir, "sample_questions_template.xlsx")
+    xlsx.writeFile(workbook, filePath)
 
     // Send file
-    res.download(tempFilePath, "question_import_template.xlsx", (err) => {
-      // Delete temp file after sending
-      if (fs.existsSync(tempFilePath)) {
-        fs.unlinkSync(tempFilePath)
+    return res.download(filePath, "sample_questions_template.xlsx", (err) => {
+      if (err) {
+        console.error("Error downloading file:", err)
+        return res.status(500).json({
+          status: false,
+          message: "Failed to download template",
+          error: err.message,
+        })
       }
 
-      if (err) {
-        console.error("Error sending template file:", err)
-      }
+      // Delete file after download
+      fs.unlinkSync(filePath)
     })
   } catch (error) {
-    console.error("Error in downloadTemplate:", error)
-    return res.someThingWentWrong(error)
+    console.error("Error generating sample Excel:", error)
+    return res.status(500).json({
+      status: false,
+      message: "Failed to generate sample Excel",
+      error: error.message,
+    })
   }
 }
+
+// Create a new question
+exports.createQuestion = async (req, res) => {
+  try {
+    const {
+      questionText,
+      option1,
+      option2,
+      option3,
+      option4,
+      option5,
+      rightAnswer,
+      explanation,
+      subjectId,
+      chapterId,
+      topicId,
+    } = req.body
+
+    // Validate required fields
+    if (
+      !questionText ||
+      !option1 ||
+      !option2 ||
+      !option3 ||
+      !option4 ||
+      !rightAnswer ||
+      !subjectId ||
+      !chapterId ||
+      !topicId
+    ) {
+      return res.status(400).json({
+        status: false,
+        message: "Please provide all required fields",
+      })
+    }
+
+    // Create new question
+    const question = await Question.create({
+      questionText,
+      option1,
+      option2,
+      option3,
+      option4,
+      option5: option5 || "",
+      rightAnswer,
+      explanation: explanation || "",
+      subjectId,
+      chapterId,
+      topicId,
+      status: true,
+      createdBy: req.user?._id,
+    })
+
+    // Increment question count in the topic
+    await Topic.findByIdAndUpdate(topicId, {
+      $inc: { questionCount: 1 },
+    })
+
+    return res.status(201).json({
+      status: true,
+      message: "Question created successfully",
+      data: question,
+    })
+  } catch (error) {
+    console.error("Error creating question:", error)
+    return res.status(500).json({
+      status: false,
+      message: "Failed to create question",
+      error: error.message,
+    })
+  }
+}
+
+// Upload questions from Excel
+exports.uploadQuestions = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        status: false,
+        message: "Please upload an Excel file",
+      })
+    }
+
+    const { subjectId, chapterId, topicId } = req.body
+
+    if (!subjectId || !chapterId || !topicId) {
+      return res.status(400).json({
+        status: false,
+        message: "Subject, Chapter, and Topic IDs are required",
+      })
+    }
+
+    // Read Excel file
+    const workbook = xlsx.read(req.file.buffer, { type: "buffer" })
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+    const data = xlsx.utils.sheet_to_json(worksheet)
+
+    if (data.length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: "Excel file is empty",
+      })
+    }
+
+    // Validate and process data
+    const questions = []
+    const errors = []
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i]
+
+      // Check required fields
+      if (
+        !row[QUESTION_FORMAT.HEADERS.QUESTION_TEXT] ||
+        !row[QUESTION_FORMAT.HEADERS.OPTION_1] ||
+        !row[QUESTION_FORMAT.HEADERS.OPTION_2] ||
+        !row[QUESTION_FORMAT.HEADERS.OPTION_3] ||
+        !row[QUESTION_FORMAT.HEADERS.OPTION_4] ||
+        !row[QUESTION_FORMAT.HEADERS.RIGHT_ANSWER]
+      ) {
+        errors.push(`Row ${i + 2}: Missing required fields`)
+        continue
+      }
+
+      // Validate right answer
+      const rightAnswerValue = row[QUESTION_FORMAT.HEADERS.RIGHT_ANSWER]
+      const rightAnswer = QUESTION_FORMAT.RIGHT_ANSWER_MAP[rightAnswerValue]
+
+      if (!rightAnswer) {
+        errors.push(`Row ${i + 2}: Invalid right answer format. Must be one of: 1, 2, 3, 4, 5`)
+        continue
+      }
+
+      // Create question object
+      questions.push({
+        questionText: row[QUESTION_FORMAT.HEADERS.QUESTION_TEXT],
+        option1: row[QUESTION_FORMAT.HEADERS.OPTION_1],
+        option2: row[QUESTION_FORMAT.HEADERS.OPTION_2],
+        option3: row[QUESTION_FORMAT.HEADERS.OPTION_3],
+        option4: row[QUESTION_FORMAT.HEADERS.OPTION_4],
+        option5: row[QUESTION_FORMAT.HEADERS.OPTION_5] || "",
+        rightAnswer: rightAnswer,
+        explanation: row[QUESTION_FORMAT.HEADERS.EXPLANATION] || "",
+        subjectId,
+        chapterId,
+        topicId,
+        status: true,
+        createdBy: req.user?._id,
+      })
+    }
+
+    if (questions.length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: "No valid questions found in Excel file",
+        errors,
+      })
+    }
+
+    // Insert questions
+    const insertedQuestions = await Question.insertMany(questions)
+
+    // Update topic question count
+    await Topic.findByIdAndUpdate(topicId, {
+      $inc: { questionCount: insertedQuestions.length },
+    })
+
+    return res.status(201).json({
+      status: true,
+      message: `${insertedQuestions.length} questions uploaded successfully`,
+      errors: errors.length > 0 ? errors : undefined,
+      data: insertedQuestions,
+    })
+  } catch (error) {
+    console.error("Error uploading questions from Excel:", error)
+    return res.status(500).json({
+      status: false,
+      message: "Failed to upload questions from Excel",
+      error: error.message,
+    })
+  }
+}
+
+// Delete a question
+exports.deleteQuestion = async (req, res) => {
+  try {
+    const question = await Question.findById(req.params.id)
+
+    if (!question) {
+      return res.status(404).json({
+        status: false,
+        message: "Question not found",
+      })
+    }
+
+    // Delete the question
+    await Question.findByIdAndDelete(req.params.id)
+
+    // Decrement topic question count
+    await Topic.findByIdAndUpdate(question.topicId, {
+      $inc: { questionCount: -1 },
+    })
+
+    return res.status(200).json({
+      status: true,
+      message: "Question deleted successfully",
+    })
+  } catch (error) {
+    console.error("Error deleting question:", error)
+    return res.status(500).json({
+      status: false,
+      message: "Failed to delete question",
+      error: error.message,
+    })
+  }
+}
+
+
+// const Question = require("../../models/Question")
+// const Topic = require("../../models/Topic")
+// const xlsx = require("xlsx")
+// const fs = require("fs")
+// const path = require("path")
+
+// // Create a new question
+// exports.createQuestion = async (req, res) => {
+//   try {
+//     const {
+//       questionText,
+//       option1,
+//       option2,
+//       option3,
+//       option4,
+//       option5,
+//       rightAnswer,
+//       explanation,
+//       subjectId,
+//       chapterId,
+//       topicId,
+//       correctMarks,
+//       negativeMarks,
+//     } = req.body
+
+//     // Validate required fields
+//     if (
+//       !questionText ||
+//       !option1 ||
+//       !option2 ||
+//       !option3 ||
+//       !option4 ||
+//       !rightAnswer ||
+//       !subjectId ||
+//       !chapterId ||
+//       !topicId
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Please provide all required fields",
+//       })
+//     }
+
+//     // Create new question
+//     const question = await Question.create({
+//       questionText,
+//       option1,
+//       option2,
+//       option3,
+//       option4,
+//       option5,
+//       rightAnswer,
+//       explanation,
+//       subjectId,
+//       chapterId,
+//       topicId,
+//       correctMarks: correctMarks || 1,
+//       negativeMarks: negativeMarks || 0.25,
+//       createdBy: req.user._id,
+//     })
+
+//     // Increment question count in the topic
+//     await Topic.findByIdAndUpdate(topicId, {
+//       $inc: { questionCount: 1 },
+//     })
+
+//     return res.status(201).json({
+//       success: true,
+//       data: question,
+//       message: "Question created successfully",
+//     })
+//   } catch (error) {
+//     console.error("Error creating question:", error)
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to create question",
+//       error: error.message,
+//     })
+//   }
+// }
+
+// // Get all questions with pagination and filters
+// exports.getQuestions = async (req, res) => {
+//   try {
+//     const { page = 1, limit = 10, subjectId, chapterId, topicId, search } = req.query
+
+//     // Build query
+//     const query = { status: true }
+
+//     if (subjectId) query.subjectId = subjectId
+//     if (chapterId) query.chapterId = chapterId
+//     if (topicId) query.topicId = topicId
+
+//     if (search) {
+//       query.$or = [
+//         { questionText: { $regex: search, $options: "i" } },
+//         { option1: { $regex: search, $options: "i" } },
+//         { option2: { $regex: search, $options: "i" } },
+//         { option3: { $regex: search, $options: "i" } },
+//         { option4: { $regex: search, $options: "i" } },
+//         { option5: { $regex: search, $options: "i" } },
+//       ]
+//     }
+
+//     // Execute query with pagination
+//     const questions = await Question.find(query)
+//       .populate("subjectId", "name")
+//       .populate("chapterId", "name")
+//       .populate("topicId", "name")
+//       .skip((page - 1) * limit)
+//       .limit(Number.parseInt(limit))
+//       .sort({ createdAt: -1 })
+
+//     // Get total count
+//     const total = await Question.countDocuments(query)
+
+//     return res.status(200).json({
+//       success: true,
+//       data: questions,
+//       pagination: {
+//         total,
+//         page: Number.parseInt(page),
+//         limit: Number.parseInt(limit),
+//         pages: Math.ceil(total / limit),
+//       },
+//     })
+//   } catch (error) {
+//     console.error("Error fetching questions:", error)
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch questions",
+//       error: error.message,
+//     })
+//   }
+// }
+
+// // Get a single question by ID
+// exports.getQuestion = async (req, res) => {
+//   try {
+//     const question = await Question.findById(req.params.id)
+//       .populate("subjectId", "name")
+//       .populate("chapterId", "name")
+//       .populate("topicId", "name")
+
+//     if (!question) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Question not found",
+//       })
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       data: question,
+//     })
+//   } catch (error) {
+//     console.error("Error fetching question:", error)
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch question",
+//       error: error.message,
+//     })
+//   }
+// }
+
+// // Update a question
+// exports.updateQuestion = async (req, res) => {
+//   try {
+//     const {
+//       questionText,
+//       option1,
+//       option2,
+//       option3,
+//       option4,
+//       option5,
+//       rightAnswer,
+//       explanation,
+//       subjectId,
+//       chapterId,
+//       topicId,
+//       correctMarks,
+//       negativeMarks,
+//       status,
+//     } = req.body
+
+//     // Find question
+//     const question = await Question.findById(req.params.id)
+
+//     if (!question) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Question not found",
+//       })
+//     }
+
+//     // Check if topic is being changed
+//     const oldTopicId = question.topicId
+//     const newTopicId = topicId || oldTopicId
+
+//     // Update question
+//     const updatedQuestion = await Question.findByIdAndUpdate(
+//       req.params.id,
+//       {
+//         questionText: questionText || question.questionText,
+//         option1: option1 || question.option1,
+//         option2: option2 || question.option2,
+//         option3: option3 || question.option3,
+//         option4: option4 || question.option4,
+//         option5: option5 || question.option5,
+//         rightAnswer: rightAnswer || question.rightAnswer,
+//         explanation: explanation || question.explanation,
+//         subjectId: subjectId || question.subjectId,
+//         chapterId: chapterId || question.chapterId,
+//         topicId: newTopicId,
+//         correctMarks: correctMarks || question.correctMarks,
+//         negativeMarks: negativeMarks || question.negativeMarks,
+//         status: status !== undefined ? status : question.status,
+//         updatedBy: req.user._id,
+//       },
+//       { new: true, runValidators: true },
+//     )
+
+//     // Update topic question counts if topic changed
+//     if (oldTopicId.toString() !== newTopicId.toString()) {
+//       await Topic.findByIdAndUpdate(oldTopicId, {
+//         $inc: { questionCount: -1 },
+//       })
+//       await Topic.findByIdAndUpdate(newTopicId, {
+//         $inc: { questionCount: 1 },
+//       })
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       data: updatedQuestion,
+//       message: "Question updated successfully",
+//     })
+//   } catch (error) {
+//     console.error("Error updating question:", error)
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to update question",
+//       error: error.message,
+//     })
+//   }
+// }
+
+// // Delete a question
+// exports.deleteQuestion = async (req, res) => {
+//   try {
+//     const question = await Question.findById(req.params.id)
+
+//     if (!question) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Question not found",
+//       })
+//     }
+
+//     // Soft delete by updating status
+//     await Question.findByIdAndUpdate(req.params.id, {
+//       status: false,
+//       updatedBy: req.user._id,
+//     })
+
+//     // Decrement question count in the topic
+//     await Topic.findByIdAndUpdate(question.topicId, {
+//       $inc: { questionCount: -1 },
+//     })
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Question deleted successfully",
+//     })
+//   } catch (error) {
+//     console.error("Error deleting question:", error)
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to delete question",
+//       error: error.message,
+//     })
+//   }
+// }
+
+// // Generate sample Excel template
+// exports.generateSampleExcel = (req, res) => {
+//   try {
+//     // Create workbook and worksheet
+//     const workbook = xlsx.utils.book_new()
+//     const worksheet = xlsx.utils.aoa_to_sheet([
+//       [
+//         "Question Text",
+//         "Option 1",
+//         "Option 2",
+//         "Option 3",
+//         "Option 4",
+//         "Option 5",
+//         "Right Answer (option1/option2/option3/option4/option5)",
+//         "Explanation",
+//         "Subject ID",
+//         "Chapter ID",
+//         "Topic ID",
+//         "Correct Marks",
+//         "Negative Marks",
+//       ],
+//       [
+//         "What is the capital of India?",
+//         "Mumbai",
+//         "New Delhi",
+//         "Kolkata",
+//         "Chennai",
+//         "",
+//         "option2",
+//         "New Delhi is the capital of India",
+//         "60f1a5b3e6d8a52b3c9a1234", // Example Subject ID
+//         "60f1a5c7e6d8a52b3c9a5678", // Example Chapter ID
+//         "60f1a5d9e6d8a52b3c9a9abc", // Example Topic ID
+//         "1",
+//         "0.25",
+//       ],
+//     ])
+
+//     // Add worksheet to workbook
+//     xlsx.utils.book_append_sheet(workbook, worksheet, "Questions")
+
+//     // Create temp directory if it doesn't exist
+//     const tempDir = path.join(__dirname, "../temp")
+//     if (!fs.existsSync(tempDir)) {
+//       fs.mkdirSync(tempDir, { recursive: true })
+//     }
+
+//     // Write to file
+//     const filePath = path.join(tempDir, "sample_questions_template.xlsx")
+//     xlsx.writeFile(workbook, filePath)
+
+//     // Send file
+//     return res.download(filePath, "sample_questions_template.xlsx", (err) => {
+//       if (err) {
+//         console.error("Error downloading file:", err)
+//         return res.status(500).json({
+//           success: false,
+//           message: "Failed to download template",
+//           error: err.message,
+//         })
+//       }
+
+//       // Delete file after download
+//       fs.unlinkSync(filePath)
+//     })
+//   } catch (error) {
+//     console.error("Error generating sample Excel:", error)
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to generate sample Excel",
+//       error: error.message,
+//     })
+//   }
+// }
+
+// // Upload questions from Excel
+// exports.uploadQuestionsExcel = async (req, res) => {
+//   try {
+//     if (!req.file) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Please upload an Excel file",
+//       })
+//     }
+
+//     // Read Excel file
+//     const workbook = xlsx.read(req.file.buffer, { type: "buffer" })
+//     const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+//     const data = xlsx.utils.sheet_to_json(worksheet)
+
+//     if (data.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Excel file is empty",
+//       })
+//     }
+
+//     // Validate and process data
+//     const questions = []
+//     const errors = []
+
+//     for (let i = 0; i < data.length; i++) {
+//       const row = data[i]
+
+//       // Check required fields
+//       if (
+//         !row["Question Text"] ||
+//         !row["Option 1"] ||
+//         !row["Option 2"] ||
+//         !row["Option 3"] ||
+//         !row["Option 4"] ||
+//         !row["Right Answer (option1/option2/option3/option4/option5)"] ||
+//         !row["Subject ID"] ||
+//         !row["Chapter ID"] ||
+//         !row["Topic ID"]
+//       ) {
+//         errors.push(`Row ${i + 2}: Missing required fields`)
+//         continue
+//       }
+
+//       // Validate right answer
+//       const rightAnswer = row["Right Answer (option1/option2/option3/option4/option5)"]
+//       if (!["option1", "option2", "option3", "option4", "option5"].includes(rightAnswer)) {
+//         errors.push(
+//           `Row ${i + 2}: Invalid right answer format. Must be one of: option1, option2, option3, option4, option5`,
+//         )
+//         continue
+//       }
+
+//       // Create question object
+//       questions.push({
+//         questionText: row["Question Text"],
+//         option1: row["Option 1"],
+//         option2: row["Option 2"],
+//         option3: row["Option 3"],
+//         option4: row["Option 4"],
+//         option5: row["Option 5"] || "",
+//         rightAnswer: rightAnswer,
+//         explanation: row["Explanation"] || "",
+//         subjectId: row["Subject ID"],
+//         chapterId: row["Chapter ID"],
+//         topicId: row["Topic ID"],
+//         correctMarks: row["Correct Marks"] || 1,
+//         negativeMarks: row["Negative Marks"] || 0.25,
+//         createdBy: req.user._id,
+//       })
+//     }
+
+//     if (questions.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "No valid questions found in Excel file",
+//         errors,
+//       })
+//     }
+
+//     // Insert questions
+//     const insertedQuestions = await Question.insertMany(questions)
+
+//     // Update topic question counts
+//     const topicCounts = {}
+//     for (const question of questions) {
+//       topicCounts[question.topicId] = (topicCounts[question.topicId] || 0) + 1
+//     }
+
+//     for (const [topicId, count] of Object.entries(topicCounts)) {
+//       await Topic.findByIdAndUpdate(topicId, {
+//         $inc: { questionCount: count },
+//       })
+//     }
+
+//     return res.status(201).json({
+//       success: true,
+//       message: `${insertedQuestions.length} questions uploaded successfully`,
+//       errors: errors.length > 0 ? errors : undefined,
+//       data: insertedQuestions,
+//     })
+//   } catch (error) {
+//     console.error("Error uploading questions from Excel:", error)
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to upload questions from Excel",
+//       error: error.message,
+//     })
+//   }
+// }
+
+// // Get questions by topic for test series
+// exports.getQuestionsByTopic = async (req, res) => {
+//   try {
+//     const { topicId } = req.params
+
+//     if (!topicId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Topic ID is required",
+//       })
+//     }
+
+//     const questions = await Question.find({
+//       topicId,
+//       status: true,
+//     }).select("_id questionText")
+
+//     return res.status(200).json({
+//       success: true,
+//       data: questions,
+//     })
+//   } catch (error) {
+//     console.error("Error fetching questions by topic:", error)
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch questions by topic",
+//       error: error.message,
+//     })
+//   }
+// }

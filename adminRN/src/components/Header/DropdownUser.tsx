@@ -4,13 +4,13 @@ import ClickOutside from '../ClickOutside';
 import { useAuth } from '../../hooks/useAuth';
 import { RootState } from '../../store';
 import { useSelector } from 'react-redux';
-import noUserImage from '../../images/user/user.svg'
+import noUserImage from '../../images/user/user.svg';
 
 const DropdownUser = () => {
-  const admin = useSelector((state: RootState) => state.admin?.data)
-  const { logout } = useAuth()
+  const admin = useSelector((state: RootState) => state.admin?.data);
+  const { logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [avatar, setAvatar] = useState("")
+  const [avatar, setAvatar] = useState('');
 
   const handleImageError = useCallback(() => {
     setAvatar(noUserImage);
@@ -18,9 +18,9 @@ const DropdownUser = () => {
 
   useEffect(() => {
     if (admin) {
-      setAvatar(admin?.image)
+      setAvatar(admin?.image);
     }
-  }, [admin])
+  }, [admin]);
 
   return (
     <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">
@@ -42,7 +42,7 @@ const DropdownUser = () => {
             onError={handleImageError}
             alt={admin?.name}
             loading="lazy"
-            className='object-cover w-full h-full'
+            className="object-cover w-full h-full"
           />
         </span>
 
@@ -94,7 +94,7 @@ const DropdownUser = () => {
                 My Profile
               </Link>
             </li>
-            <li>
+            {/* <li>
               <Link
                 to="#"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
@@ -114,10 +114,10 @@ const DropdownUser = () => {
                 </svg>
                 My Contacts
               </Link>
-            </li>
+            </li> */}
             <li>
               <Link
-                to="/settings"
+                to="/profile"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
               >
                 <svg
@@ -141,7 +141,10 @@ const DropdownUser = () => {
               </Link>
             </li>
           </ul>
-          <button onClick={logout} className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base">
+          <button
+            onClick={logout}
+            className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+          >
             <svg
               className="fill-current"
               width="22"

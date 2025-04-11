@@ -9,8 +9,9 @@ import TableOne from '../../components/Tables/TableOne';
 
 const ECommerce: React.FC = () => {
   return (
-    <>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
+    <div className="p-10">
+      <h1 className="text-5xl font-medium ">Dashboard {'->'} Coming Soon...</h1>
+      {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
         <CardDataStats title="Total views" total="$3.456K" rate="0.43%" levelUp>
           <svg
             className="fill-primary dark:fill-white"
@@ -106,8 +107,8 @@ const ECommerce: React.FC = () => {
           <TableOne />
         </div>
         <ChatCard />
-      </div>
-    </>
+      </div>   */}
+    </div>
   );
 };
 
