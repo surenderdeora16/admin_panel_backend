@@ -93,6 +93,35 @@ const MENU_CONFIG = {
     },
 
     {
+      name: 'Exams',
+      icon: IoLibrary,
+      children: [
+        {
+          name: 'Batches',
+          path: '/batches',
+          icon: FaBook,
+        },
+        {
+          name: 'Exam Plans',
+          path: '/exam-plans',
+          icon: SlBookOpen,
+        },
+        {
+          name: 'Test Series',
+          path: '/test-series',
+          icon: MdNewspaper,
+        },
+        // {
+        //   name: 'Questions',
+        //   path: '/exam-library/questions',
+        //   icon: IoShareSocialOutline,
+        // },
+      ],
+    },
+
+
+
+    {
       name: 'Location',
       icon: FaMapLocationDot,
       children: [

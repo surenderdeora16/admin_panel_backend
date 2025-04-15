@@ -26,7 +26,14 @@ import Chapters from './pages/ExamLibrary/pages/Chapters';
 import Topics from './pages/ExamLibrary/pages/Topics';
 import Questions from './pages/ExamLibrary/pages/Questions';
 import ManageTestSeries from './pages/ExamLibrary/ManageTestSeries';
-import TestSeriesQuestions from './pages/ExamLibrary/TestSeriesQuestions';
+// import TestSeriesQuestions from './pages/ExamLibrary/TestSeriesQuestions';
+import TestSeriesQuestions from './pages/Exams/TestSeriesQuestions';
+import Batches from './pages/Exams/Batches';
+import ExamPlans from './pages/Exams/ExamPlans';
+import TestSeries from './pages/Exams/TestSeries';
+import TestSeriesSections from './pages/Exams/TestSeriesSections';
+import SectionQuestions from './pages/Exams/SectionQuestions';
+
 // import SubjectsPage from './pages/ExamLibrary/vercel/subjects/page';
 
 // import SubjectsPage from './pages/ExamLibrary/SubjectsPage';
@@ -163,6 +170,59 @@ function App() {
               <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
               <TestSeriesQuestions />
             </>
+          }
+        />
+
+        {/*  */}
+        <Route
+          path="/batches"
+          element={
+            <>
+              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <Batches />
+            </>
+          }
+        />
+
+        <Route
+          path="/exam-plans"
+          element={
+            <>
+              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <ExamPlans />
+            </>
+          }
+        />
+        <Route
+          path="/exam-plans/:batchId"
+          element={
+              <ExamPlans />
+          }
+        />
+        <Route
+          path="/test-series"
+          element={
+            <>
+              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <TestSeries />
+            </>
+          }
+        />
+        <Route
+          path="/test-series/*"
+          element={
+              <Routes>
+                <Route path=":examPlanId" element={<TestSeries />} />
+                <Route
+                  path=":testSeriesId/sections"
+                  element={<TestSeriesSections />}
+                />
+                <Route
+                  path=":testSeriesId/sections/:sectionId/questions"
+                  element={<SectionQuestions />}
+                />
+                <Route path=":testSeriesId/questions" element={<TestSeriesQuestions />} />
+              </Routes>
           }
         />
 

@@ -202,22 +202,22 @@ const MyForm = ({
                                   />
                                 );
 
-                                  // For Date Input
-                                  case 'date':
-                                  return (
-                                    <Field
+                              // For Date Input
+                              case 'date':
+                                return (
+                                  <Field
                                     id={field?.name}
                                     disabled={disabled || isDisabled}
                                     type="date"
                                     name={field?.name}
                                     className={`appearance-none block w-full px-4 py-2.5 bg-white text-slate-900 border ${
                                       fieldError
-                                      ? 'border-rose-500 ring-1 ring-rose-500'
-                                      : 'border-slate-300 hover:border-slate-400'
+                                        ? 'border-rose-500 ring-1 ring-rose-500'
+                                        : 'border-slate-300 hover:border-slate-400'
                                     } rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-base`}
                                     {...field}
-                                    />
-                                  );
+                                  />
+                                );
 
                               // For Textarea Input
                               case 'textarea':
@@ -1254,6 +1254,17 @@ const TextEditer = ({
         borderRadius: '0.5rem',
         boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
       },
+      defaultActionOnPaste: 'insert_as_html',
+      cleanHTML: false,
+      removeEmptyAttributes: false,
+      allowTags: ['*'],
+      allowAttributes: ['*'],
+
+      // events: {
+      //   onPaste: (event: ClipboardEvent) => {
+      //     console.log('Pasting something...');
+      //   },
+      // },
     };
 
     return (
