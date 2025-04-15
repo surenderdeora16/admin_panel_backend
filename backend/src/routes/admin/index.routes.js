@@ -11,6 +11,8 @@ const subjectController = require("../../controllers/admin/subjectController")
 const chapterController = require("../../controllers/admin/chapterController")
 const topicController = require("../../controllers/admin/topicController")
 const questionController = require("../../controllers/admin/questionController")
+const batchController = require("../../controllers/admin/batchController")
+const examPlanController = require("../../controllers/admin/examPlanController")
 const testSeriesController = require("../../controllers/admin/testSeriesController")
 
 const checkValid = require("../../middelwares/validator");
@@ -29,7 +31,8 @@ const uploadUpcomingGovtExamImage = new Storage.uploadTo({
   isImage: true,
   // fileSize: 10,
 });
-
+const uploadBatch = new Storage.uploadTo({ dir: "batches", isImage: true })
+const uploadExamPlan = new Storage.uploadTo({ dir: "exam_plans", isImage: true })
 
 
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -243,17 +246,6 @@ router.post("/topics", checkValid("createTopic"), showValidationErrors, topicCon
 router.put("/topics/:id", checkValid("updateTopic"), showValidationErrors, topicController.updateTopic)
 router.delete("/topics/:id", topicController.deleteTopic)
 
-// Question Routes
-// router.get("/questions", questionController.getQuestions)
-// router.get("/questions/:id", questionController.getQuestionById)
-// router.post("/questions", checkValid("createQuestion"), showValidationErrors, questionController.createQuestion)
-// router.put("/questions/:id", checkValid("updateQuestion"), showValidationErrors, questionController.updateQuestion)
-// router.delete("/questions/:id", questionController.deleteQuestion)
-// router.post("/questions/bulk-delete", questionController.bulkDeleteQuestions)
-
-// // Import/Export Routes
-// router.post("/questions/import", uploadQues.single("file"), questionController.importQuestions)
-// router.get("/questions/template/download", questionController.downloadTemplate)
 
 
 // Routes
@@ -266,28 +258,55 @@ router.post(
   questionController.uploadQuestions,
 )
 router.post("/questions", questionController.createQuestion) // add this to create a question
-router.delete("/questions/:id", questionController.deleteQuestion) /
+router.delete("/questions/:id", questionController.deleteQuestion) 
 // router.get("/questions/topic/:topicId",  questionController.getQuestionsByTopic)
 // // router.get("questions/:id",  questionController.getQuestion)
 // router.put("update-questions/:id",  questionController.updateQuestion)
 // // router.delete("/:id",  questionController.deleteQuestion)
 
 
-// Test Series 
-router.post("/testSeries",  testSeriesController.createTestSeries)
-router.get("/testSeries",  testSeriesController.getTestSeries)
-router.get("/testSeries/subjects-chapters-topics",  testSeriesController.getSubjectsChaptersTopics)
-router.get("testSeries/:id",  testSeriesController.getTestSeriesById)
-router.put("/update-testSeries/:id",  testSeriesController.updateTestSeries)
-// router.delete("/:id",  testSeriesController.deleteTestSeries)
-router.post("/testSeries/:testSeriesId/questions",  testSeriesController.addQuestionsToTestSeries)
-// router.delete(
-//   "/:testSeriesId/questions",
-//   
-//  
-//   testSeriesController.removeQuestionsFromTestSeries,
-// )
-router.get("/testSeries/:testSeriesId/questions",  testSeriesController.getTestSeriesQuestions)
+
+
+// Batch Routes
+router.get("/batches", batchController.getBatches)
+router.get("/batches/:id", batchController.getBatchById)
+router.post("/batches", uploadBatch.single("image"), batchController.createBatch)
+router.put("/batches/:id", uploadBatch.single("image"), batchController.updateBatch)
+router.delete("/batches/:id", batchController.deleteBatch)
+
+// Exam Plan Routes
+router.get("/exam-plans", examPlanController.getExamPlans)
+router.get("/exam-plans/:id", examPlanController.getExamPlanById)
+router.post("/exam-plans", uploadExamPlan.single("image"), examPlanController.createExamPlan)
+router.put("/exam-plans/:id", uploadExamPlan.single("image"), examPlanController.updateExamPlan)
+router.delete("/exam-plans/:id", examPlanController.deleteExamPlan)
+
+// Test Series Routes
+router.get("/test-series", testSeriesController.getTestSeries)
+router.get("/test-series/:id", testSeriesController.getTestSeriesById)
+router.post("/test-series", testSeriesController.createTestSeries)
+router.put("/test-series/:id", testSeriesController.updateTestSeries)
+router.delete("/test-series/:id", testSeriesController.deleteTestSeries)
+
+// Test Series Sections Routes
+router.get("/test-series/:testSeriesId/sections", testSeriesController.getTestSeriesSections)
+router.post("/test-series/:testSeriesId/sections", testSeriesController.createSection)
+router.put("/test-series/sections/:sectionId", testSeriesController.updateSection)
+router.delete("/test-series/sections/:sectionId", testSeriesController.deleteSection)
+
+// Test Series Questions Routes
+router.get("/test-series/:testSeriesId/sections/:sectionId/questions", testSeriesController.getSectionQuestions)
+router.post("/test-series/:testSeriesId/sections/:sectionId/questions", testSeriesController.addQuestionsToSection)
+router.delete(
+  "/test-series/:testSeriesId/sections/:sectionId/questions",
+  testSeriesController.removeQuestionsFromSection,
+)
+
+// Question Selection Data Routes
+router.get("/question-selection/subjects", testSeriesController.getQuestionSelectionData)
+router.get("/question-selection/subjects/:subjectId/chapters", testSeriesController.getChaptersBySubject)
+router.get("/question-selection/chapters/:chapterId/topics", testSeriesController.getTopicsByChapter)
+router.get("/question-selection/topics/:topicId/questions", testSeriesController.getQuestionsByTopic)
 
 
 

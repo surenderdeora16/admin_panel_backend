@@ -9,6 +9,12 @@ const TestSeriesQuestionSchema = new Schema(
       required: [true, "Test series is required"],
       index: true,
     },
+    sectionId: {
+      type: Schema.Types.ObjectId,
+      ref: "Section",
+      required: [true, "Section is required"],
+      index: true,
+    },
     questionId: {
       type: Schema.Types.ObjectId,
       ref: "Question",
@@ -23,6 +29,10 @@ const TestSeriesQuestionSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "Admin",
@@ -36,6 +46,8 @@ const TestSeriesQuestionSchema = new Schema(
 )
 
 // Create compound index for test series + question uniqueness
-TestSeriesQuestionSchema.index({ testSeriesId: 1, questionId: 1 }, { unique: true })
+// TestSeriesQuestionSchema.index({ testSeriesId: 1, questionId: 1 }, { unique: true })
+TestSeriesQuestionSchema.index({ testSeriesId: 1, sectionId: 1, questionId: 1 }, { unique: true })
+
 
 module.exports = mongoose.model("TestSeriesQuestion", TestSeriesQuestionSchema)

@@ -13,12 +13,12 @@ const TestSeriesSchema = new Schema(
     description: {
       type: String,
       trim: true,
-      maxlength: [500, "Description cannot exceed 500 characters"],
+      maxlength: [1000, "Description cannot exceed 1000 characters"],
     },
-    examId: {
+    examPlanId: {
       type: Schema.Types.ObjectId,
-      ref: "Exam",
-      required: [true, "Exam is required"],
+      ref: "ExamPlan",
+      required: [true, "Exam plan is required"],
       index: true,
     },
     duration: {
@@ -30,6 +30,10 @@ const TestSeriesSchema = new Schema(
       type: Number,
       default: 0,
     },
+    correctMarks: {
+      type: Number,
+      default: 1,
+    },
     negativeMarks: {
       type: Number,
       default: 0.25,
@@ -37,18 +41,24 @@ const TestSeriesSchema = new Schema(
     passingPercentage: {
       type: Number,
       default: 33,
+      min: [0, "Passing percentage cannot be negative"],
+      max: [100, "Passing percentage cannot exceed 100"],
     },
-    isFree: {
-      type: Boolean,
-      default: false,
+    instructions: {
+      type: String,
+      trim: true,
     },
-    isActive: {
-      type: Boolean,
-      default: true,
+    sequence: {
+      type: Number,
+      default: 0,
     },
     status: {
       type: Boolean,
       default: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
     },
     createdBy: {
       type: Schema.Types.ObjectId,
@@ -64,5 +74,11 @@ const TestSeriesSchema = new Schema(
 
 // Create text index for search optimization
 TestSeriesSchema.index({ title: "text", description: "text" })
+
+// Pre-find middleware to exclude soft-deleted records
+TestSeriesSchema.pre(/^find/, function (next) {
+  this.where({ deletedAt: null })
+  next()
+})
 
 module.exports = mongoose.model("TestSeries", TestSeriesSchema)

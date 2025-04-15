@@ -25,12 +25,14 @@ const UserSchema = new mongoose.Schema(
       maxlength: 10,
     },
     state: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
+      ref: 'State', 
       trim: true,
     },
     district: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'District', 
       required: true,
       trim: true,
     },
