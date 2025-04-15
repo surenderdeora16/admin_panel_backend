@@ -30,7 +30,7 @@ router.post('/login-otp', checkValid('loginWithOtp'), showValidationErrors, auth
 router.use(authCheck);
 
 // ..................... Dashboard Routes .................................
-
+router.get('/profile', dashboardController.getProfile);
 
 
 // ..................... User Protected Routes .................................
