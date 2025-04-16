@@ -75,7 +75,7 @@ exports.login = async (req, res) => {
     // Set secure cookie
     res.cookie("accessToken", token, getCookiesConfig());
 
-    const record = { token, mobile };
+    const record = { token, mobile, name: user.name, email: user.email };
     return res.success(record, "Login successful! Welcome back.");
   } catch (error) {
     logger.error(`Login error: ${error.message}`);

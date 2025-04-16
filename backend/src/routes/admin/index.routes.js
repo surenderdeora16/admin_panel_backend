@@ -14,7 +14,7 @@ const questionController = require("../../controllers/admin/questionController")
 const batchController = require("../../controllers/admin/batchController")
 const examPlanController = require("../../controllers/admin/examPlanController")
 const testSeriesController = require("../../controllers/admin/testSeriesController")
-
+const noteController = require("../../controllers/admin/noteController")
 const checkValid = require("../../middelwares/validator");
 const Storage = require("../../helpers/Storage");
 const bannerController = require("../../controllers/admin/bannerController");
@@ -38,6 +38,8 @@ const uploadExamPlan = new Storage.uploadTo({ dir: "exam_plans", isImage: true }
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // Configure multer for memory storage
 const multer = require("multer")
+const path = require("path");
+const fs = require("fs");
 
 const questionUpload = multer({
   storage: multer.memoryStorage(),
@@ -55,6 +57,62 @@ const questionUpload = multer({
     }
   },
 })
+
+
+
+// Configure storage for note uploads
+const noteStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    let uploadPath = path.join(__dirname, "../../../public/uploads/notes")
+
+    // Create separate folder for thumbnails
+    if (file.fieldname === "thumbnailImage") {
+      uploadPath = path.join(uploadPath, "thumbnails")
+    }
+
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true })
+    }
+
+    cb(null, uploadPath)
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9)
+    const ext = path.extname(file.originalname)
+    cb(null, file.fieldname + "-" + uniqueSuffix + ext)
+  },
+})
+
+// Configure file filter
+const noteFileFilter = (req, file, cb) => {
+  if (file.fieldname === "pdfFile") {
+    // Accept only PDF files
+    if (file.mimetype === "application/pdf") {
+      cb(null, true)
+    } else {
+      cb(new Error("Only PDF files are allowed for notes"), false)
+    }
+  } else if (file.fieldname === "thumbnailImage") {
+    // Accept only image files
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true)
+    } else {
+      cb(new Error("Only image files are allowed for thumbnails"), false)
+    }
+  } else {
+    cb(new Error("Unexpected field"), false)
+  }
+}
+
+const uploadNote = multer({
+  storage: noteStorage,
+  fileFilter: noteFileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+})
+
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
@@ -309,6 +367,26 @@ router.get("/question-selection/chapters/:chapterId/topics", testSeriesControlle
 router.get("/question-selection/topics/:topicId/questions", testSeriesController.getQuestionsByTopic)
 
 
+// Notes (PDF) Routes
+router.get("/notes", noteController.getNotes)
+router.get("/notes/:id", noteController.getNoteById)
+router.post(
+  "/notes",
+  uploadNote.fields([
+    { name: "pdfFile", maxCount: 1 },
+    { name: "thumbnailImage", maxCount: 1 },
+  ]),
+  noteController.createNote,
+)
+router.put(
+  "/notes/:id",
+  uploadNote.fields([
+    { name: "pdfFile", maxCount: 1 },
+    { name: "thumbnailImage", maxCount: 1 },
+  ]),
+  noteController.updateNote,
+)
+router.delete("/notes/:id", noteController.deleteNote)
 
 //-------------------------
 router.get("/users-datatable", usersController.list);

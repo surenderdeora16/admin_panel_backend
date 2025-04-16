@@ -16,7 +16,7 @@ import {
   FiLayout,
   FiLogIn,
 } from 'react-icons/fi';
-import { FaBook } from "react-icons/fa";
+import { FaBook, FaFileAlt } from "react-icons/fa";
 import { SlBookOpen } from "react-icons/sl";
 import { RiGovernmentLine } from "react-icons/ri";
 
@@ -91,7 +91,11 @@ const MENU_CONFIG = {
         // },
       ],
     },
-
+    {
+      name: 'Notes',
+      path: '/notes',
+      icon: FaFileAlt,
+    },
     {
       name: 'Exams',
       icon: IoLibrary,

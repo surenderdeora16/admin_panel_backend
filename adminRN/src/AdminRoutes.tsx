@@ -33,6 +33,7 @@ import ExamPlans from './pages/Exams/ExamPlans';
 import TestSeries from './pages/Exams/TestSeries';
 import TestSeriesSections from './pages/Exams/TestSeriesSections';
 import SectionQuestions from './pages/Exams/SectionQuestions';
+import Notes from './pages/notes/Notes';
 
 // import SubjectsPage from './pages/ExamLibrary/vercel/subjects/page';
 
@@ -225,6 +226,38 @@ function App() {
               </Routes>
           }
         />
+
+
+<Route
+          path="/notes"
+          element={
+              <Notes />
+          }
+        />
+        <Route
+          path="/notes/:subjectId"
+          element={
+              <Notes />
+          }
+        />
+
+        {/* User Routes
+        <Route
+          path="/notes"
+          element={
+            <UserLayout>
+              <DownloadNotes />
+            </UserLayout>
+          }
+        />
+        <Route
+          path="/notes/:subjectId"
+          element={
+            <UserLayout>
+              <DownloadNotes />
+            </UserLayout>
+          }
+        /> */}
 
         {/* ------------- */}
         <Route

@@ -2,6 +2,8 @@ const authController = require('../../controllers/user/authController');
 const commonController = require('../../controllers/user/commonController');
 const bookingController = require('../../controllers/user/bookingController');
 const locationController = require('../../controllers/locationController');
+const dashboardController = require('../../controllers/user/dashboardController');
+const noteController = require("../../controllers/admin/noteController")
 
 const { showValidationErrors, authCheck } = require('../../middelwares')
 const checkValid = require('../../middelwares/validator');
@@ -30,7 +32,14 @@ router.post('/login-otp', checkValid('loginWithOtp'), showValidationErrors, auth
 router.use(authCheck);
 
 // ..................... Dashboard Routes .................................
-// router.get('/profile', dashboardController.getProfile);
+router.get('/dashboard', dashboardController.dashboard);
+
+
+
+// Note Routes for users
+router.get("/subjects/:subjectId/notes", noteController.getNotesBySubject)
+router.get("/notes/:noteId/download", noteController.downloadNote)
+
 
 
 // ..................... User Protected Routes .................................
