@@ -2,6 +2,8 @@ const Note = require("../../models/Note")
 const Subject = require("../../models/Subject")
 const fs = require("fs")
 const path = require("path")
+const UserPurchase = require("../../models/UserPurchase")
+const razorpayService = require("../../services/razorpayService")
 
 // Get all notes with pagination and filters
 exports.getNotes = async (req, res) => {
@@ -90,7 +92,7 @@ exports.createNote = async (req, res) => {
       validityDays: validityDays || 180,
       sequence: sequence || 0,
       status: status !== undefined ? status === "true" || status === true : true,
-      createdBy: req.admin._id,
+      createdBy: req.user._id,
     }
 
     // Add thumbnail image if uploaded
@@ -163,7 +165,7 @@ exports.updateNote = async (req, res) => {
     if (sequence !== undefined) note.sequence = sequence
     if (status !== undefined) note.status = status === "true" || status === true
 
-    note.updatedBy = req.admin._id
+    note.updatedBy = req.user._id
 
     // Update PDF file if uploaded
     if (req.files && req.files.pdfFile) {
@@ -233,7 +235,7 @@ exports.deleteNote = async (req, res) => {
 
     // Soft delete by updating deletedAt
     note.deletedAt = new Date()
-    note.updatedBy = req.admin._id
+    note.updatedBy = req.user._id
     await note.save()
 
     return res.successDelete()
@@ -317,26 +319,110 @@ exports.downloadNote = async (req, res) => {
       return res.download(filePath, `${note.title}.pdf`)
     } else {
       // For paid notes, check if user has purchased it
-      // This would typically involve checking a purchases collection
-      // For now, we'll just return the file path that would be used in a frontend download
-      return res.status(200).json({
-        status: true,
-        message: "Note is available for purchase",
-        data: {
-          noteId: note._id,
-          title: note.title,
-          price: note.price,
-          mrp: note.mrp,
-          validityDays: note.validityDays,
-          isPurchased: false, // This would be determined by checking user purchases
-        },
-      })
+      const hasPurchased = await razorpayService.checkUserPurchase(req.user._id, "NOTE", noteId)
+
+      if (!hasPurchased) {
+        return res.status(403).json({
+          status: false,
+          message: "You need to purchase this note to download it",
+          data: {
+            noteId: note._id,
+            title: note.title,
+            price: note.price,
+            mrp: note.mrp,
+            validityDays: note.validityDays,
+            requiresPurchase: true,
+          },
+        })
+      }
+
+      // User has purchased, allow download
+      const filePath = path.join(__dirname, "../../../public", note.pdfFile)
+
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({
+          status: false,
+          message: "PDF file not found",
+        })
+      }
+
+      // Send file
+      return res.download(filePath, `${note.title}.pdf`)
     }
   } catch (error) {
     console.error("Error downloading note:", error)
     return res.status(500).json({
       status: false,
       message: "Failed to download note",
+      error: error.message,
+    })
+  }
+}
+
+// get notes by subject with purchase status
+exports.getNotesBySubjectWithPurchaseStatus = async (req, res) => {
+  try {
+    const { subjectId } = req.params
+
+    // Check if subject exists
+    const subject = await Subject.findById(subjectId)
+    if (!subject) {
+      return res.status(404).json({
+        status: false,
+        message: "Subject not found",
+      })
+    }
+
+    // Get active notes for this subject
+    const notes = await Note.find({
+      subjectId,
+      status: true,
+    }).sort({ sequence: 1 })
+
+    // Get user's active purchases
+    const userPurchases = await UserPurchase.find({
+      userId: req.user._id,
+      itemType: "NOTE",
+      status: "ACTIVE",
+      expiryDate: { $gt: new Date() },
+    })
+
+    // Map of purchased note IDs
+    const purchasedNoteIds = new Map(userPurchases.map((purchase) => [purchase.itemId.toString(), purchase]))
+
+    // Add purchase status to each note
+    const notesWithPurchaseStatus = notes.map((note) => {
+      const noteObj = note.toObject()
+
+      if (note.isFree) {
+        noteObj.isPurchased = true
+        noteObj.isFree = true
+      } else {
+        const purchase = purchasedNoteIds.get(note._id.toString())
+        noteObj.isPurchased = !!purchase
+        noteObj.isFree = false
+        if (purchase) {
+          noteObj.purchaseDetails = {
+            purchaseId: purchase._id,
+            purchaseDate: purchase.purchaseDate,
+            expiryDate: purchase.expiryDate,
+          }
+        }
+      }
+
+      return noteObj
+    })
+
+    return res.status(200).json({
+      status: true,
+      data: notesWithPurchaseStatus,
+    })
+  } catch (error) {
+    console.error("Error fetching notes by subject:", error)
+    return res.status(500).json({
+      status: false,
+      message: "Failed to fetch notes",
       error: error.message,
     })
   }

@@ -44,10 +44,6 @@ const ExamPlanSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    isFree: {
-      type: Boolean,
-      default: false,
-    },
     sequence: {
       type: Number,
       default: 0,

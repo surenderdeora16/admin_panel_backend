@@ -4,6 +4,14 @@ const bookingController = require('../../controllers/user/bookingController');
 const locationController = require('../../controllers/locationController');
 const dashboardController = require('../../controllers/user/dashboardController');
 const noteController = require("../../controllers/admin/noteController")
+const testSeriesController = require("../../controllers/admin/testSeriesController")
+const paymentController = require("../../controllers/paymentController")
+const examPlanController = require("../../controllers/user/examPlanController")
+
+// const { checkNotePurchase, checkExamPlanPurchase, checkTestSeriesAccess } = require("../../middelwares/checkPurchase")
+const { checkExamPlanPurchase, checkTestSeriesAccess } = require("../../middelwares/checkPurchase")
+
+
 
 const { showValidationErrors, authCheck } = require('../../middelwares')
 const checkValid = require('../../middelwares/validator');
@@ -38,8 +46,27 @@ router.get('/dashboard', dashboardController.dashboard);
 
 // Note Routes for users
 router.get("/subjects/:subjectId/notes", noteController.getNotesBySubject)
+// router.get("/notes/:noteId/download", checkNotePurchase, noteController.downloadNote)
 router.get("/notes/:noteId/download", noteController.downloadNote)
 
+
+// Exam Plan Routes for users
+router.get("/exam-plans",  examPlanController.getUserExamPlans)
+router.get("/exam-plans/:id",  examPlanController.getUserExamPlanById)
+
+// Test Series Routes for users
+// router.get("/exam-plans/:examPlanId/test-series",  testSeriesController.getTestSeriesWithPurchaseStatus)
+// router.get("/test-series/:testSeriesId",  checkTestSeriesAccess, testSeriesController.getTestSeriesForUser)
+router.get("/test-series/:testSeriesId/sections",  checkTestSeriesAccess, testSeriesController.getTestSeriesSections)
+router.get("/test-series/:testSeriesId/sections/:sectionId/questions",  checkTestSeriesAccess, testSeriesController.getSectionQuestions)
+
+// Payment Routes
+router.post("/payments/create-order",  paymentController.createPaymentOrder)
+router.post("/payments/verify",  paymentController.verifyPayment)
+router.get("/payments/history",  paymentController.getUserPaymentHistory)
+router.get("/payments/active-purchases",  paymentController.getUserActivePurchases)
+router.get("/payments/:paymentId",  paymentController.getPaymentDetails)
+router.get("/purchases/check/:itemType/:itemId",  paymentController.checkPurchaseStatus)
 
 
 // ..................... User Protected Routes .................................

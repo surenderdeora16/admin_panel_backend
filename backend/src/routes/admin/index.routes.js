@@ -15,6 +15,8 @@ const batchController = require("../../controllers/admin/batchController")
 const examPlanController = require("../../controllers/admin/examPlanController")
 const testSeriesController = require("../../controllers/admin/testSeriesController")
 const noteController = require("../../controllers/admin/noteController")
+const paymentController = require("../../controllers/paymentController")
+
 const checkValid = require("../../middelwares/validator");
 const Storage = require("../../helpers/Storage");
 const bannerController = require("../../controllers/admin/bannerController");
@@ -387,6 +389,11 @@ router.put(
   noteController.updateNote,
 )
 router.delete("/notes/:id", noteController.deleteNote)
+
+
+// Payment Routes for admin
+router.get("/payments", authCheckAdmin, paymentController.getAllPayments)
+router.get("/payments/statistics", authCheckAdmin, paymentController.getPaymentStatistics)
 
 //-------------------------
 router.get("/users-datatable", usersController.list);

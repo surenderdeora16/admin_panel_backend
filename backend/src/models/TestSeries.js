@@ -48,6 +48,10 @@ const TestSeriesSchema = new Schema(
       type: String,
       trim: true,
     },
+    isFree: {
+      type: Boolean,
+      default: false,
+    },
     sequence: {
       type: Number,
       default: 0,
