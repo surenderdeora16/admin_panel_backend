@@ -1,0 +1,54 @@
+{"error":{},"level":"error","message":"Error creating coupon: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-04-19 19:09:49"}
+{"error":{},"level":"error","message":"Error getting coupon stats: Class constructor ObjectId cannot be invoked without 'new'","service":"lms-api","timestamp":"2025-04-19 19:23:59"}
+{"error":{},"level":"error","message":"Error getting coupon stats: Class constructor ObjectId cannot be invoked without 'new'","service":"lms-api","timestamp":"2025-04-19 19:24:17"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:37:09"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:38:43"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:39:58"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:42:36"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:43:14"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:44:14"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:45:12"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:45:33"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 00:47:41"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 00:48:15"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 00:49:07"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:49:45"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:51:42"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:52:41"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 00:53:03"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:53:38"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:53:51"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 00:54:07"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 00:54:26"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 00:55:03"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 00:55:07"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:56:17"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 00:56:45"}
+{"error":{},"level":"error","message":"Error creating exam plan order: req is not defined","service":"lms-api","timestamp":"2025-04-20 00:58:02"}
+{"error":{},"level":"error","message":"Error creating exam plan order: req is not defined","service":"lms-api","timestamp":"2025-04-20 00:58:37"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 01:01:34"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 01:03:36"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Cannot read properties of undefined (reading 'toString')","service":"lms-api","timestamp":"2025-04-20 01:04:13"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 01:05:05"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 01:06:39"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 01:07:23"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 01:09:29"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 01:10:01"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 01:11:12"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 01:12:13"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 01:13:58"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 01:20:59"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 01:21:27"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 01:24:37"}
+{"error":{"error":{"code":"BAD_REQUEST_ERROR","description":"Authentication failed"},"statusCode":401},"level":"error","message":"Error creating exam plan order: undefined","service":"lms-api","timestamp":"2025-04-20 01:25:54"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Coupon has expired or is no longer valid","service":"lms-api","timestamp":"2025-04-20 01:43:29"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Invalid coupon code","service":"lms-api","timestamp":"2025-04-20 01:44:10"}
+{"error":{},"level":"error","message":"Error creating exam plan order: Coupon has expired or is no longer valid","service":"lms-api","timestamp":"2025-04-20 01:44:17"}
+{"error":{},"level":"error","message":"Error processing payment: Invalid payment signature","service":"lms-api","timestamp":"2025-04-20 02:13:41"}
+{"error":{},"level":"error","message":"Error processing payment: Invalid payment signature","service":"lms-api","timestamp":"2025-04-20 02:17:42"}
+{"error":{},"level":"error","message":"Error processing payment: Invalid payment signature","service":"lms-api","timestamp":"2025-04-20 02:35:37"}
+{"error":{},"level":"error","message":"Error creating note order: Invalid coupon code","service":"lms-api","timestamp":"2025-04-20 02:55:56"}
+{"error":{},"level":"error","message":"Error processing payment: Invalid payment signature","service":"lms-api","timestamp":"2025-04-20 02:57:14"}
+{"error":{},"level":"error","message":"Error processing payment: Invalid payment signature","service":"lms-api","timestamp":"2025-04-20 02:58:18"}
+{"error":{},"level":"error","message":"Error processing payment: Invalid payment signature","service":"lms-api","timestamp":"2025-04-20 02:58:23"}
+{"error":{},"level":"error","message":"Error processing payment: Invalid payment signature","service":"lms-api","timestamp":"2025-04-20 03:18:11"}

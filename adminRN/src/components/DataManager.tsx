@@ -489,8 +489,6 @@ const DataManager = ({
                       Sr No.
                     </th>
                     {tableColumns?.map((col) => {
-                      
-                      console.log("col", col)
                       return(
                       <th
                         key={col.header}

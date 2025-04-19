@@ -4,12 +4,11 @@ const mongoose = require("mongoose")
 const path = require("path")
 const fs = require("fs")
 
-
 // * Get all exam plans with purchase status for the authenticated user
 exports.getUserExamPlans = async (req, res) => {
   try {
     // Get query parameters for filtering and pagination
-    const { limit = 10, page = 1, search = "", sortBy = "createdAt", sortOrder = "desc", batchId = null } = req.query
+    const { limit, pageNo: page, query: search, orderBy: sortBy, orderDirection: sortOrder, batchId } = req.query
 
     // Build query object
     const query = {
@@ -43,6 +42,11 @@ exports.getUserExamPlans = async (req, res) => {
 
     // Get total count for pagination
     const totalCount = await ExamPlan.countDocuments(query)
+
+    // Return if no records found
+    if (!examPlans.length) {
+      return res.datatableNoRecords()
+    }
 
     // Get user's purchases for these exam plans
     const userPurchases = await UserPurchase.find({
@@ -96,26 +100,12 @@ exports.getUserExamPlans = async (req, res) => {
     })
 
     // Return response with pagination
-    return res.status(200).json({
-      success: true,
-      data: examPlansWithPurchaseStatus,
-      pagination: {
-        total: totalCount,
-        page: Number.parseInt(page),
-        pages: Math.ceil(totalCount / Number.parseInt(limit)),
-        limit: Number.parseInt(limit),
-      },
-    })
+    return res.pagination(examPlansWithPurchaseStatus, totalCount, limit, page)
   } catch (error) {
     console.error("Error fetching exam plans:", error)
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch exam plans",
-      error: error.message,
-    })
+    return res.someThingWentWrong(error)
   }
 }
-
 
 // * Get a single exam plan with purchase status
 exports.getUserExamPlanById = async (req, res) => {
@@ -131,10 +121,7 @@ exports.getUserExamPlanById = async (req, res) => {
     }).populate("batchId", "name")
 
     if (!examPlan) {
-      return res.status(404).json({
-        success: false,
-        message: "Exam plan not found",
-      })
+      return res.noRecords("Exam plan not found")
     }
 
     // Check if user has purchased this exam plan
@@ -170,16 +157,9 @@ exports.getUserExamPlanById = async (req, res) => {
       examPlanObj.imageUrl = `${process.env.BASE_URL}${examPlanObj.image}`
     }
 
-    return res.status(200).json({
-      success: true,
-      data: examPlanObj,
-    })
+    return res.success(examPlanObj)
   } catch (error) {
     console.error("Error fetching exam plan:", error)
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch exam plan",
-      error: error.message,
-    })
+    return res.someThingWentWrong(error)
   }
 }

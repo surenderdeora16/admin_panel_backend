@@ -123,7 +123,11 @@ const MENU_CONFIG = {
       ],
     },
 
-
+    {
+      name: 'Coupons',
+      path: '/coupon',
+      icon: RiGovernmentLine,
+    },
 
     {
       name: 'Location',

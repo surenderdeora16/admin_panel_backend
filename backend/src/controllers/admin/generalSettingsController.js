@@ -4,11 +4,8 @@ const Storage = require('../../helpers/storage');
 
 exports.getGeneralSetting = async (req, res) => {
     try {
-        console.log("req", req)
         var setting = await GeneralSetting.find({ setting_type: { $in: req.params.type.split(',').map(r => parseInt(r)) } });
-        console.log("setting", setting)
         var setting_arr = setting.reduce((obj, item) => Object.assign(obj, { [item.field_name]: item.field_value }), {});
-        console.log("setting_arr", setting_arr)
 
         if (setting.length > 0) {
             console.log(1)

@@ -7,6 +7,8 @@ const noteController = require("../../controllers/admin/noteController")
 const testSeriesController = require("../../controllers/admin/testSeriesController")
 const paymentController = require("../../controllers/paymentController")
 const examPlanController = require("../../controllers/user/examPlanController")
+const examPlanPaymentController = require("../../controllers/user/examPlanPaymentController")
+const notePaymentController = require("../../controllers/user/notePaymentController")
 
 // const { checkNotePurchase, checkExamPlanPurchase, checkTestSeriesAccess } = require("../../middelwares/checkPurchase")
 const { checkExamPlanPurchase, checkTestSeriesAccess } = require("../../middelwares/checkPurchase")
@@ -50,9 +52,82 @@ router.get("/subjects/:subjectId/notes", noteController.getNotesBySubject)
 router.get("/notes/:noteId/download", noteController.downloadNote)
 
 
+// Exam Plan Payment Flow
+// Create exam plan order
+router.post("/exam-plans/:examPlanId/order",  examPlanPaymentController.createExamPlanOrder)
+
+// Verify exam plan payment
+router.post("/exam-plans/verify-payment",  examPlanPaymentController.verifyExamPlanPayment)
+
+// Get user's purchased exam plans
+router.get("/exam-plans/purchased",  examPlanPaymentController.getUserPurchasedExamPlans)
+
+// Check if user has purchased an exam plan
+router.get("/exam-plans/:examPlanId/check-purchase",  examPlanPaymentController.checkExamPlanPurchase)
+
+// Get applicable coupons for an exam plan
+router.get("/exam-plans/:examPlanId/coupons",  examPlanPaymentController.getExamPlanCoupons)
+
+// Validate coupon for an exam plan
+router.post("/exam-plans/:examPlanId/validate-coupon",  examPlanPaymentController.validateExamPlanCoupon)
+
 // Exam Plan Routes for users
 router.get("/exam-plans",  examPlanController.getUserExamPlans)
 router.get("/exam-plans/:id",  examPlanController.getUserExamPlanById)
+
+
+
+
+// Create note order
+router.post("/notes/:noteId/order",  notePaymentController.createNoteOrder)
+
+// Verify note payment
+router.post("/notes/verify-payment",  notePaymentController.verifyNotePayment)
+
+// Get user's purchased notes
+router.get("/notes/purchased",  notePaymentController.getUserPurchasedNotes)
+
+// Check if user has purchased a note
+router.get("/notes/:noteId/check-purchase",  notePaymentController.checkNotePurchase)
+
+// Get applicable coupons for a note
+router.get("/notes/:noteId/coupons",  notePaymentController.getNoteCoupons)
+
+// Validate coupon for a note
+router.post("/notes/:noteId/validate-coupon",  notePaymentController.validateNoteCoupon)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Test Series Routes for users
 // router.get("/exam-plans/:examPlanId/test-series",  testSeriesController.getTestSeriesWithPurchaseStatus)

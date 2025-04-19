@@ -17,7 +17,7 @@ const OrderSchema = new Schema(
     },
     itemType: {
       type: String,
-      enum: ["EXAM_PLAN", "TEST_SERIES"],
+      enum: ["EXAM_PLAN", "NOTE"],
       required: [true, "Item type is required"],
     },
     itemId: {
@@ -28,12 +28,31 @@ const OrderSchema = new Schema(
     itemModel: {
       type: String,
       required: [true, "Item model is required"],
-      enum: ["ExamPlan", "TestSeries"],
+      enum: ["ExamPlan", "Note"],
     },
-    amount: {
+    originalAmount: {
       type: Number,
-      required: [true, "Amount is required"],
+      required: [true, "Original amount is required"],
       min: [0, "Amount cannot be negative"],
+    },
+    discountAmount: {
+      type: Number,
+      default: 0,
+      min: [0, "Discount amount cannot be negative"],
+    },
+    finalAmount: {
+      type: Number,
+      required: [true, "Final amount is required"],
+      min: [0, "Amount cannot be negative"],
+    },
+    couponId: {
+      type: Schema.Types.ObjectId,
+      ref: "Coupon",
+      default: null,
+    },
+    couponCode: {
+      type: String,
+      default: null,
     },
     currency: {
       type: String,
@@ -51,6 +70,7 @@ const OrderSchema = new Schema(
     paymentId: {
       type: Schema.Types.ObjectId,
       ref: "Payment",
+      default: null,
     },
     validUntil: {
       type: Date,

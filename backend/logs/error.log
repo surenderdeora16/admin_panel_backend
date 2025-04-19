@@ -466,3 +466,6 @@
 {"level":"error","message":"OPTIONS /api-v1/admin/logout - CORS policy violation: Origin not allowed"}
 {"level":"error","message":"OPTIONS /api-v1/admin/logout - CORS policy violation: Origin not allowed"}
 {"level":"error","message":"OPTIONS /api-v1/admin/logout - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"POST /api-v1/user/login - Unexpected number in JSON at position 43"}
+{"level":"error","message":"POST /api-v1/user/login - Unexpected number in JSON at position 43"}
+{"level":"error","message":"POST /api-v1/user/login - Unexpected number in JSON at position 43"}

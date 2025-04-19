@@ -34,6 +34,7 @@ import TestSeries from './pages/Exams/TestSeries';
 import TestSeriesSections from './pages/Exams/TestSeriesSections';
 import SectionQuestions from './pages/Exams/SectionQuestions';
 import Notes from './pages/notes/Notes';
+import Coupons from './pages/coupon/Coupons';
 
 // import SubjectsPage from './pages/ExamLibrary/vercel/subjects/page';
 
@@ -194,12 +195,7 @@ function App() {
             </>
           }
         />
-        <Route
-          path="/exam-plans/:batchId"
-          element={
-              <ExamPlans />
-          }
-        />
+        <Route path="/exam-plans/:batchId" element={<ExamPlans />} />
         <Route
           path="/test-series"
           element={
@@ -212,35 +208,29 @@ function App() {
         <Route
           path="/test-series/*"
           element={
-              <Routes>
-                <Route path=":examPlanId" element={<TestSeries />} />
-                <Route
-                  path=":testSeriesId/sections"
-                  element={<TestSeriesSections />}
-                />
-                <Route
-                  path=":testSeriesId/sections/:sectionId/questions"
-                  element={<SectionQuestions />}
-                />
-                <Route path=":testSeriesId/questions" element={<TestSeriesQuestions />} />
-              </Routes>
+            <Routes>
+              <Route path=":examPlanId" element={<TestSeries />} />
+              <Route
+                path=":testSeriesId/sections"
+                element={<TestSeriesSections />}
+              />
+              <Route
+                path=":testSeriesId/sections/:sectionId/questions"
+                element={<SectionQuestions />}
+              />
+              <Route
+                path=":testSeriesId/questions"
+                element={<TestSeriesQuestions />}
+              />
+            </Routes>
           }
         />
 
+        <Route path="/notes" element={<Notes />} />
+        <Route path="/notes/:subjectId" element={<Notes />} />
 
-<Route
-          path="/notes"
-          element={
-              <Notes />
-          }
-        />
-        <Route
-          path="/notes/:subjectId"
-          element={
-              <Notes />
-          }
-        />
 
+        <Route path="/coupon" element={<Coupons />} />
         {/* User Routes
         <Route
           path="/notes"

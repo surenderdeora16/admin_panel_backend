@@ -1,140 +1,308 @@
-const Razorpay = require("razorpay")
-const crypto = require("crypto")
-const Order = require("../models/Order")
-const Payment = require("../models/Payment")
-const UserPurchase = require("../models/UserPurchase")
-const ExamPlan = require("../models/ExamPlan")
-const TestSeries = require("../models/TestSeries")
+// src/services/razorpayService.js
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
+const Order = require("../models/Order");
+const Payment = require("../models/Payment");
+const UserPurchase = require("../models/UserPurchase");
+const ExamPlan = require("../models/ExamPlan");
+const Note = require("../models/Note");
+const couponService = require("./couponService");
+const logger = require("../utils/logger");
 
 // Initialize Razorpay with your key_id and key_secret
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
-})
+});
 
-// Generate a unique order number
-const generateOrderNumber = () => {
-  const timestamp = new Date().getTime()
-  const random = Math.floor(Math.random() * 1000)
-  return `ORD-${timestamp}-${random}`
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+  throw new Error("Razorpay API credentials are missing. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your environment variables.");
 }
 
-// Create a Razorpay order
-exports.createOrder = async (userId, itemType, itemId, amount, currency = "INR") => {
-  try {
-    // Validate item exists and get validity days
-    let validityDays = 0
-    let itemModel = ""
+/**
+ * Generates a unique order number
+ * @returns {string} - Unique order number
+ */
+const generateOrderNumber = () => {
+  const timestamp = new Date().getTime();
+  const random = Math.floor(Math.random() * 1000);
+  return `ORD-${timestamp}-${random}`;
+};
 
-    if (itemType === "EXAM_PLAN") {
-      const examPlan = await ExamPlan.findById(itemId)
-      if (!examPlan) {
-        throw new Error("Exam plan not found")
+/**
+ * Creates a Razorpay order for an exam plan
+ * @param {string} userId - The user ID
+ * @param {string} examPlanId - The exam plan ID
+ * @param {string} couponCode - Optional coupon code
+ * @returns {Promise<Object>} - The created order and Razorpay order
+ */
+exports.createExamPlanOrder = async (userId, examPlanId, couponCode = null) => {
+  try {
+    logger.info(`Creating exam plan order for user ${userId}, exam plan ${examPlanId}`);
+
+    // Validate exam plan exists
+    const examPlan = await ExamPlan.findById(examPlanId);
+    if (!examPlan) {
+      throw new Error("Exam plan not found");
+    }
+
+    // Check if user already has an active purchase for this exam plan
+    const hasActivePurchase = await this.checkUserPurchase(userId, "EXAM_PLAN", examPlanId);
+    if (hasActivePurchase) {
+      throw new Error("You already have an active purchase for this exam plan");
+    }
+
+    // Set original amount
+    const originalAmount = examPlan.price;
+    let discountAmount = 0;
+    let finalAmount = originalAmount;
+    let couponData = null;
+
+    // Apply coupon if provided
+    if (couponCode) {
+      try {
+        couponData = await couponService.validateCoupon(
+          couponCode,
+          userId,
+          "EXAM_PLAN",
+          examPlanId,
+          originalAmount
+        );
+
+        discountAmount = couponData.discountAmount;
+        finalAmount = couponData.finalAmount;
+      } catch (error) {
+        throw new Error(error.message);
       }
-      validityDays = examPlan.validityDays
-      itemModel = "ExamPlan"
-    } else if (itemType === "TEST_SERIES") {
-      const testSeries = await TestSeries.findById(itemId)
-      if (!testSeries) {
-        throw new Error("Test series not found")
-      }
-      
-      // Check if test series is free
-      if (testSeries.isFree) {
-        throw new Error("This test series is free and doesn't require payment")
-      }
-      
-      // Get exam plan for validity days
-      const examPlan = await ExamPlan.findById(testSeries.examPlanId)
-      if (!examPlan) {
-        throw new Error("Associated exam plan not found")
-      }
-      
-      validityDays = examPlan.validityDays
-      itemModel = "TestSeries"
-    } else {
-      throw new Error("Invalid item type")
     }
 
     // Create Razorpay order
     const orderOptions = {
-      amount: amount * 100, // Razorpay expects amount in paise
-      currency,
+      amount: finalAmount * 100, 
+      currency: "INR",
       receipt: generateOrderNumber(),
       notes: {
         userId: userId.toString(),
-        itemType,
-        itemId: itemId.toString(),
+        itemType: "EXAM_PLAN",
+        itemId: examPlanId.toString(),
+        couponCode: couponCode || "NONE",
       },
-    }
+    };
 
-    const razorpayOrder = await razorpay.orders.create(orderOptions)
+    const razorpayOrder = await razorpay.orders.create(orderOptions);
+
+    logger.info(`Razorpay order created: ${razorpayOrder.id}`);
 
     // Create our internal order
     const order = new Order({
       userId,
       orderNumber: orderOptions.receipt,
-      itemType,
-      itemId,
-      itemModel,
-      amount,
-      currency,
+      itemType: "EXAM_PLAN",
+      itemId: examPlanId,
+      itemModel: "ExamPlan",
+      originalAmount,
+      discountAmount,
+      finalAmount,
+      couponId: couponData ? couponData.coupon._id : null,
+      couponCode: couponCode,
+      currency: "INR",
       razorpayOrderId: razorpayOrder.id,
       status: "CREATED",
-      validUntil: new Date(Date.now() + validityDays * 24 * 60 * 60 * 1000), // Set validity based on item
+      validUntil: new Date(Date.now() + examPlan.validityDays * 24 * 60 * 60 * 1000),
       metadata: {
         razorpayOrder: razorpayOrder,
+        examPlanDetails: {
+          title: examPlan.title,
+          validityDays: examPlan.validityDays,
+        },
       },
-    })
+    });
 
     // Add initial status to history
-    order.addStatusHistory("CREATED", "Order created")
+    order.addStatusHistory("CREATED", "Order created");
 
-    await order.save()
+    await order.save();
+    logger.info(`Internal order created: ${order._id}`);
+    return {
+      order,
+      razorpayOrder,
+    };
+  } catch (error) {
+    logger.error(`Error creating exam plan order: ${error.message}`, { error });
+    throw error;
+  }
+};
+
+/**
+ * Creates a Razorpay order for a note
+ * @param {string} userId - The user ID
+ * @param {string} noteId - The note ID
+ * @param {string} couponCode - Optional coupon code
+ * @returns {Promise<Object>} - The created order and Razorpay order
+ */
+exports.createNoteOrder = async (userId, noteId, couponCode = null) => {
+  try {
+    logger.info(`Creating note order for user ${userId}, note ${noteId}`);
+
+    // Validate note exists
+    const note = await Note.findById(noteId);
+    if (!note) {
+      throw new Error("Note not found");
+    }
+
+    // Check if note is free
+    if (note.isFree) {
+      throw new Error("This note is free and doesn't require payment");
+    }
+
+    // Check if user already has an active purchase for this note
+    const hasActivePurchase = await this.checkUserPurchase(userId, "NOTE", noteId);
+    if (hasActivePurchase) {
+      throw new Error("You already have an active purchase for this note");
+    }
+
+    // Set original amount
+    const originalAmount = note.price;
+    let discountAmount = 0;
+    let finalAmount = originalAmount;
+    let couponData = null;
+
+    // Apply coupon if provided
+    if (couponCode) {
+      try {
+        couponData = await couponService.validateCoupon(
+          couponCode,
+          userId,
+          "NOTE",
+          noteId,
+          originalAmount
+        );
+
+        discountAmount = couponData.discountAmount;
+        finalAmount = couponData.finalAmount;
+      } catch (error) {
+        throw new Error(error.message);
+      }
+    }
+
+    // Create Razorpay order
+    const orderOptions = {
+      amount: finalAmount * 100, // Razorpay expects amount in paise
+      currency: "INR",
+      receipt: generateOrderNumber(),
+      notes: {
+        userId: userId.toString(),
+        itemType: "NOTE",
+        itemId: noteId.toString(),
+        couponCode: couponCode || "NONE",
+      },
+    };
+
+    const razorpayOrder = await razorpay.orders.create(orderOptions);
+    logger.info(`Razorpay order created: ${razorpayOrder.id}`);
+
+    // Create our internal order
+    const order = new Order({
+      userId,
+      orderNumber: orderOptions.receipt,
+      itemType: "NOTE",
+      itemId: noteId,
+      itemModel: "Note",
+      originalAmount,
+      discountAmount,
+      finalAmount,
+      couponId: couponData ? couponData.coupon._id : null,
+      couponCode: couponCode,
+      currency: "INR",
+      razorpayOrderId: razorpayOrder.id,
+      status: "CREATED",
+      validUntil: new Date(Date.now() + note.validityDays * 24 * 60 * 60 * 1000),
+      metadata: {
+        razorpayOrder: razorpayOrder,
+        noteDetails: {
+          title: note.title,
+          validityDays: note.validityDays,
+        },
+      },
+    });
+
+    // Add initial status to history
+    order.addStatusHistory("CREATED", "Order created");
+
+    await order.save();
+    logger.info(`Internal order created: ${order._id}`);
 
     return {
       order,
       razorpayOrder,
-    }
+    };
   } catch (error) {
-    console.error("Error creating Razorpay order:", error)
-    throw error
+    logger.error(`Error creating note order: ${error.message}`, { error });
+    throw error;
   }
-}
+};
 
-// Verify Razorpay payment signature
+/**
+ * Verifies Razorpay payment signature
+ * @param {string} razorpayOrderId - Razorpay order ID
+ * @param {string} razorpayPaymentId - Razorpay payment ID
+ * @param {string} razorpaySignature - Razorpay signature
+ * @returns {boolean} - Whether the signature is valid
+ */
 exports.verifyPaymentSignature = (razorpayOrderId, razorpayPaymentId, razorpaySignature) => {
-  const generatedSignature = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-    .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-    .digest("hex")
+  try {
+    const generatedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+      .digest("hex");
 
-  return generatedSignature === razorpaySignature
-}
+    return generatedSignature === razorpaySignature;
+  } catch (error) {
+    logger.error(`Error verifying payment signature: ${error.message}`, { error });
+    return false;
+  }
+};
 
-// Process payment verification and update order status
+/**
+ * Processes payment verification and updates order status
+ * @param {string} razorpayOrderId - Razorpay order ID
+ * @param {string} razorpayPaymentId - Razorpay payment ID
+ * @param {string} razorpaySignature - Razorpay signature
+ * @param {string} userId - User ID
+ * @returns {Promise<Object>} - The processed payment result
+ */
 exports.processPayment = async (razorpayOrderId, razorpayPaymentId, razorpaySignature, userId) => {
   try {
+    logger.info(`Processing payment for order ${razorpayOrderId}, payment ${razorpayPaymentId}`);
+
     // Verify signature
-    const isValidSignature = this.verifyPaymentSignature(razorpayOrderId, razorpayPaymentId, razorpaySignature)
+    const isValidSignature = this.verifyPaymentSignature(
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature
+    );
 
     if (!isValidSignature) {
-      throw new Error("Invalid payment signature")
+      logger.warn(`Invalid payment signature for order ${razorpayOrderId}`);
+      throw new Error("Invalid payment signature");
     }
 
     // Get payment details from Razorpay
-    const razorpayPayment = await razorpay.payments.fetch(razorpayPaymentId)
+    const razorpayPayment = await razorpay.payments.fetch(razorpayPaymentId);
+    logger.info(`Fetched Razorpay payment: ${JSON.stringify(razorpayPayment)}`);
 
     // Find our order
-    const order = await Order.findOne({ razorpayOrderId })
+    const order = await Order.findOne({ razorpayOrderId });
 
     if (!order) {
-      throw new Error("Order not found")
+      logger.warn(`Order not found for Razorpay order ID ${razorpayOrderId}`);
+      throw new Error("Order not found");
     }
 
     // Verify user
     if (order.userId.toString() !== userId.toString()) {
-      throw new Error("Unauthorized access to order")
+      logger.warn(`Unauthorized access to order ${order._id} by user ${userId}`);
+      throw new Error("Unauthorized access to order");
     }
 
     // Create payment record
@@ -156,18 +324,23 @@ exports.processPayment = async (razorpayOrderId, razorpayPaymentId, razorpaySign
       contact: razorpayPayment.contact,
       notes: razorpayPayment.notes,
       rawResponse: razorpayPayment,
-    })
+    });
 
     // Add initial status to history
-    payment.addStatusHistory(razorpayPayment.status === "captured" ? "CAPTURED" : "AUTHORIZED", "Payment processed")
+    payment.addStatusHistory(
+      razorpayPayment.status === "captured" ? "CAPTURED" : "AUTHORIZED",
+      "Payment processed"
+    );
 
-    await payment.save()
+    await payment.save();
+    logger.info(`Payment record created: ${payment._id}`);
 
     // Update order status
-    order.paymentId = payment._id
-    order.status = "PAID"
-    order.addStatusHistory("PAID", "Payment successful")
-    await order.save()
+    order.paymentId = payment._id;
+    order.status = "PAID";
+    order.addStatusHistory("PAID", "Payment successful");
+    await order.save();
+    logger.info(`Order status updated to PAID: ${order._id}`);
 
     // Create user purchase record
     const userPurchase = new UserPurchase({
@@ -179,145 +352,153 @@ exports.processPayment = async (razorpayOrderId, razorpayPaymentId, razorpaySign
       paymentId: payment._id,
       expiryDate: order.validUntil,
       status: "ACTIVE",
-    })
+    });
 
     // Add initial status to history
-    userPurchase.addStatusHistory("ACTIVE", "Purchase activated")
+    userPurchase.addStatusHistory("ACTIVE", "Purchase activated");
 
-    await userPurchase.save()
+    await userPurchase.save();
+    logger.info(`User purchase record created: ${userPurchase._id}`);
+
+    // Record coupon usage if a coupon was used
+    if (order.couponId) {
+      await couponService.recordCouponUsage(
+        userId,
+        order.couponId,
+        order._id,
+        order.originalAmount,
+        order.discountAmount,
+        order.finalAmount
+      );
+      logger.info(`Coupon usage recorded for coupon ${order.couponCode}`);
+    }
 
     return {
       success: true,
       order,
       payment,
       userPurchase,
-    }
+    };
   } catch (error) {
-    console.error("Error processing payment:", error)
-    throw error
+    logger.error(`Error processing payment: ${error.message}`, { error });
+    throw error;
   }
-}
+};
 
-// Check if a payment has failed and update status
+/**
+ * Checks if a payment has failed and updates status
+ * @param {string} orderId - Order ID
+ * @returns {Promise<Object>} - The updated order
+ */
 exports.checkPaymentStatus = async (orderId) => {
   try {
-    const order = await Order.findById(orderId)
+    const order = await Order.findById(orderId);
 
     if (!order) {
-      throw new Error("Order not found")
+      throw new Error("Order not found");
     }
 
     // If order is still in CREATED or PENDING status after 30 minutes, mark as EXPIRED
     if (["CREATED", "PENDING"].includes(order.status)) {
-      const orderCreationTime = new Date(order.createdAt).getTime()
-      const currentTime = new Date().getTime()
-      const timeDifference = currentTime - orderCreationTime
+      const orderCreationTime = new Date(order.createdAt).getTime();
+      const currentTime = new Date().getTime();
+      const timeDifference = currentTime - orderCreationTime;
 
       // If more than 30 minutes have passed
       if (timeDifference > 30 * 60 * 1000) {
-        order.status = "EXPIRED"
-        order.addStatusHistory("EXPIRED", "Order expired due to payment timeout")
-        await order.save()
+        logger.info(`Marking order ${order._id} as EXPIRED due to payment timeout`);
+        order.status = "EXPIRED";
+        order.addStatusHistory("EXPIRED", "Order expired due to payment timeout");
+        await order.save();
       }
     }
 
-    return order
+    return order;
   } catch (error) {
-    console.error("Error checking payment status:", error)
-    throw error
+    logger.error(`Error checking payment status: ${error.message}`, { error });
+    throw error;
   }
-}
+};
 
-// Get payment details from Razorpay
+/**
+ * Gets payment details from Razorpay
+ * @param {string} paymentId - Razorpay payment ID
+ * @returns {Promise<Object>} - Payment details
+ */
 exports.getPaymentDetails = async (paymentId) => {
   try {
-    return await razorpay.payments.fetch(paymentId)
+    return await razorpay.payments.fetch(paymentId);
   } catch (error) {
-    console.error("Error fetching payment details:", error)
-    throw error
+    logger.error(`Error fetching payment details: ${error.message}`, { error });
+    throw error;
   }
-}
+};
 
-// Check if user has active purchase for an item
+/**
+ * Checks if user has active purchase for an item
+ * @param {string} userId - User ID
+ * @param {string} itemType - Item type (EXAM_PLAN or NOTE)
+ * @param {string} itemId - Item ID
+ * @returns {Promise<boolean>} - Whether user has active purchase
+ */
 exports.checkUserPurchase = async (userId, itemType, itemId) => {
   try {
-    // If it's a test series, check if it's free
-    if (itemType === "TEST_SERIES") {
-      const testSeries = await TestSeries.findById(itemId)
-      if (testSeries && testSeries.isFree) {
-        return true // Free test series, no purchase needed
-      }
-      
-      // If not free, check if user has purchased the associated exam plan
-      const examPlan = await ExamPlan.findById(testSeries.examPlanId)
-      if (!examPlan) {
-        throw new Error("Associated exam plan not found")
-      }
-      
-      // Check if user has purchased the exam plan
-      const examPlanPurchase = await UserPurchase.findOne({
-        userId,
-        itemType: "EXAM_PLAN",
-        itemId: examPlan._id,
-        status: "ACTIVE",
-        expiryDate: { $gt: new Date() },
-      })
-      
-      if (examPlanPurchase) {
-        return true // User has purchased the exam plan, can access the test series
-      }
-    }
-    
-    // For exam plans or direct test series purchase
     const purchase = await UserPurchase.findOne({
       userId,
       itemType,
       itemId,
       status: "ACTIVE",
       expiryDate: { $gt: new Date() },
-    })
+    });
 
-    return !!purchase
+    return !!purchase;
   } catch (error) {
-    console.error("Error checking user purchase:", error)
-    throw error
+    logger.error(`Error checking user purchase: ${error.message}`, { error });
+    throw error;
   }
-}
+};
 
-// Get user's active purchases
+/**
+ * Gets user's active purchases
+ * @param {string} userId - User ID
+ * @returns {Promise<Array>} - User's active purchases
+ */
 exports.getUserActivePurchases = async (userId) => {
   try {
     return await UserPurchase.find({
       userId,
       status: "ACTIVE",
       expiryDate: { $gt: new Date() },
-    }).populate({
-      path: "itemId",
-      select: "title name description",
-    })
+    });
   } catch (error) {
-    console.error("Error getting user active purchases:", error)
-    throw error
+    logger.error(`Error getting user active purchases: ${error.message}`, { error });
+    throw error;
   }
-}
+};
 
-// Update expired purchases
+/**
+ * Updates expired purchases
+ * @returns {Promise<number>} - Number of updated purchases
+ */
 exports.updateExpiredPurchases = async () => {
   try {
     const expiredPurchases = await UserPurchase.find({
       status: "ACTIVE",
       expiryDate: { $lt: new Date() },
-    })
+    });
+
+    logger.info(`Found ${expiredPurchases.length} expired purchases to update`);
 
     for (const purchase of expiredPurchases) {
-      purchase.status = "EXPIRED"
-      purchase.addStatusHistory("EXPIRED", "Purchase expired")
-      await purchase.save()
+      purchase.status = "EXPIRED";
+      purchase.addStatusHistory("EXPIRED", "Purchase expired");
+      await purchase.save();
+      logger.info(`Updated purchase ${purchase._id} to EXPIRED`);
     }
 
-    return expiredPurchases.length
+    return expiredPurchases.length;
   } catch (error) {
-    console.error("Error updating expired purchases:", error)
-    throw error
+    logger.error(`Error updating expired purchases: ${error.message}`, { error });
+    throw error;
   }
-}
+};
