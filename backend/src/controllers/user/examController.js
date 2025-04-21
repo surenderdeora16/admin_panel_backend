@@ -1,0 +1,982 @@
+// src/controllers/examController.js
+const Exam = require("../../models/Exam");
+const ExamQuestion = require("../../models/ExamQuestion");
+const TestSeries = require("../../models/TestSeries");
+const Section = require("../../models/Section");
+const TestSeriesQuestion = require("../../models/TestSeriesQuestion");
+const Question = require("../../models/Question");
+const UserPurchase = require("../../models/UserPurchase");
+const mongoose = require("mongoose");
+const language = require("../../languages/english");
+
+/**
+ * @desc    Start a new exam
+ * @route   POST /api/exams/start/:testSeriesId
+ * @access  Private (User)
+ */
+exports.startExam = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { testSeriesId } = req.params;
+    const userId = req.user._id;
+
+    // Check if test series exists
+    const testSeries = await TestSeries.findById(testSeriesId);
+    if (!testSeries) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("Test series not found");
+    }
+
+    // Check if test series is active
+    if (!testSeries.status) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("This test series is not available");
+    }
+
+    // Check if the test series is free or paid
+    if (!testSeries.isFree) {
+      // For paid test series, check if user has purchased the exam plan
+      const examPlanId = testSeries.examPlanId;
+      
+      const userPurchase = await UserPurchase.findOne({
+        userId,
+        itemType: "EXAM_PLAN",
+        itemId: examPlanId,
+        status: "ACTIVE",
+        expiryDate: { $gt: new Date() },
+      });
+
+      if (!userPurchase) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.noRecords("You need to purchase this exam plan to access this test series");
+      }
+    }
+
+    // Check if user already has an ongoing exam for this test series
+    const ongoingExam = await Exam.findOne({
+      userId,
+      testSeriesId,
+      status: "STARTED",
+    });
+
+    if (ongoingExam) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.success(ongoingExam, "You have an ongoing exam. Resuming...");
+    }
+
+    // Get all sections for this test series
+    const sections = await Section.find({
+      testSeriesId,
+      status: true,
+    }).sort({ sequence: 1 });
+
+    if (sections.length === 0) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("No sections found for this test series");
+    }
+
+    // Get all questions for this test series
+    const testSeriesQuestions = await TestSeriesQuestion.find({
+      testSeriesId,
+      status: true,
+    })
+      .populate("questionId")
+      .sort({ sequence: 1 });
+
+    if (testSeriesQuestions.length === 0) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("No questions found for this test series");
+    }
+
+    // Create a new exam
+    const exam = new Exam({
+      userId,
+      testSeriesId,
+      startTime: new Date(),
+      totalQuestions: testSeriesQuestions.length,
+      maxScore: testSeriesQuestions.length * testSeries.correctMarks,
+      sectionTimings: sections.map(section => ({
+        sectionId: section._id,
+        startTime: null,
+        endTime: null,
+        totalTimeSpent: 0,
+      })),
+    });
+
+    await exam.save({ session });
+
+    // Create exam questions
+    const examQuestions = [];
+    for (let i = 0; i < testSeriesQuestions.length; i++) {
+      const tsq = testSeriesQuestions[i];
+      examQuestions.push({
+        examId: exam._id,
+        sectionId: tsq.sectionId,
+        questionId: tsq.questionId._id,
+        sequence: i + 1,
+      });
+    }
+
+    await ExamQuestion.insertMany(examQuestions, { session });
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.successInsert(exam, "Exam started successfully");
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Error starting exam:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
+/**
+ * @desc    Get exam questions by section
+ * @route   GET /api/exams/:examId/sections/:sectionId/questions
+ * @access  Private (User)
+ */
+exports.getExamQuestionsBySection = async (req, res) => {
+  try {
+    const { examId, sectionId } = req.params;
+    const userId = req.user._id;
+
+    // Check if exam exists and belongs to the user
+    const exam = await Exam.findOne({
+      _id: examId,
+      userId,
+    });
+
+    if (!exam) {
+      return res.noRecords("Exam not found");
+    }
+
+    // Check if exam is still ongoing
+    if (exam.status !== "STARTED") {
+      return res.noRecords("Exam has already been completed");
+    }
+
+    // Check if section exists
+    const section = await Section.findById(sectionId);
+    if (!section) {
+      return res.noRecords("Section not found");
+    }
+
+    // Update section timing if not already started
+    const sectionTiming = exam.sectionTimings.find(
+      st => st.sectionId.toString() === sectionId
+    );
+    
+    if (sectionTiming && !sectionTiming.startTime) {
+      sectionTiming.startTime = new Date();
+      await exam.save();
+    }
+
+    // Get exam questions for this section
+    const examQuestions = await ExamQuestion.find({
+      examId,
+      sectionId,
+    })
+      .populate({
+        path: "questionId",
+        select: "questionText option1 option2 option3 option4 option5",
+      })
+      .sort({ sequence: 1 });
+
+    // Increment visit count for first question if not visited before
+    if (examQuestions.length > 0 && examQuestions[0].visitCount === 0) {
+      examQuestions[0].visitCount += 1;
+      await examQuestions[0].save();
+    }
+
+    // Format questions to remove sensitive information
+    const formattedQuestions = examQuestions.map(eq => ({
+      id: eq._id,
+      sequence: eq.sequence,
+      questionText: eq.questionId.questionText,
+      options: {
+        option1: eq.questionId.option1,
+        option2: eq.questionId.option2,
+        option3: eq.questionId.option3,
+        option4: eq.questionId.option4,
+        option5: eq.questionId.option5 || null,
+      },
+      userAnswer: eq.userAnswer,
+      isMarkedForReview: eq.isMarkedForReview,
+      status: eq.status,
+      visitCount: eq.visitCount,
+    }));
+
+    // Get section stats
+    const sectionStats = {
+      totalQuestions: examQuestions.length,
+      attempted: examQuestions.filter(eq => eq.status === "ATTEMPTED").length,
+      unattempted: examQuestions.filter(eq => eq.status === "UNATTEMPTED").length,
+      skipped: examQuestions.filter(eq => eq.status === "SKIPPED").length,
+      markedForReview: examQuestions.filter(eq => eq.isMarkedForReview).length,
+    };
+
+    return res.success({
+      section: {
+        id: section._id,
+        name: section.name,
+        sequence: section.sequence,
+      },
+      questions: formattedQuestions,
+      stats: sectionStats,
+    });
+  } catch (error) {
+    console.error("Error getting exam questions:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
+/**
+ * @desc    Get a specific exam question
+ * @route   GET /api/exams/questions/:examQuestionId
+ * @access  Private (User)
+ */
+exports.getExamQuestion = async (req, res) => {
+  try {
+    const { examQuestionId } = req.params;
+    const userId = req.user._id;
+
+    // Get exam question
+    const examQuestion = await ExamQuestion.findById(examQuestionId)
+      .populate({
+        path: "questionId",
+        select: "questionText option1 option2 option3 option4 option5",
+      })
+      .populate({
+        path: "examId",
+        select: "userId status",
+      });
+
+    if (!examQuestion) {
+      return res.noRecords("Question not found");
+    }
+
+    // Check if exam belongs to the user
+    if (examQuestion.examId.userId.toString() !== userId.toString()) {
+      return res.noRecords("Unauthorized access to this question");
+    }
+
+    // Check if exam is still ongoing
+    if (examQuestion.examId.status !== "STARTED") {
+      return res.noRecords("Exam has already been completed");
+    }
+
+    // Increment visit count if not visited before
+    if (examQuestion.visitCount === 0) {
+      examQuestion.visitCount += 1;
+      await examQuestion.save();
+    }
+
+    // Format question to remove sensitive information
+    const formattedQuestion = {
+      id: examQuestion._id,
+      sequence: examQuestion.sequence,
+      questionText: examQuestion.questionId.questionText,
+      options: {
+        option1: examQuestion.questionId.option1,
+        option2: examQuestion.questionId.option2,
+        option3: examQuestion.questionId.option3,
+        option4: examQuestion.questionId.option4,
+        option5: examQuestion.questionId.option5 || null,
+      },
+      userAnswer: examQuestion.userAnswer,
+      isMarkedForReview: examQuestion.isMarkedForReview,
+      status: examQuestion.status,
+      visitCount: examQuestion.visitCount,
+    };
+
+    return res.success(formattedQuestion);
+  } catch (error) {
+    console.error("Error getting exam question:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
+/**
+ * @desc    Answer an exam question
+ * @route   POST /api/exams/questions/:examQuestionId/answer
+ * @access  Private (User)
+ */
+exports.answerExamQuestion = async (req, res) => {
+  try {
+    const { examQuestionId } = req.params;
+    const { answer, timeSpent, isMarkedForReview } = req.body;
+    const userId = req.user._id;
+
+    // Validate required fields
+    if (answer === undefined) {
+      return res.noRecords("Answer is required");
+    }
+
+    // Get exam question
+    const examQuestion = await ExamQuestion.findById(examQuestionId)
+      .populate({
+        path: "questionId",
+        select: "rightAnswer",
+      })
+      .populate({
+        path: "examId",
+        select: "userId status",
+      });
+
+    if (!examQuestion) {
+      return res.noRecords("Question not found");
+    }
+
+    // Check if exam belongs to the user
+    if (examQuestion.examId.userId.toString() !== userId.toString()) {
+      return res.noRecords("Unauthorized access to this question");
+    }
+
+    // Check if exam is still ongoing
+    if (examQuestion.examId.status !== "STARTED") {
+      return res.noRecords("Exam has already been completed");
+    }
+
+    // Update exam question
+    examQuestion.userAnswer = answer;
+    examQuestion.isCorrect = answer === examQuestion.questionId.rightAnswer;
+    examQuestion.status = "ATTEMPTED";
+    
+    if (isMarkedForReview !== undefined) {
+      examQuestion.isMarkedForReview = isMarkedForReview;
+    }
+    
+    if (timeSpent) {
+      examQuestion.timeSpent += parseInt(timeSpent);
+    }
+
+    await examQuestion.save();
+
+    return res.successUpdate({
+      id: examQuestion._id,
+      userAnswer: examQuestion.userAnswer,
+      isMarkedForReview: examQuestion.isMarkedForReview,
+      status: examQuestion.status,
+    });
+  } catch (error) {
+    console.error("Error answering exam question:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
+/**
+ * @desc    Skip an exam question
+ * @route   POST /api/exams/questions/:examQuestionId/skip
+ * @access  Private (User)
+ */
+exports.skipExamQuestion = async (req, res) => {
+  try {
+    const { examQuestionId } = req.params;
+    const { timeSpent, isMarkedForReview } = req.body;
+    const userId = req.user._id;
+
+    // Get exam question
+    const examQuestion = await ExamQuestion.findById(examQuestionId)
+      .populate({
+        path: "examId",
+        select: "userId status",
+      });
+
+    if (!examQuestion) {
+      return res.noRecords("Question not found");
+    }
+
+    // Check if exam belongs to the user
+    if (examQuestion.examId.userId.toString() !== userId.toString()) {
+      return res.noRecords("Unauthorized access to this question");
+    }
+
+    // Check if exam is still ongoing
+    if (examQuestion.examId.status !== "STARTED") {
+      return res.noRecords("Exam has already been completed");
+    }
+
+    // Update exam question
+    examQuestion.status = "SKIPPED";
+    
+    if (isMarkedForReview !== undefined) {
+      examQuestion.isMarkedForReview = isMarkedForReview;
+    }
+    
+    if (timeSpent) {
+      examQuestion.timeSpent += parseInt(timeSpent);
+    }
+
+    await examQuestion.save();
+
+    return res.successUpdate({
+      id: examQuestion._id,
+      isMarkedForReview: examQuestion.isMarkedForReview,
+      status: examQuestion.status,
+    });
+  } catch (error) {
+    console.error("Error skipping exam question:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
+/**
+ * @desc    Mark/unmark an exam question for review
+ * @route   POST /api/exams/questions/:examQuestionId/mark-review
+ * @access  Private (User)
+ */
+exports.markExamQuestionForReview = async (req, res) => {
+  try {
+    const { examQuestionId } = req.params;
+    const { isMarkedForReview, timeSpent } = req.body;
+    const userId = req.user._id;
+
+    // Validate required fields
+    if (isMarkedForReview === undefined) {
+      return res.noRecords("isMarkedForReview is required");
+    }
+
+    // Get exam question
+    const examQuestion = await ExamQuestion.findById(examQuestionId)
+      .populate({
+        path: "examId",
+        select: "userId status",
+      });
+
+    if (!examQuestion) {
+      return res.noRecords("Question not found");
+    }
+
+    // Check if exam belongs to the user
+    if (examQuestion.examId.userId.toString() !== userId.toString()) {
+      return res.noRecords("Unauthorized access to this question");
+    }
+
+    // Check if exam is still ongoing
+    if (examQuestion.examId.status !== "STARTED") {
+      return res.noRecords("Exam has already been completed");
+    }
+
+    // Update exam question
+    examQuestion.isMarkedForReview = isMarkedForReview;
+    
+    if (timeSpent) {
+      examQuestion.timeSpent += parseInt(timeSpent);
+    }
+
+    await examQuestion.save();
+
+    return res.successUpdate({
+      id: examQuestion._id,
+      isMarkedForReview: examQuestion.isMarkedForReview,
+    });
+  } catch (error) {
+    console.error("Error marking exam question for review:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
+/**
+ * @desc    Update section timing
+ * @route   POST /api/exams/:examId/sections/:sectionId/timing
+ * @access  Private (User)
+ */
+exports.updateSectionTiming = async (req, res) => {
+  try {
+    const { examId, sectionId } = req.params;
+    const { timeSpent } = req.body;
+    const userId = req.user._id;
+
+    // Validate required fields
+    if (!timeSpent) {
+      return res.noRecords("timeSpent is required");
+    }
+
+    // Check if exam exists and belongs to the user
+    const exam = await Exam.findOne({
+      _id: examId,
+      userId,
+    });
+
+    if (!exam) {
+      return res.noRecords("Exam not found");
+    }
+
+    // Check if exam is still ongoing
+    if (exam.status !== "STARTED") {
+      return res.noRecords("Exam has already been completed");
+    }
+
+    // Update section timing
+    const sectionTiming = exam.sectionTimings.find(
+      st => st.sectionId.toString() === sectionId
+    );
+    
+    if (!sectionTiming) {
+      return res.noRecords("Section timing not found");
+    }
+    
+    sectionTiming.totalTimeSpent += parseInt(timeSpent);
+    
+    if (!sectionTiming.startTime) {
+      sectionTiming.startTime = new Date();
+    }
+    
+    sectionTiming.endTime = new Date();
+    
+    await exam.save();
+
+    return res.successUpdate({
+      sectionId,
+      totalTimeSpent: sectionTiming.totalTimeSpent,
+    });
+  } catch (error) {
+    console.error("Error updating section timing:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
+/**
+ * @desc    Submit exam
+ * @route   POST /api/exams/:examId/submit
+ * @access  Private (User)
+ */
+exports.submitExam = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { examId } = req.params;
+    const userId = req.user._id;
+
+    // Check if exam exists and belongs to the user
+    const exam = await Exam.findOne({
+      _id: examId,
+      userId,
+    });
+
+    if (!exam) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("Exam not found");
+    }
+
+    // Check if exam is still ongoing
+    if (exam.status !== "STARTED") {
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("Exam has already been completed");
+    }
+
+    // Get all exam questions
+    const examQuestions = await ExamQuestion.find({
+      examId,
+    }).populate("questionId");
+
+    // Calculate exam statistics
+    const attemptedQuestions = examQuestions.filter(eq => eq.status === "ATTEMPTED").length;
+    const correctAnswers = examQuestions.filter(eq => eq.isCorrect === true).length;
+    const wrongAnswers = examQuestions.filter(eq => eq.isCorrect === false).length;
+    const skippedQuestions = examQuestions.filter(eq => eq.status === "SKIPPED").length;
+    const markedForReview = examQuestions.filter(eq => eq.isMarkedForReview).length;
+
+    // Get test series for scoring details
+    const testSeries = await TestSeries.findById(exam.testSeriesId);
+    
+    // Calculate total score
+    const totalScore = correctAnswers * testSeries.correctMarks - wrongAnswers * testSeries.negativeMarks;
+    const maxScore = examQuestions.length * testSeries.correctMarks;
+    const percentage = (totalScore / maxScore) * 100;
+
+    // Update exam
+    exam.endTime = new Date();
+    exam.status = "COMPLETED";
+    exam.attemptedQuestions = attemptedQuestions;
+    exam.correctAnswers = correctAnswers;
+    exam.wrongAnswers = wrongAnswers;
+    exam.skippedQuestions = skippedQuestions;
+    exam.markedForReview = markedForReview;
+    exam.totalScore = totalScore;
+    exam.maxScore = maxScore;
+    exam.percentage = percentage;
+
+    // Update section timings that don't have an end time
+    exam.sectionTimings.forEach(st => {
+      if (st.startTime && !st.endTime) {
+        st.endTime = new Date();
+      }
+    });
+
+    await exam.save({ session });
+
+    // Calculate rank (optional, can be done asynchronously later)
+    const betterExams = await Exam.countDocuments({
+      testSeriesId: exam.testSeriesId,
+      status: "COMPLETED",
+      totalScore: { $gt: totalScore },
+    });
+    
+    exam.rank = betterExams + 1;
+    await exam.save({ session });
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.successUpdate({
+      id: exam._id,
+      totalQuestions: exam.totalQuestions,
+      attemptedQuestions: exam.attemptedQuestions,
+      correctAnswers: exam.correctAnswers,
+      wrongAnswers: exam.wrongAnswers,
+      skippedQuestions: exam.skippedQuestions,
+      markedForReview: exam.markedForReview,
+      totalScore: exam.totalScore,
+      maxScore: exam.maxScore,
+      percentage: exam.percentage,
+      rank: exam.rank,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Error submitting exam:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
+/**
+ * @desc    Get exam result
+ * @route   GET /api/exams/:examId/result
+ * @access  Private (User)
+ */
+exports.getExamResult = async (req, res) => {
+  try {
+    const { examId } = req.params;
+    const userId = req.user._id;
+
+    // Check if exam exists and belongs to the user
+    const exam = await Exam.findOne({
+      _id: examId,
+      userId,
+    }).populate("testSeriesId");
+
+    if (!exam) {
+      return res.noRecords("Exam not found");
+    }
+
+    // Check if exam is completed
+    if (exam.status !== "COMPLETED") {
+      return res.noRecords("Exam has not been completed yet");
+    }
+
+    // Get all sections
+    const sections = await Section.find({
+      testSeriesId: exam.testSeriesId,
+    }).sort({ sequence: 1 });
+
+    // Get section-wise statistics
+    const sectionStats = [];
+    for (const section of sections) {
+      const sectionQuestions = await ExamQuestion.find({
+        examId,
+        sectionId: section._id,
+      });
+      
+      const sectionStat = {
+        sectionId: section._id,
+        name: section.name,
+        totalQuestions: sectionQuestions.length,
+        attempted: sectionQuestions.filter(eq => eq.status === "ATTEMPTED").length,
+        correct: sectionQuestions.filter(eq => eq.isCorrect === true).length,
+        wrong: sectionQuestions.filter(eq => eq.isCorrect === false).length,
+        skipped: sectionQuestions.filter(eq => eq.status === "SKIPPED").length,
+      };
+      
+      sectionStats.push(sectionStat);
+    }
+
+    // Calculate time statistics
+    const totalDuration = (new Date(exam.endTime) - new Date(exam.startTime)) / 1000; // in seconds
+    const sectionTimings = exam.sectionTimings.map(st => {
+      const section = sections.find(s => s._id.toString() === st.sectionId.toString());
+      return {
+        sectionId: st.sectionId,
+        name: section ? section.name : "Unknown",
+        totalTimeSpent: st.totalTimeSpent,
+      };
+    });
+
+    // Format result
+    const result = {
+      examId: exam._id,
+      testSeries: {
+        id: exam.testSeriesId._id,
+        title: exam.testSeriesId.title,
+      },
+      startTime: exam.startTime,
+      endTime: exam.endTime,
+      totalDuration,
+      totalQuestions: exam.totalQuestions,
+      attemptedQuestions: exam.attemptedQuestions,
+      correctAnswers: exam.correctAnswers,
+      wrongAnswers: exam.wrongAnswers,
+      skippedQuestions: exam.skippedQuestions,
+      markedForReview: exam.markedForReview,
+      totalScore: exam.totalScore,
+      maxScore: exam.maxScore,
+      percentage: exam.percentage,
+      rank: exam.rank,
+      sectionStats,
+      sectionTimings,
+    };
+
+    return res.success(result);
+  } catch (error) {
+    console.error("Error getting exam result:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
+/**
+ * @desc    Get exam review
+ * @route   GET /api/exams/:examId/review
+ * @access  Private (User)
+ */
+exports.getExamReview = async (req, res) => {
+  try {
+    const { examId } = req.params;
+    const userId = req.user._id;
+
+    // Check if exam exists and belongs to the user
+    const exam = await Exam.findOne({
+      _id: examId,
+      userId,
+    });
+
+    if (!exam) {
+      return res.noRecords("Exam not found");
+    }
+
+    // Check if exam is completed
+    if (exam.status !== "COMPLETED") {
+      return res.noRecords("Exam has not been completed yet");
+    }
+
+    // Get all exam questions with answers
+    const examQuestions = await ExamQuestion.find({
+      examId,
+    })
+      .populate({
+        path: "questionId",
+        select: "questionText option1 option2 option3 option4 option5 rightAnswer explanation",
+      })
+      .populate({
+        path: "sectionId",
+        select: "name sequence",
+      })
+      .sort({ sequence: 1 });
+
+    // Format questions with correct answers
+    const reviewQuestions = examQuestions.map(eq => ({
+      id: eq._id,
+      sequence: eq.sequence,
+      section: {
+        id: eq.sectionId._id,
+        name: eq.sectionId.name,
+        sequence: eq.sectionId.sequence,
+      },
+      questionText: eq.questionId.questionText,
+      options: {
+        option1: eq.questionId.option1,
+        option2: eq.questionId.option2,
+        option3: eq.questionId.option3,
+        option4: eq.questionId.option4,
+        option5: eq.questionId.option5 || null,
+      },
+      userAnswer: eq.userAnswer,
+      correctAnswer: eq.questionId.rightAnswer,
+      isCorrect: eq.isCorrect,
+      explanation: eq.questionId.explanation,
+      status: eq.status,
+      isMarkedForReview: eq.isMarkedForReview,
+      timeSpent: eq.timeSpent,
+    }));
+
+    // Group questions by section
+    const sectionMap = new Map();
+    reviewQuestions.forEach(q => {
+      if (!sectionMap.has(q.section.id.toString())) {
+        sectionMap.set(q.section.id.toString(), {
+          section: q.section,
+          questions: [],
+        });
+      }
+      sectionMap.get(q.section.id.toString()).questions.push(q);
+    });
+
+    const sectionReviews = Array.from(sectionMap.values());
+
+    return res.success({
+      examId: exam._id,
+      sections: sectionReviews,
+      stats: {
+        totalQuestions: exam.totalQuestions,
+        attemptedQuestions: exam.attemptedQuestions,
+        correctAnswers: exam.correctAnswers,
+        wrongAnswers: exam.wrongAnswers,
+        skippedQuestions: exam.skippedQuestions,
+        markedForReview: exam.markedForReview,
+      },
+    });
+  } catch (error) {
+    console.error("Error getting exam review:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
+/**
+ * @desc    Get exam navigation
+ * @route   GET /api/exams/:examId/navigation
+ * @access  Private (User)
+ */
+exports.getExamNavigation = async (req, res) => {
+  try {
+    const { examId } = req.params;
+    const userId = req.user._id;
+
+    // Check if exam exists and belongs to the user
+    const exam = await Exam.findOne({
+      _id: examId,
+      userId,
+    });
+
+    if (!exam) {
+      return res.noRecords("Exam not found");
+    }
+
+    // Get all sections
+    const sections = await Section.find({
+      testSeriesId: exam.testSeriesId,
+    }).sort({ sequence: 1 });
+
+    // Get all exam questions status
+    const examQuestions = await ExamQuestion.find({
+      examId,
+    }).select("sectionId sequence status isMarkedForReview");
+
+    // Group questions by section
+    const sectionMap = new Map();
+    sections.forEach(section => {
+      sectionMap.set(section._id.toString(), {
+        id: section._id,
+        name: section.name,
+        sequence: section.sequence,
+        questions: [],
+      });
+    });
+
+    // Add questions to sections
+    examQuestions.forEach(eq => {
+      const sectionId = eq.sectionId.toString();
+      if (sectionMap.has(sectionId)) {
+        sectionMap.get(sectionId).questions.push({
+          id: eq._id,
+          sequence: eq.sequence,
+          status: eq.status,
+          isMarkedForReview: eq.isMarkedForReview,
+        });
+      }
+    });
+
+    // Sort questions by sequence
+    sectionMap.forEach(section => {
+      section.questions.sort((a, b) => a.sequence - b.sequence);
+      
+      // Add stats
+      section.stats = {
+        total: section.questions.length,
+        attempted: section.questions.filter(q => q.status === "ATTEMPTED").length,
+        unattempted: section.questions.filter(q => q.status === "UNATTEMPTED").length,
+        skipped: section.questions.filter(q => q.status === "SKIPPED").length,
+        markedForReview: section.questions.filter(q => q.isMarkedForReview).length,
+      };
+    });
+
+    const navigation = Array.from(sectionMap.values());
+
+    return res.success({
+      examId: exam._id,
+      status: exam.status,
+      sections: navigation,
+    });
+  } catch (error) {
+    console.error("Error getting exam navigation:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
+/**
+ * @desc    Get user's exam history
+ * @route   GET /api/exams/history
+ * @access  Private (User)
+ */
+exports.getExamHistory = async (req, res) => {
+  try {
+    const { limit, pageNo } = req.query;
+    const userId = req.user._id;
+
+    // Count total records
+    const total = await Exam.countDocuments({
+      userId,
+      status: "COMPLETED",
+    });
+
+    if (total === 0) {
+      return res.datatableNoRecords();
+    }
+
+    // Get exams with pagination
+    const exams = await Exam.find({
+      userId,
+      status: "COMPLETED",
+    })
+      .populate("testSeriesId", "title")
+      .sort({ endTime: -1 })
+      .skip((pageNo - 1) * limit)
+      .limit(Number(limit));
+
+    // Format exams
+    const formattedExams = exams.map(exam => ({
+      id: exam._id,
+      testSeries: {
+        id: exam.testSeriesId._id,
+        title: exam.testSeriesId.title,
+      },
+      startTime: exam.startTime,
+      endTime: exam.endTime,
+      totalQuestions: exam.totalQuestions,
+      attemptedQuestions: exam.attemptedQuestions,
+      correctAnswers: exam.correctAnswers,
+      wrongAnswers: exam.wrongAnswers,
+      totalScore: exam.totalScore,
+      maxScore: exam.maxScore,
+      percentage: exam.percentage,
+      rank: exam.rank,
+    }));
+
+    return res.pagination(formattedExams, total, limit, pageNo);
+  } catch (error) {
+    console.error("Error getting exam history:", error);
+    return res.someThingWentWrong(error);
+  }
+};

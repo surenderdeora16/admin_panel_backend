@@ -59,81 +59,47 @@ exports.checkExamPlanPurchase = async (req, res, next) => {
 // Middleware to check if user has access to a test series
 exports.checkTestSeriesAccess = async (req, res, next) => {
   try {
-    const { testSeriesId } = req.params
+    const { testSeriesId } = req.params;
+    const userId = req.user._id;
 
-    if (!testSeriesId) {
-      return res.status(400).json({
-        status: false,
-        message: "Test series ID is required",
-      })
+    // Check if test series exists
+    const testSeries = await TestSeries.findById(testSeriesId);
+    if (!testSeries) {
+      return res.noRecords("Test series not found");
     }
 
-    // Get test series details
-    const testSeries = await TestSeries.findById(testSeriesId)
-
-    if (!testSeries) {
-      return res.status(404).json({
-        status: false,
-        message: "Test series not found",
-      })
+    // Check if test series is active
+    if (!testSeries.status) {
+      return res.noRecords("This test series is not available");
     }
 
     // If test series is free, allow access
     if (testSeries.isFree) {
-      req.testSeries = testSeries
-      return next()
+      req.testSeries = testSeries;
+      return next();
     }
 
-    // Check if user has purchased the associated exam plan
-    const examPlanPurchase = await UserPurchase.findOne({
-      userId: req.user._id,
+    // For paid test series, check if user has purchased the exam plan
+    const examPlanId = testSeries.examPlanId;
+    
+    const userPurchase = await UserPurchase.findOne({
+      userId,
       itemType: "EXAM_PLAN",
-      itemId: testSeries.examPlanId,
+      itemId: examPlanId,
       status: "ACTIVE",
       expiryDate: { $gt: new Date() },
-    })
+    });
 
-    if (examPlanPurchase) {
-      req.testSeries = testSeries
-      return next()
+    if (!userPurchase) {
+      return res.noRecords("You need to purchase this exam plan to access this test series");
     }
 
-    // Check if user has directly purchased this test series
-    const testSeriesPurchase = await UserPurchase.findOne({
-      userId: req.user._id,
-      itemType: "TEST_SERIES",
-      itemId: testSeriesId,
-      status: "ACTIVE",
-      expiryDate: { $gt: new Date() },
-    })
-
-    if (testSeriesPurchase) {
-      req.testSeries = testSeries
-      return next()
-    }
-
-    // Get exam plan details for the response
-    const examPlan = await ExamPlan.findById(testSeries.examPlanId)
-
-    // User hasn't purchased, deny access
-    return res.status(403).json({
-      status: false,
-      message: "You need to purchase the exam plan to access this test series",
-      data: {
-        testSeriesId,
-        title: testSeries.title,
-        examPlanId: testSeries.examPlanId,
-        examPlanTitle: examPlan ? examPlan.title : null,
-        examPlanPrice: examPlan ? examPlan.price : null,
-        requiresPurchase: true,
-      },
-    })
+    // User has access, proceed
+    req.testSeries = testSeries;
+    req.userPurchase = userPurchase;
+    next();
   } catch (error) {
-    console.error("Error checking test series access:", error)
-    return res.status(500).json({
-      status: false,
-      message: "Failed to check test series access",
-      error: error.message,
-    })
+    console.error("Error checking test series access:", error);
+    return res.someThingWentWrong(error);
   }
-}
+};

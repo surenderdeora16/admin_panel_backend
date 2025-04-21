@@ -9,6 +9,7 @@ const paymentController = require("../../controllers/paymentController")
 const examPlanController = require("../../controllers/user/examPlanController")
 const examPlanPaymentController = require("../../controllers/user/examPlanPaymentController")
 const notePaymentController = require("../../controllers/user/notePaymentController")
+const examController = require("../../controllers/user/examController")
 
 // const { checkNotePurchase, checkExamPlanPurchase, checkTestSeriesAccess } = require("../../middelwares/checkPurchase")
 const { checkExamPlanPurchase, checkTestSeriesAccess } = require("../../middelwares/checkPurchase")
@@ -75,6 +76,10 @@ router.post("/exam-plans/:examPlanId/validate-coupon",  examPlanPaymentControlle
 router.get("/exam-plans",  examPlanController.getUserExamPlans)
 router.get("/exam-plans/:id",  examPlanController.getUserExamPlanById)
 
+// Test Series Routes for users
+router.get("/test-series", examPlanController.getAllTestSeries);
+// Get test series by ID (with authentication)
+router.get("/test-series/:id", examPlanController.getTestSeriesById);
 
 
 
@@ -104,7 +109,41 @@ router.post("/notes/:noteId/validate-coupon",  notePaymentController.validateNot
 
 
 
+// Start a new exam
+router.post("/exams/start/:testSeriesId",  examController.startExam);
 
+// Get exam questions by section
+router.get("/exams/:examId/sections/:sectionId/questions",  examController.getExamQuestionsBySection);
+
+// Get a specific exam question
+router.get("/exams/questions/:examQuestionId",  examController.getExamQuestion);
+
+// Answer an exam question
+router.post("/exams/questions/:examQuestionId/answer",  examController.answerExamQuestion);
+
+// Skip an exam question
+router.post("/exams/questions/:examQuestionId/skip",  examController.skipExamQuestion);
+
+// Mark/unmark an exam question for review
+router.post("/exams/questions/:examQuestionId/mark-review",  examController.markExamQuestionForReview);
+
+// Update section timing
+router.post("/exams/:examId/sections/:sectionId/timing",  examController.updateSectionTiming);
+
+// Submit exam
+router.post("/exams/:examId/submit",  examController.submitExam);
+
+// Get exam result
+router.get("/exams/:examId/result",  examController.getExamResult);
+
+// Get exam review
+router.get("/exams/:examId/review",  examController.getExamReview);
+
+// Get exam navigation
+router.get("/exams/:examId/navigation",  examController.getExamNavigation);
+
+// Get user's exam history
+router.get("/exams/history",  examController.getExamHistory);
 
 
 
