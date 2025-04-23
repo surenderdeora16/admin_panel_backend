@@ -23,7 +23,7 @@ exports.startExam = async (req, res) => {
     const userId = req.user._id;
 
     // Check if test series exists
-    const testSeries = await TestSeries.findById(testSeriesId);
+    const testSeries = await TestSeries.findOne({ _id: testSeriesId, deletedAt: null });
     if (!testSeries) {
       await session.abortTransaction();
       session.endSession();
@@ -192,6 +192,7 @@ exports.getExamQuestionsBySection = async (req, res) => {
       })
       .sort({ sequence: 1 });
 
+      console.log("examQuestions", examQuestions)
     // Increment visit count for first question if not visited before
     if (examQuestions.length > 0 && examQuestions[0].visitCount === 0) {
       examQuestions[0].visitCount += 1;

@@ -72,7 +72,8 @@ const TestSeries = () => {
   const itemName = "Test Series"
 
   const endpoints = {
-    list: "/test-series",
+    // list: "/test-series",
+    list: examPlanId ? `/test-series?examPlanId=${examPlanId}` : "/test-series",
     create: "/test-series",
     update: (id: string) => `/test-series/${id}`,
     delete: (id: string) => `/test-series/${id}`,

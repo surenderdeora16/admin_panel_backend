@@ -146,7 +146,7 @@ exports.createTestSeries = async (req, res) => {
       isFree: isFree !== undefined ? isFree === "true" || isFree === true : false,
       sequence: sequence || 0,
       status: status !== undefined ? status === "true" || status === true : true,
-      createdBy: req.user._id,
+      createdBy: req.admin._id,
     }
 
     // Create new test series
@@ -160,7 +160,7 @@ exports.createTestSeries = async (req, res) => {
           testSeriesId: testSeries._id,
           sequence: index,
           status: true,
-          createdBy: req.user._id,
+          createdBy: req.admin._id,
         })
       })
 
@@ -172,7 +172,7 @@ exports.createTestSeries = async (req, res) => {
         testSeriesId: testSeries._id,
         sequence: 0,
         status: true,
-        createdBy: req.user._id,
+        createdBy: req.admin._id,
       })
     }
 
@@ -231,7 +231,7 @@ exports.updateTestSeries = async (req, res) => {
     if (sequence !== undefined) testSeries.sequence = sequence
     if (status !== undefined) testSeries.status = status === "true" || status === true
 
-    testSeries.updatedBy = req.user._id
+    testSeries.updatedBy = req.admin._id
 
     // Save updated test series
     await testSeries.save()
@@ -259,7 +259,7 @@ exports.getTestSeriesWithPurchaseStatus = async (req, res) => {
 
     // Check if user has purchased the exam plan
     const examPlanPurchase = await UserPurchase.findOne({
-      userId: req.user._id,
+      userId: req.admin._id,
       itemType: "EXAM_PLAN",
       itemId: examPlanId,
       status: "ACTIVE",
@@ -327,16 +327,16 @@ exports.deleteTestSeries = async (req, res) => {
 
     // Soft delete by updating deletedAt
     testSeries.deletedAt = new Date()
-    testSeries.updatedBy = req.user._id
+    testSeries.updatedBy = req.admin._id
     await testSeries.save()
 
     // Also soft delete all associated sections
-    await Section.updateMany({ testSeriesId: req.params.id }, { deletedAt: new Date(), updatedBy: req.user._id })
+    await Section.updateMany({ testSeriesId: req.params.id }, { deletedAt: new Date(), updatedBy: req.admin._id })
 
     // Also soft delete all associated test series questions
     await TestSeriesQuestion.updateMany(
       { testSeriesId: req.params.id },
-      { deletedAt: new Date(), updatedBy: req.user._id },
+      { deletedAt: new Date(), updatedBy: req.admin._id },
     )
 
     return res.successDelete()
@@ -373,7 +373,7 @@ exports.getTestSeriesSections = async (req, res) => {
       }),
     )
 
-    return res.success(sectionsWithCounts)
+    return res.pagination(sectionsWithCounts, sectionsWithCounts.length, req.query.limit, req.query.pageNo)
   } catch (error) {
     console.error("Error fetching test series sections:", error)
     return res.someThingWentWrong(error)
@@ -407,7 +407,7 @@ exports.createSection = async (req, res) => {
       testSeriesId,
       sequence: sequence || 0,
       status: true,
-      createdBy: req.user._id,
+      createdBy: req.admin._id,
     })
 
     return res.successInsert(section)
@@ -451,7 +451,7 @@ exports.updateSection = async (req, res) => {
     if (sequence !== undefined) section.sequence = sequence
     if (status !== undefined) section.status = status === "true" || status === true
 
-    section.updatedBy = req.user._id
+    section.updatedBy = req.admin._id
 
     // Save updated section
     await section.save()
@@ -487,7 +487,7 @@ exports.deleteSection = async (req, res) => {
 
     // Soft delete by updating deletedAt
     section.deletedAt = new Date()
-    section.updatedBy = req.user._id
+    section.updatedBy = req.admin._id
     await section.save()
 
     return res.successDelete()
@@ -608,7 +608,7 @@ exports.addQuestionsToSection = async (req, res) => {
       sectionId,
       questionId,
       sequence: startSequence + index,
-      createdBy: req.user._id,
+      createdBy: req.admin._id,
     }))
 
     // Insert test series questions
@@ -661,7 +661,7 @@ exports.removeQuestionsFromSection = async (req, res) => {
     // Remove questions from section (soft delete)
     const result = await TestSeriesQuestion.updateMany(
       { testSeriesId, sectionId, questionId: { $in: questionIds } },
-      { deletedAt: new Date(), updatedBy: req.user._id },
+      { deletedAt: new Date(), updatedBy: req.admin._id },
     )
 
     if (result.nModified === 0) {
@@ -830,7 +830,7 @@ exports.getTestSeriesWithPurchaseStatus = async (req, res) => {
     // Check if user has purchased the exam plan (if it's not free)
     let canAccessExamPlan = examPlan.isFree
     if (!canAccessExamPlan) {
-      canAccessExamPlan = await razorpayService.checkUserPurchase(req.user._id, "EXAM_PLAN", examPlanId)
+      canAccessExamPlan = await razorpayService.checkUserPurchase(req.admin._id, "EXAM_PLAN", examPlanId)
     }
 
     // Get test series for this exam plan

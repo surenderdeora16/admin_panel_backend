@@ -51,6 +51,7 @@ const ExamPlans = () => {
 
   const { batches, loading: batchesLoading, error: batchesError } = useBatches()
 
+  console.log("batchId>>>", batchId)
   // Fetch batch name if batchId is provided
   useEffect(() => {
     if (batchId) {
@@ -72,7 +73,7 @@ const ExamPlans = () => {
   const itemName = "Exam Plan"
 
   const endpoints = {
-    list: "/exam-plans",
+    list: batchId ? `/exam-plans?batchId=${batchId}` : "/exam-plans",
     create: "/exam-plans",
     update: (id: string) => `/exam-plans/${id}`,
     delete: (id: string) => `/exam-plans/${id}`,
@@ -195,6 +196,11 @@ const ExamPlans = () => {
             render: (value: any) => value?.name || "N/A",
           },
         ]),
+      // {
+      //   header: "Batch Name",
+      //   accessor: "batchId",
+      //   render: (value: any) => value?.name || "N/A",
+      // },
     {
       header: "Price",
       accessor: "price",

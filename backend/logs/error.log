@@ -469,3 +469,4 @@
 {"level":"error","message":"POST /api-v1/user/login - Unexpected number in JSON at position 43"}
 {"level":"error","message":"POST /api-v1/user/login - Unexpected number in JSON at position 43"}
 {"level":"error","message":"POST /api-v1/user/login - Unexpected number in JSON at position 43"}
+{"level":"error","message":"OPTIONS /uploads/main_banner/image-1745424633728-541301053.png - CORS policy violation: Origin not allowed"}

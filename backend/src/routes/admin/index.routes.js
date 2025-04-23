@@ -372,6 +372,8 @@ router.delete("/batches/:id", batchController.deleteBatch);
 // Exam Plan Routes
 router.get("/exam-plans", examPlanController.getExamPlans);
 router.get("/exam-plans/:id", examPlanController.getExamPlanById);
+// router.get("/exam-plans/:batchid", examPlanController.getExamPlanById);
+
 router.post(
   "/exam-plans",
   uploadExamPlan.single("image"),
