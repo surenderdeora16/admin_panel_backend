@@ -127,3 +127,8 @@
 {"level":"info","message":"Processing payment for order order_JfcYDtEFwqPYcZ, payment pay_JfcYKtGHxqQZdA","service":"lms-api","timestamp":"2025-04-20 03:18:11"}
 {"level":"warn","message":"Invalid payment signature for order order_JfcYDtEFwqPYcZ","service":"lms-api","timestamp":"2025-04-20 03:18:11"}
 {"error":{},"level":"error","message":"Error processing payment: Invalid payment signature","service":"lms-api","timestamp":"2025-04-20 03:18:11"}
+{"level":"info","message":"Creating exam plan order for user 67e989a03de126aa23c879f2, exam plan 67fe6febe93ec38615adda86","service":"lms-api","timestamp":"2025-04-24 08:20:30"}
+{"error":{},"level":"error","message":"Error creating exam plan order: You have already used this coupon 2 time(s)","service":"lms-api","timestamp":"2025-04-24 08:20:30"}
+{"level":"info","message":"Creating exam plan order for user 67e989a03de126aa23c879f2, exam plan 67fe6febe93ec38615adda86","service":"lms-api","timestamp":"2025-04-24 08:20:43"}
+{"level":"info","message":"Razorpay order created: order_QMjgvvLQDxm11S","service":"lms-api","timestamp":"2025-04-24 08:20:44"}
+{"level":"info","message":"Internal order created: 6809a7047b93426274835eb3","service":"lms-api","timestamp":"2025-04-24 08:20:44"}

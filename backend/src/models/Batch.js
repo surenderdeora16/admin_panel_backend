@@ -19,6 +19,13 @@ const BatchSchema = new Schema(
     image: {
       type: String,
       default: null,
+      set: (value) => {
+        if (!value.startsWith(`${process.env.BASEURL}/uploads/batches/`)) {
+            return `${process.env.BASEURL}${value}`;
+        }
+        return value;
+    },
+    get: (value) => value 
     },
     sequence: {
       type: Number,

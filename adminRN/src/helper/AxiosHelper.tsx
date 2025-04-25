@@ -70,9 +70,9 @@ const errorHandler = (error: any) => {
 };
 
 const AxiosHelper = {
-  getData: async (url: any, params = null) => {
+  getData: async (url: any, params = null, config = {}) => {
     commonHeaders();
-    return axios.get(url, { params }).catch(errorHandler);
+    return axios.get(url, { params, ...config }).catch(errorHandler);
   },
   postData: async (url: any, data: any, isMultipart = false, config: any = {}) => {
     commonHeaders();

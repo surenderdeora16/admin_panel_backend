@@ -24,6 +24,13 @@ const ExamPlanSchema = new Schema(
     image: {
       type: String,
       default: null,
+      set: (value) => {
+        if (!value.startsWith(`${process.env.BASEURL}/uploads/exam_plans/`)) {
+            return `${process.env.BASEURL}${value}`;
+        }
+        return value;
+    },
+    get: (value) => value 
     },
     price: {
       type: Number,

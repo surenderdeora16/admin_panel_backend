@@ -17,6 +17,7 @@ const testSeriesController = require("../../controllers/admin/testSeriesControll
 const noteController = require("../../controllers/admin/noteController");
 const paymentController = require("../../controllers/paymentController");
 const couponController = require("../../controllers/admin/couponController");
+const paymentLogController = require("../../controllers/admin/paymentLogController");
 
 const checkValid = require("../../middelwares/validator");
 const Storage = require("../../helpers/Storage");
@@ -495,8 +496,26 @@ router.get("/coupon/:id/stats", couponController.getCouponStats);
 // Get coupon usage
 router.get("/coupon/:id/usage", couponController.getCouponUsage);
 
-//-------------------------
+
+
+
+
+
+//----    USER ROUTES---------------------
 router.get("/users-datatable", usersController.list);
+// Get all users
+router.get("/users",  usersController.getAllUsers)
+
+// Get user details
+router.get("/users/:id",  usersController.getUserDetails)
+
+
+// -------------------- PAYMENT LOGS --------------
+router.get("/payment-logs",  paymentLogController.getPaymentLogs)
+
+
+
+
 router.get("/contact-us-datatable", CommonController.contactUsList);
 
 router.all("/admin/*", function (req, res) {

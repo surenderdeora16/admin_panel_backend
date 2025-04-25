@@ -470,3 +470,16 @@
 {"level":"error","message":"POST /api-v1/user/login - Unexpected number in JSON at position 43"}
 {"level":"error","message":"POST /api-v1/user/login - Unexpected number in JSON at position 43"}
 {"level":"error","message":"OPTIONS /uploads/main_banner/image-1745424633728-541301053.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/main_banner/image-1745424633728-541301053.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/main_banner/image-1745465837447-910683011.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1745587535624-763623479.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1744217038636-233996596.jpg - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1744218581782-707725731.jpg - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1744217152925-934963107.jpg - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1744217131092-831243518.jpg - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/main_banner/image-1745424633728-541301053.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/main_banner/image-1745465837447-910683011.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1744217038636-233996596.jpg - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1744218581782-707725731.jpg - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1744217152925-934963107.jpg - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1744217131092-831243518.jpg - CORS policy violation: Origin not allowed"}

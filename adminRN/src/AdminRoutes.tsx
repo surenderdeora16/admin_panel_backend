@@ -35,6 +35,9 @@ import TestSeriesSections from './pages/Exams/TestSeriesSections';
 import SectionQuestions from './pages/Exams/SectionQuestions';
 import Notes from './pages/notes/Notes';
 import Coupons from './pages/coupon/Coupons';
+import Users from './pages/User/Users';
+import PaymentLogs from './pages/PaymentLogs';
+import UserDetail from './pages/User/UserDetail';
 
 // import SubjectsPage from './pages/ExamLibrary/vercel/subjects/page';
 
@@ -231,6 +234,13 @@ function App() {
 
 
         <Route path="/coupon" element={<Coupons />} />
+
+        <Route path="/users" element={<Users />} />
+        <Route path="/users/:id" element={<UserDetail />} />
+
+        <Route path="/payment-logs" element={<PaymentLogs />} />
+
+
         {/* User Routes
         <Route
           path="/notes"

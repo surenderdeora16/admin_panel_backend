@@ -384,26 +384,26 @@ exports.checkPurchaseStatus = async (req, res) => {
 // Admin: Get all payments with filters
 exports.getAllPayments = async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, userId, startDate, endDate } = req.query
+    const { page = 1, limit = 10, status, userId, startDate, endDate } = req.query;
 
     // Build query
-    const query = {}
+    const query = {};
 
     if (status) {
-      query.status = status
+      query.status = status;
     }
 
     if (userId) {
-      query.userId = userId
+      query.userId = userId;
     }
 
     if (startDate || endDate) {
-      query.createdAt = {}
+      query.createdAt = {};
       if (startDate) {
-        query.createdAt.$gte = new Date(startDate)
+        query.createdAt.$gte = new Date(startDate);
       }
       if (endDate) {
-        query.createdAt.$lte = new Date(endDate)
+        query.createdAt.$lte = new Date(endDate);
       }
     }
 
@@ -423,61 +423,52 @@ exports.getAllPayments = async (req, res) => {
       .populate({
         path: "userId",
         select: "name email",
-      })
+      });
 
     // Get total count
-    const total = await Payment.countDocuments(query)
+    const total = await Payment.countDocuments(query);
 
-    return res.status(200).json({
-      status: true,
-      data: payments,
-      pagination: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        pages: Math.ceil(total / limit),
-      },
-    })
+    if (!payments.length) {
+      return res.datatableNoRecords();
+    }
+
+    return res.pagination(payments, total, Number(limit), Number(page));
   } catch (error) {
-    console.error("Error fetching payments:", error)
-    return res.status(500).json({
-      status: false,
-      message: "Failed to fetch payments",
-      error: error.message,
-    })
+    console.error("Error fetching payments:", error);
+    return res.someThingWentWrong(error);
   }
-}
+};
 
 // Admin: Get payment statistics
 exports.getPaymentStatistics = async (req, res) => {
   try {
-    const { startDate, endDate } = req.query
+    const { startDate, endDate } = req.query;
 
     // Build date range
-    const dateRange = {}
+    const dateRange = {};
     if (startDate) {
-      dateRange.$gte = new Date(startDate)
+      dateRange.$gte = new Date(startDate);
     }
     if (endDate) {
-      dateRange.$lte = new Date(endDate)
+      dateRange.$lte = new Date(endDate);
     }
 
     // Get total payments
     const totalPayments = await Payment.countDocuments({
       ...(Object.keys(dateRange).length > 0 ? { createdAt: dateRange } : {}),
-    })
+    });
 
     // Get successful payments
     const successfulPayments = await Payment.countDocuments({
       status: "CAPTURED",
       ...(Object.keys(dateRange).length > 0 ? { createdAt: dateRange } : {}),
-    })
+    });
 
     // Get failed payments
     const failedPayments = await Payment.countDocuments({
       status: "FAILED",
       ...(Object.keys(dateRange).length > 0 ? { createdAt: dateRange } : {}),
-    })
+    });
 
     // Get total revenue
     const revenueResult = await Payment.aggregate([
@@ -493,9 +484,9 @@ exports.getPaymentStatistics = async (req, res) => {
           totalAmount: { $sum: "$amount" },
         },
       },
-    ])
+    ]);
 
-    const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalAmount : 0
+    const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalAmount : 0;
 
     // Get revenue by item type
     const revenueByItemType = await Order.aggregate([
@@ -512,24 +503,17 @@ exports.getPaymentStatistics = async (req, res) => {
           count: { $sum: 1 },
         },
       },
-    ])
+    ]);
 
-    return res.status(200).json({
-      status: true,
-      data: {
-        totalPayments,
-        successfulPayments,
-        failedPayments,
-        totalRevenue,
-        revenueByItemType,
-      },
-    })
+    return res.success({
+      totalPayments,
+      successfulPayments,
+      failedPayments,
+      totalRevenue,
+      revenueByItemType,
+    });
   } catch (error) {
-    console.error("Error fetching payment statistics:", error)
-    return res.status(500).json({
-      status: false,
-      message: "Failed to fetch payment statistics",
-      error: error.message,
-    })
+    console.error("Error fetching payment statistics:", error);
+    return res.someThingWentWrong(error);
   }
-}
+};

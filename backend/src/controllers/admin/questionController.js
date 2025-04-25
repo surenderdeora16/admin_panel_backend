@@ -59,10 +59,68 @@ exports.getQuestions = async (req, res) => {
 }
 
 // Generate sample Excel template
+// exports.generateSampleExcel = (req, res) => {
+//   try {
+//     // Create workbook and worksheet
+//     const workbook = xlsx.utils.book_new()
+
+//     // Create headers array from config
+//     const headers = [
+//       QUESTION_FORMAT.HEADERS.QUESTION_TEXT,
+//       QUESTION_FORMAT.HEADERS.OPTION_1,
+//       QUESTION_FORMAT.HEADERS.OPTION_2,
+//       QUESTION_FORMAT.HEADERS.OPTION_3,
+//       QUESTION_FORMAT.HEADERS.OPTION_4,
+//       QUESTION_FORMAT.HEADERS.OPTION_5,
+//       QUESTION_FORMAT.HEADERS.RIGHT_ANSWER,
+//       QUESTION_FORMAT.HEADERS.EXPLANATION,
+//     ]
+
+//     // Create worksheet with headers and sample data
+//     const data = [headers, ...QUESTION_FORMAT.SAMPLE_DATA]
+//     const worksheet = xlsx.utils.aoa_to_sheet(data)
+
+//     // Add worksheet to workbook
+//     xlsx.utils.book_append_sheet(workbook, worksheet, "Questions")
+
+//     // Create temp directory if it doesn't exist
+//     const tempDir = path.join(__dirname, "../temp")
+//     if (!fs.existsSync(tempDir)) {
+//       fs.mkdirSync(tempDir, { recursive: true })
+//     }
+
+//     // Write to file
+//     const filePath = path.join(tempDir, "sample_questions_template.xlsx")
+//     xlsx.writeFile(workbook, filePath)
+
+//     // Send file
+//     return res.download(filePath, "sample_questions_template.xlsx", (err) => {
+//       if (err) {
+//         console.error("Error downloading file:", err)
+//         return res.status(500).json({
+//           status: false,
+//           message: "Failed to download template",
+//           error: err.message,
+//         })
+//       }
+
+//       // Delete file after download
+//       fs.unlinkSync(filePath)
+//     })
+//   } catch (error) {
+//     console.error("Error generating sample Excel:", error)
+//     return res.status(500).json({
+//       status: false,
+//       message: "Failed to generate sample Excel",
+//       error: error.message,
+//     })
+//   }
+// }
+
 exports.generateSampleExcel = (req, res) => {
   try {
     // Create workbook and worksheet
-    const workbook = xlsx.utils.book_new()
+    const workbook = xlsx.utils.book_new();
 
     // Create headers array from config
     const headers = [
@@ -74,48 +132,31 @@ exports.generateSampleExcel = (req, res) => {
       QUESTION_FORMAT.HEADERS.OPTION_5,
       QUESTION_FORMAT.HEADERS.RIGHT_ANSWER,
       QUESTION_FORMAT.HEADERS.EXPLANATION,
-    ]
+    ];
 
     // Create worksheet with headers and sample data
-    const data = [headers, ...QUESTION_FORMAT.SAMPLE_DATA]
-    const worksheet = xlsx.utils.aoa_to_sheet(data)
+    const data = [headers, ...QUESTION_FORMAT.SAMPLE_DATA];
+    const worksheet = xlsx.utils.aoa_to_sheet(data);
 
     // Add worksheet to workbook
-    xlsx.utils.book_append_sheet(workbook, worksheet, "Questions")
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Questions");
 
-    // Create temp directory if it doesn't exist
-    const tempDir = path.join(__dirname, "../temp")
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true })
-    }
+    // Generate buffer instead of writing to a file
+    const buffer = xlsx.write(workbook, { bookType: 'xlsx', type: 'buffer' });
 
-    // Write to file
-    const filePath = path.join(tempDir, "sample_questions_template.xlsx")
-    xlsx.writeFile(workbook, filePath)
-
-    // Send file
-    return res.download(filePath, "sample_questions_template.xlsx", (err) => {
-      if (err) {
-        console.error("Error downloading file:", err)
-        return res.status(500).json({
-          status: false,
-          message: "Failed to download template",
-          error: err.message,
-        })
-      }
-
-      // Delete file after download
-      fs.unlinkSync(filePath)
-    })
+    // Set appropriate headers and send the buffer
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="sample_questions_template.xlsx"');
+    res.send(buffer);
   } catch (error) {
-    console.error("Error generating sample Excel:", error)
+    console.error("Error generating sample Excel:", error);
     return res.status(500).json({
       status: false,
       message: "Failed to generate sample Excel",
       error: error.message,
-    })
+    });
   }
-}
+};
 
 // Create a new question
 exports.createQuestion = async (req, res) => {

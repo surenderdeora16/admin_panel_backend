@@ -6,6 +6,8 @@ import { MdOutlineDisplaySettings, MdOutlineMailOutline } from 'react-icons/md';
 import { LuLayoutDashboard } from 'react-icons/lu';
 import { HiOutlineChatBubbleLeftRight } from 'react-icons/hi2';
 import { IoShareSocialOutline } from 'react-icons/io5';
+import { GiBookAura } from "react-icons/gi";
+
 import {
   FiGrid,
   FiCalendar,
@@ -16,19 +18,21 @@ import {
   FiLayout,
   FiLogIn,
 } from 'react-icons/fi';
-import { FaBook, FaFileAlt } from "react-icons/fa";
-import { SlBookOpen } from "react-icons/sl";
-import { RiGovernmentLine } from "react-icons/ri";
+import { FaBook, FaFileAlt, FaMoneyBillAlt, FaUsers } from 'react-icons/fa';
+import { SlBookOpen } from 'react-icons/sl';
+import { RiGovernmentLine } from 'react-icons/ri';
+import { PiExamFill } from "react-icons/pi";
 
-import { IoMdImages } from "react-icons/io";
+import { IoMdImages } from 'react-icons/io';
 import { FaMapLocationDot } from 'react-icons/fa6';
 import { FaMapPin } from 'react-icons/fa';
-import { IoLibrary } from "react-icons/io5";
-import { MdNewspaper } from "react-icons/md";
+import { IoLibrary } from 'react-icons/io5';
+import { MdNewspaper } from 'react-icons/md';
 
 import { SlCalender } from 'react-icons/sl';
 import { FaUsersCog } from 'react-icons/fa';
 import { IoSettingsSharp } from 'react-icons/io5';
+import { BiSolidCoupon } from 'react-icons/bi';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -98,12 +102,12 @@ const MENU_CONFIG = {
     },
     {
       name: 'Exams',
-      icon: IoLibrary,
+      icon: PiExamFill,
       children: [
         {
           name: 'Batches',
           path: '/batches',
-          icon: FaBook,
+          icon: GiBookAura,
         },
         {
           name: 'Exam Plans',
@@ -126,8 +130,11 @@ const MENU_CONFIG = {
     {
       name: 'Coupons',
       path: '/coupon',
-      icon: RiGovernmentLine,
+      icon: BiSolidCoupon,
     },
+
+    { name: 'Users', path: '/users', icon: FaUsers },
+    { name: 'Payment Logs', path: '/payment-logs', icon: FaMoneyBillAlt },
 
     {
       name: 'Location',

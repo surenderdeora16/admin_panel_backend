@@ -294,12 +294,15 @@ const Questions = () => {
     try {
       const response = await AxiosHelper.getData(
         'questions/sample-excel',
-        {},
-        { responseType: 'blob' },
+        null,
+        { responseType: 'blob' }
       );
 
-      // Create a download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Create a download link with correct blob type
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      );
+      console.log(url)
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', 'sample_questions_template.xlsx');

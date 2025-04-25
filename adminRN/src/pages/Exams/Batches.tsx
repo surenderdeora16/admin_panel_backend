@@ -66,9 +66,24 @@ const Batches = () => {
   ]
 
   const tableColumns = [
+    {
+      header: 'Image',
+      accessor: 'image',
+      render: (value: any) => (
+        <div className="w-[150px] h-[110px] overflow-hidden rounded-lg shadow-3">
+          <img src={value} alt="" className="w-full h-full object-cover object-center" />
+        </div>
+      ),
+    },
     { header: "Name", accessor: "name", sortable: true },
-    { header: "Description", accessor: "description" },
-    { header: "Sequence", accessor: "sequence", sortable: true },
+    {
+      header: "Description",
+      accessor: "description",
+      render: (value: string) => (
+        <div dangerouslySetInnerHTML={{ __html: value }} />
+      ),
+    },
+    // { header: "Sequence", accessor: "sequence", sortable: true },
     {
       header: "Status",
       accessor: "status",

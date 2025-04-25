@@ -186,6 +186,15 @@ const ExamPlans = () => {
   ]
 
   const tableColumns = [
+    {
+      header: 'Image',
+      accessor: 'image',
+      render: (value: any) => (
+        <div className="w-[150px] h-[110px] overflow-hidden rounded-lg shadow-3">
+          <img src={value} alt="" className="w-full h-full object-cover object-center" />
+        </div>
+      ),
+    },
     { header: "Title", accessor: "title", sortable: true },
     ...(batchId
       ? []
