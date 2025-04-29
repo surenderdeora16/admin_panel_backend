@@ -2,7 +2,7 @@ const authController = require('../../controllers/user/authController');
 const commonController = require('../../controllers/user/commonController');
 const bookingController = require('../../controllers/user/bookingController');
 const locationController = require('../../controllers/locationController');
-const dashboardController = require('../../controllers/user/dashboardController');
+const AppController = require('../../controllers/user/AppController');
 const noteController = require("../../controllers/admin/noteController")
 const testSeriesController = require("../../controllers/admin/testSeriesController")
 const paymentController = require("../../controllers/paymentController")
@@ -43,8 +43,8 @@ router.post('/login-otp', checkValid('loginWithOtp'), showValidationErrors, auth
 router.use(authCheck);
 
 // ..................... Dashboard Routes .................................
-router.get('/dashboard', dashboardController.dashboard);
-
+router.get('/dashboard', AppController.dashboard);
+router.get('/payment-history', AppController.getUserPaymentHistory);
 
 
 // Note Routes for users
@@ -72,9 +72,15 @@ router.get("/exam-plans/:examPlanId/coupons",  examPlanPaymentController.getExam
 // Validate coupon for an exam plan
 router.post("/exam-plans/:examPlanId/validate-coupon",  examPlanPaymentController.validateExamPlanCoupon)
 
+// Get user's Payment history
+router.get("/exam-plans/history",  examPlanPaymentController.getUserPurchasedExamPlans)
+
+
 // Exam Plan Routes for users
 router.get("/exam-plans",  examPlanController.getUserExamPlans)
 router.get("/exam-plans/:id",  examPlanController.getUserExamPlanById)
+router.get("/exam-plans-bybatch/:batchId",  examPlanController.getExamPlansByBatch)
+
 
 // Test Series Routes for users
 router.get("/test-series", examPlanController.getAllTestSeries);
@@ -143,7 +149,7 @@ router.get("/exams/:examId/review",  examController.getExamReview);
 router.get("/exams/:examId/navigation",  examController.getExamNavigation);
 
 // Get user's exam history
-router.get("/exams/history",  examController.getExamHistory);
+router.get("/exams/result-list",  examController.getExamResultList);
 
 
 

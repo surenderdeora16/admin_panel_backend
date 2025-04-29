@@ -93,6 +93,11 @@ const ExamSchema = new Schema(
   { timestamps: true }
 );
 
+
+// Add index in Exam model
+ExamSchema.index({ status: 1, endTime: 1 }); // For faster expired exam queries
+ExamSchema.index({ testSeriesId: 1, totalScore: -1 }); // For faster ranking
+
 // Pre-find middleware to exclude soft-deleted records
 ExamSchema.pre(/^find/, function (next) {
   this.where({ deletedAt: null });

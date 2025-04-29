@@ -8,6 +8,7 @@ const Question = require("../../models/Question");
 const UserPurchase = require("../../models/UserPurchase");
 const mongoose = require("mongoose");
 const language = require("../../languages/english");
+const { scheduleExamAutoSubmit } = require("../../services/examService");
 
 /**
  * @desc    Start a new exam
@@ -23,7 +24,10 @@ exports.startExam = async (req, res) => {
     const userId = req.user._id;
 
     // Check if test series exists
-    const testSeries = await TestSeries.findOne({ _id: testSeriesId, deletedAt: null });
+    const testSeries = await TestSeries.findOne({
+      _id: testSeriesId,
+      deletedAt: null,
+    });
     if (!testSeries) {
       await session.abortTransaction();
       session.endSession();
@@ -41,7 +45,7 @@ exports.startExam = async (req, res) => {
     if (!testSeries.isFree) {
       // For paid test series, check if user has purchased the exam plan
       const examPlanId = testSeries.examPlanId;
-      
+
       const userPurchase = await UserPurchase.findOne({
         userId,
         itemType: "EXAM_PLAN",
@@ -53,10 +57,11 @@ exports.startExam = async (req, res) => {
       if (!userPurchase) {
         await session.abortTransaction();
         session.endSession();
-        return res.noRecords("You need to purchase this exam plan to access this test series");
+        return res.noRecords(
+          "You need to purchase this exam plan to access this test series"
+        );
       }
     }
-
     // Check if user already has an ongoing exam for this test series
     const ongoingExam = await Exam.findOne({
       userId,
@@ -69,13 +74,11 @@ exports.startExam = async (req, res) => {
       session.endSession();
       return res.success(ongoingExam, "You have an ongoing exam. Resuming...");
     }
-
     // Get all sections for this test series
     const sections = await Section.find({
       testSeriesId,
       status: true,
     }).sort({ sequence: 1 });
-
     if (sections.length === 0) {
       await session.abortTransaction();
       session.endSession();
@@ -95,15 +98,18 @@ exports.startExam = async (req, res) => {
       session.endSession();
       return res.noRecords("No questions found for this test series");
     }
-
+    // Calculate end time based on test series duration
+    const startTime = new Date();
+    const endTime = new Date(startTime.getTime() + testSeries.duration * 60000); // Convert minutes to milliseconds
     // Create a new exam
     const exam = new Exam({
       userId,
       testSeriesId,
-      startTime: new Date(),
+      startTime,
+      endTime, // Set the end time based on test series duration
       totalQuestions: testSeriesQuestions.length,
       maxScore: testSeriesQuestions.length * testSeries.correctMarks,
-      sectionTimings: sections.map(section => ({
+      sectionTimings: sections.map((section) => ({
         sectionId: section._id,
         startTime: null,
         endTime: null,
@@ -131,6 +137,9 @@ exports.startExam = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    // Schedule auto-submit for this exam
+    scheduleExamAutoSubmit(exam._id, endTime);
+    console.log(`Exam ${exam._id} auto-submit scheduled for ${endTime}`);
     return res.successInsert(exam, "Exam started successfully");
   } catch (error) {
     await session.abortTransaction();
@@ -165,6 +174,13 @@ exports.getExamQuestionsBySection = async (req, res) => {
       return res.noRecords("Exam has already been completed");
     }
 
+    // Check if exam time has expired
+    if (new Date() > new Date(exam.endTime)) {
+      return res.noRecords(
+        "Exam time has expired. The exam will be auto-submitted."
+      );
+    }
+
     // Check if section exists
     const section = await Section.findById(sectionId);
     if (!section) {
@@ -173,9 +189,9 @@ exports.getExamQuestionsBySection = async (req, res) => {
 
     // Update section timing if not already started
     const sectionTiming = exam.sectionTimings.find(
-      st => st.sectionId.toString() === sectionId
+      (st) => st.sectionId.toString() === sectionId
     );
-    
+
     if (sectionTiming && !sectionTiming.startTime) {
       sectionTiming.startTime = new Date();
       await exam.save();
@@ -192,7 +208,6 @@ exports.getExamQuestionsBySection = async (req, res) => {
       })
       .sort({ sequence: 1 });
 
-      console.log("examQuestions", examQuestions)
     // Increment visit count for first question if not visited before
     if (examQuestions.length > 0 && examQuestions[0].visitCount === 0) {
       examQuestions[0].visitCount += 1;
@@ -200,7 +215,7 @@ exports.getExamQuestionsBySection = async (req, res) => {
     }
 
     // Format questions to remove sensitive information
-    const formattedQuestions = examQuestions.map(eq => ({
+    const formattedQuestions = examQuestions.map((eq) => ({
       id: eq._id,
       sequence: eq.sequence,
       questionText: eq.questionId.questionText,
@@ -220,11 +235,21 @@ exports.getExamQuestionsBySection = async (req, res) => {
     // Get section stats
     const sectionStats = {
       totalQuestions: examQuestions.length,
-      attempted: examQuestions.filter(eq => eq.status === "ATTEMPTED").length,
-      unattempted: examQuestions.filter(eq => eq.status === "UNATTEMPTED").length,
-      skipped: examQuestions.filter(eq => eq.status === "SKIPPED").length,
-      markedForReview: examQuestions.filter(eq => eq.isMarkedForReview).length,
+      attempted: examQuestions.filter((eq) => eq.status === "ATTEMPTED").length,
+      unattempted: examQuestions.filter((eq) => eq.status === "UNATTEMPTED")
+        .length,
+      skipped: examQuestions.filter((eq) => eq.status === "SKIPPED").length,
+      markedForReview: examQuestions.filter((eq) => eq.isMarkedForReview)
+        .length,
     };
+
+    // Calculate remaining time
+    const remainingTime = Math.max(
+      0,
+      new Date(exam.endTime).getTime() - new Date().getTime()
+    );
+    const remainingMinutes = Math.floor(remainingTime / 60000);
+    const remainingSeconds = Math.floor((remainingTime % 60000) / 1000);
 
     return res.success({
       section: {
@@ -234,6 +259,16 @@ exports.getExamQuestionsBySection = async (req, res) => {
       },
       questions: formattedQuestions,
       stats: sectionStats,
+      examTiming: {
+        startTime: exam.startTime,
+        endTime: exam.endTime,
+        remainingTime: {
+          milliseconds: remainingTime,
+          formatted: `${remainingMinutes}:${remainingSeconds
+            .toString()
+            .padStart(2, "0")}`,
+        },
+      },
     });
   } catch (error) {
     console.error("Error getting exam questions:", error);
@@ -259,7 +294,7 @@ exports.getExamQuestion = async (req, res) => {
       })
       .populate({
         path: "examId",
-        select: "userId status",
+        select: "userId status startTime endTime",
       });
 
     if (!examQuestion) {
@@ -274,6 +309,13 @@ exports.getExamQuestion = async (req, res) => {
     // Check if exam is still ongoing
     if (examQuestion.examId.status !== "STARTED") {
       return res.noRecords("Exam has already been completed");
+    }
+
+    // Check if exam time has expired
+    if (new Date() > new Date(examQuestion.examId.endTime)) {
+      return res.noRecords(
+        "Exam time has expired. The exam will be auto-submitted."
+      );
     }
 
     // Increment visit count if not visited before
@@ -298,6 +340,14 @@ exports.getExamQuestion = async (req, res) => {
       isMarkedForReview: examQuestion.isMarkedForReview,
       status: examQuestion.status,
       visitCount: examQuestion.visitCount,
+      examTiming: {
+        startTime: examQuestion.examId.startTime,
+        endTime: examQuestion.examId.endTime,
+        remainingTime: Math.max(
+          0,
+          new Date(examQuestion.examId.endTime).getTime() - new Date().getTime()
+        ),
+      },
     };
 
     return res.success(formattedQuestion);
@@ -331,7 +381,7 @@ exports.answerExamQuestion = async (req, res) => {
       })
       .populate({
         path: "examId",
-        select: "userId status",
+        select: "userId status endTime",
       });
 
     if (!examQuestion) {
@@ -348,17 +398,24 @@ exports.answerExamQuestion = async (req, res) => {
       return res.noRecords("Exam has already been completed");
     }
 
+    // Check if exam time has expired
+    if (new Date() > new Date(examQuestion.examId.endTime)) {
+      return res.noRecords(
+        "Exam time has expired. The exam will be auto-submitted."
+      );
+    }
+
     // Update exam question
     examQuestion.userAnswer = answer;
     examQuestion.isCorrect = answer === examQuestion.questionId.rightAnswer;
     examQuestion.status = "ATTEMPTED";
-    
+
     if (isMarkedForReview !== undefined) {
       examQuestion.isMarkedForReview = isMarkedForReview;
     }
-    
+
     if (timeSpent) {
-      examQuestion.timeSpent += parseInt(timeSpent);
+      examQuestion.timeSpent += Number.parseInt(timeSpent);
     }
 
     await examQuestion.save();
@@ -387,11 +444,10 @@ exports.skipExamQuestion = async (req, res) => {
     const userId = req.user._id;
 
     // Get exam question
-    const examQuestion = await ExamQuestion.findById(examQuestionId)
-      .populate({
-        path: "examId",
-        select: "userId status",
-      });
+    const examQuestion = await ExamQuestion.findById(examQuestionId).populate({
+      path: "examId",
+      select: "userId status endTime",
+    });
 
     if (!examQuestion) {
       return res.noRecords("Question not found");
@@ -407,15 +463,22 @@ exports.skipExamQuestion = async (req, res) => {
       return res.noRecords("Exam has already been completed");
     }
 
+    // Check if exam time has expired
+    if (new Date() > new Date(examQuestion.examId.endTime)) {
+      return res.noRecords(
+        "Exam time has expired. The exam will be auto-submitted."
+      );
+    }
+
     // Update exam question
     examQuestion.status = "SKIPPED";
-    
+
     if (isMarkedForReview !== undefined) {
       examQuestion.isMarkedForReview = isMarkedForReview;
     }
-    
+
     if (timeSpent) {
-      examQuestion.timeSpent += parseInt(timeSpent);
+      examQuestion.timeSpent += Number.parseInt(timeSpent);
     }
 
     await examQuestion.save();
@@ -448,11 +511,10 @@ exports.markExamQuestionForReview = async (req, res) => {
     }
 
     // Get exam question
-    const examQuestion = await ExamQuestion.findById(examQuestionId)
-      .populate({
-        path: "examId",
-        select: "userId status",
-      });
+    const examQuestion = await ExamQuestion.findById(examQuestionId).populate({
+      path: "examId",
+      select: "userId status endTime",
+    });
 
     if (!examQuestion) {
       return res.noRecords("Question not found");
@@ -468,11 +530,18 @@ exports.markExamQuestionForReview = async (req, res) => {
       return res.noRecords("Exam has already been completed");
     }
 
+    // Check if exam time has expired
+    if (new Date() > new Date(examQuestion.examId.endTime)) {
+      return res.noRecords(
+        "Exam time has expired. The exam will be auto-submitted."
+      );
+    }
+
     // Update exam question
     examQuestion.isMarkedForReview = isMarkedForReview;
-    
+
     if (timeSpent) {
-      examQuestion.timeSpent += parseInt(timeSpent);
+      examQuestion.timeSpent += Number.parseInt(timeSpent);
     }
 
     await examQuestion.save();
@@ -518,23 +587,30 @@ exports.updateSectionTiming = async (req, res) => {
       return res.noRecords("Exam has already been completed");
     }
 
+    // Check if exam time has expired
+    if (new Date() > new Date(exam.endTime)) {
+      return res.noRecords(
+        "Exam time has expired. The exam will be auto-submitted."
+      );
+    }
+
     // Update section timing
     const sectionTiming = exam.sectionTimings.find(
-      st => st.sectionId.toString() === sectionId
+      (st) => st.sectionId.toString() === sectionId
     );
-    
+
     if (!sectionTiming) {
       return res.noRecords("Section timing not found");
     }
-    
-    sectionTiming.totalTimeSpent += parseInt(timeSpent);
-    
+
+    sectionTiming.totalTimeSpent += Number.parseInt(timeSpent);
+
     if (!sectionTiming.startTime) {
       sectionTiming.startTime = new Date();
     }
-    
+
     sectionTiming.endTime = new Date();
-    
+
     await exam.save();
 
     return res.successUpdate({
@@ -585,17 +661,29 @@ exports.submitExam = async (req, res) => {
     }).populate("questionId");
 
     // Calculate exam statistics
-    const attemptedQuestions = examQuestions.filter(eq => eq.status === "ATTEMPTED").length;
-    const correctAnswers = examQuestions.filter(eq => eq.isCorrect === true).length;
-    const wrongAnswers = examQuestions.filter(eq => eq.isCorrect === false).length;
-    const skippedQuestions = examQuestions.filter(eq => eq.status === "SKIPPED").length;
-    const markedForReview = examQuestions.filter(eq => eq.isMarkedForReview).length;
+    const attemptedQuestions = examQuestions.filter(
+      (eq) => eq.status === "ATTEMPTED"
+    ).length;
+    const correctAnswers = examQuestions.filter(
+      (eq) => eq.isCorrect === true
+    ).length;
+    const wrongAnswers = examQuestions.filter(
+      (eq) => eq.isCorrect === false
+    ).length;
+    const skippedQuestions = examQuestions.filter(
+      (eq) => eq.status === "SKIPPED"
+    ).length;
+    const markedForReview = examQuestions.filter(
+      (eq) => eq.isMarkedForReview
+    ).length;
 
     // Get test series for scoring details
     const testSeries = await TestSeries.findById(exam.testSeriesId);
-    
+
     // Calculate total score
-    const totalScore = correctAnswers * testSeries.correctMarks - wrongAnswers * testSeries.negativeMarks;
+    const totalScore =
+      correctAnswers * testSeries.correctMarks -
+      wrongAnswers * testSeries.negativeMarks;
     const maxScore = examQuestions.length * testSeries.correctMarks;
     const percentage = (totalScore / maxScore) * 100;
 
@@ -612,7 +700,7 @@ exports.submitExam = async (req, res) => {
     exam.percentage = percentage;
 
     // Update section timings that don't have an end time
-    exam.sectionTimings.forEach(st => {
+    exam.sectionTimings.forEach((st) => {
       if (st.startTime && !st.endTime) {
         st.endTime = new Date();
       }
@@ -626,7 +714,7 @@ exports.submitExam = async (req, res) => {
       status: "COMPLETED",
       totalScore: { $gt: totalScore },
     });
-    
+
     exam.rank = betterExams + 1;
     await exam.save({ session });
 
@@ -652,6 +740,110 @@ exports.submitExam = async (req, res) => {
     session.endSession();
     console.error("Error submitting exam:", error);
     return res.someThingWentWrong(error);
+  }
+};
+
+/**
+ * @desc    Auto-submit exam (internal use)
+ * @access  Private (System)
+ */
+exports.autoSubmitExam = async (examId) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Check if exam exists
+    const exam = await Exam.findById({ _id: examId });
+
+    if (!exam) {
+      await session.abortTransaction();
+      session.endSession();
+      console.error(`Auto-submit: Exam ${examId} not found`);
+      return;
+    }
+
+    // Check if exam is still ongoing
+    if (exam.status !== "STARTED") {
+      await session.abortTransaction();
+      session.endSession();
+      console.log(`Auto-submit: Exam ${examId} has already been completed`);
+      return;
+    }
+
+    console.log(`Auto-submitting exam ${examId} for user ${exam.userId}`);
+
+    // Get all exam questions
+    const examQuestions = await ExamQuestion.find({
+      examId,
+    }).populate("questionId");
+
+    // Calculate exam statistics
+    const attemptedQuestions = examQuestions.filter(
+      (eq) => eq.status === "ATTEMPTED"
+    ).length;
+    const correctAnswers = examQuestions.filter(
+      (eq) => eq.isCorrect === true
+    ).length;
+    const wrongAnswers = examQuestions.filter(
+      (eq) => eq.isCorrect === false
+    ).length;
+    const skippedQuestions = examQuestions.filter(
+      (eq) => eq.status === "SKIPPED"
+    ).length;
+    const markedForReview = examQuestions.filter(
+      (eq) => eq.isMarkedForReview
+    ).length;
+
+    // Get test series for scoring details
+    const testSeries = await TestSeries.findById(exam.testSeriesId);
+
+    // Calculate total score
+    const totalScore =
+      correctAnswers * testSeries.correctMarks -
+      wrongAnswers * testSeries.negativeMarks;
+    const maxScore = examQuestions.length * testSeries.correctMarks;
+    const percentage = (totalScore / maxScore) * 100;
+
+    // Update exam
+    exam.endTime = new Date();
+    exam.status = "COMPLETED";
+    exam.attemptedQuestions = attemptedQuestions;
+    exam.correctAnswers = correctAnswers;
+    exam.wrongAnswers = wrongAnswers;
+    exam.skippedQuestions = skippedQuestions;
+    exam.markedForReview = markedForReview;
+    exam.totalScore = totalScore;
+    exam.maxScore = maxScore;
+    exam.percentage = percentage;
+
+    // Update section timings that don't have an end time
+    exam.sectionTimings.forEach((st) => {
+      if (st.startTime && !st.endTime) {
+        st.endTime = new Date();
+      }
+    });
+
+    await exam.save({ session });
+
+    // Calculate rank
+    const betterExams = await Exam.countDocuments({
+      testSeriesId: exam.testSeriesId,
+      status: "COMPLETED",
+      totalScore: { $gt: totalScore },
+    });
+
+    exam.rank = betterExams + 1;
+    await exam.save({ session });
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    console.log(`Auto-submit completed for exam ${examId}`);
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error(`Error auto-submitting exam ${examId}:`, error);
   }
 };
 
@@ -692,24 +884,29 @@ exports.getExamResult = async (req, res) => {
         examId,
         sectionId: section._id,
       });
-      
+
       const sectionStat = {
         sectionId: section._id,
         name: section.name,
         totalQuestions: sectionQuestions.length,
-        attempted: sectionQuestions.filter(eq => eq.status === "ATTEMPTED").length,
-        correct: sectionQuestions.filter(eq => eq.isCorrect === true).length,
-        wrong: sectionQuestions.filter(eq => eq.isCorrect === false).length,
-        skipped: sectionQuestions.filter(eq => eq.status === "SKIPPED").length,
+        attempted: sectionQuestions.filter((eq) => eq.status === "ATTEMPTED")
+          .length,
+        correct: sectionQuestions.filter((eq) => eq.isCorrect === true).length,
+        wrong: sectionQuestions.filter((eq) => eq.isCorrect === false).length,
+        skipped: sectionQuestions.filter((eq) => eq.status === "SKIPPED")
+          .length,
       };
-      
+
       sectionStats.push(sectionStat);
     }
 
     // Calculate time statistics
-    const totalDuration = (new Date(exam.endTime) - new Date(exam.startTime)) / 1000; // in seconds
-    const sectionTimings = exam.sectionTimings.map(st => {
-      const section = sections.find(s => s._id.toString() === st.sectionId.toString());
+    const totalDuration =
+      (new Date(exam.endTime) - new Date(exam.startTime)) / 1000; // in seconds
+    const sectionTimings = exam.sectionTimings.map((st) => {
+      const section = sections.find(
+        (s) => s._id.toString() === st.sectionId.toString()
+      );
       return {
         sectionId: st.sectionId,
         name: section ? section.name : "Unknown",
@@ -779,7 +976,8 @@ exports.getExamReview = async (req, res) => {
     })
       .populate({
         path: "questionId",
-        select: "questionText option1 option2 option3 option4 option5 rightAnswer explanation",
+        select:
+          "questionText option1 option2 option3 option4 option5 rightAnswer explanation",
       })
       .populate({
         path: "sectionId",
@@ -788,7 +986,7 @@ exports.getExamReview = async (req, res) => {
       .sort({ sequence: 1 });
 
     // Format questions with correct answers
-    const reviewQuestions = examQuestions.map(eq => ({
+    const reviewQuestions = examQuestions.map((eq) => ({
       id: eq._id,
       sequence: eq.sequence,
       section: {
@@ -815,7 +1013,7 @@ exports.getExamReview = async (req, res) => {
 
     // Group questions by section
     const sectionMap = new Map();
-    reviewQuestions.forEach(q => {
+    reviewQuestions.forEach((q) => {
       if (!sectionMap.has(q.section.id.toString())) {
         sectionMap.set(q.section.id.toString(), {
           section: q.section,
@@ -877,7 +1075,7 @@ exports.getExamNavigation = async (req, res) => {
 
     // Group questions by section
     const sectionMap = new Map();
-    sections.forEach(section => {
+    sections.forEach((section) => {
       sectionMap.set(section._id.toString(), {
         id: section._id,
         name: section.name,
@@ -887,7 +1085,7 @@ exports.getExamNavigation = async (req, res) => {
     });
 
     // Add questions to sections
-    examQuestions.forEach(eq => {
+    examQuestions.forEach((eq) => {
       const sectionId = eq.sectionId.toString();
       if (sectionMap.has(sectionId)) {
         sectionMap.get(sectionId).questions.push({
@@ -900,16 +1098,19 @@ exports.getExamNavigation = async (req, res) => {
     });
 
     // Sort questions by sequence
-    sectionMap.forEach(section => {
+    sectionMap.forEach((section) => {
       section.questions.sort((a, b) => a.sequence - b.sequence);
-      
+
       // Add stats
       section.stats = {
         total: section.questions.length,
-        attempted: section.questions.filter(q => q.status === "ATTEMPTED").length,
-        unattempted: section.questions.filter(q => q.status === "UNATTEMPTED").length,
-        skipped: section.questions.filter(q => q.status === "SKIPPED").length,
-        markedForReview: section.questions.filter(q => q.isMarkedForReview).length,
+        attempted: section.questions.filter((q) => q.status === "ATTEMPTED")
+          .length,
+        unattempted: section.questions.filter((q) => q.status === "UNATTEMPTED")
+          .length,
+        skipped: section.questions.filter((q) => q.status === "SKIPPED").length,
+        markedForReview: section.questions.filter((q) => q.isMarkedForReview)
+          .length,
       };
     });
 
@@ -931,7 +1132,7 @@ exports.getExamNavigation = async (req, res) => {
  * @route   GET /api/exams/history
  * @access  Private (User)
  */
-exports.getExamHistory = async (req, res) => {
+exports.getExamResultList = async (req, res) => {
   try {
     const { limit, pageNo } = req.query;
     const userId = req.user._id;
@@ -951,29 +1152,33 @@ exports.getExamHistory = async (req, res) => {
       userId,
       status: "COMPLETED",
     })
-      .populate("testSeriesId", "title")
+      .populate("testSeriesId", "title correctMarks")
       .sort({ endTime: -1 })
       .skip((pageNo - 1) * limit)
       .limit(Number(limit));
 
     // Format exams
-    const formattedExams = exams.map(exam => ({
-      id: exam._id,
-      testSeries: {
-        id: exam.testSeriesId._id,
-        title: exam.testSeriesId.title,
-      },
-      startTime: exam.startTime,
-      endTime: exam.endTime,
-      totalQuestions: exam.totalQuestions,
-      attemptedQuestions: exam.attemptedQuestions,
-      correctAnswers: exam.correctAnswers,
-      wrongAnswers: exam.wrongAnswers,
-      totalScore: exam.totalScore,
-      maxScore: exam.maxScore,
-      percentage: exam.percentage,
-      rank: exam.rank,
-    }));
+    const formattedExams = exams.map((exam) => {
+      const totalMarks = exam.totalQuestions * exam.testSeriesId.correctMarks;
+      return {
+        id: exam._id,
+        testSeries: {
+          id: exam.testSeriesId._id,
+          title: exam.testSeriesId.title,
+        },
+        startTime: exam.startTime,
+        endTime: exam.endTime,
+        totalQuestions: exam.totalQuestions,
+        attemptedQuestions: exam.attemptedQuestions,
+        correctAnswers: exam.correctAnswers,
+        wrongAnswers: exam.wrongAnswers,
+        totalScore: exam.totalScore,
+        maxScore: exam.maxScore,
+        percentage: exam.percentage,
+        rank: exam.rank,
+        totalMarks: totalMarks,
+      };
+    });
 
     return res.pagination(formattedExams, total, limit, pageNo);
   } catch (error) {

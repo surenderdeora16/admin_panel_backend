@@ -47,10 +47,6 @@ const ExamPlanSchema = new Schema(
       required: [true, "Validity days is required"],
       min: [1, "Validity must be at least 1 day"],
     },
-    isFeatured: {
-      type: Boolean,
-      default: false,
-    },
     sequence: {
       type: Number,
       default: 0,

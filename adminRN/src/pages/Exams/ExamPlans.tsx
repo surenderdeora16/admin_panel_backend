@@ -103,8 +103,6 @@ const ExamPlans = () => {
     //   .min(1, "Validity must be at least 1 day")
     //   .integer("Validity days must be a whole number"),
     // image: Yup.mixed(),
-    // isFeatured: Yup.boolean(),
-    // isFree: Yup.boolean(),
     // sequence: Yup.number().min(0, "Sequence cannot be negative").integer("Sequence must be a whole number"),
     // status: Yup.boolean(),
   })
@@ -135,18 +133,6 @@ const ExamPlans = () => {
       name: "image",
       type: "image-file",
       col: 12,
-    },
-    {
-      label: "Is Free",
-      name: "isFree",
-      type: "check",
-      col: 6,
-    },
-    {
-      label: "Is Featured",
-      name: "isFeatured",
-      type: "check",
-      col: 6,
     },
     {
       label: "Price (₹)",
@@ -217,11 +203,7 @@ const ExamPlans = () => {
         item.isFree ? "Free" : `₹${value} ${item.mrp > value ? `(MRP: ₹${item.mrp})` : ""}`,
     },
     { header: "Validity", accessor: "validityDays", render: (value: number) => `${value} days` },
-    {
-      header: "Type",
-      accessor: "isFeatured",
-      render: (value: boolean) => (value ? "Featured" : "Regular"),
-    },
+   
     {
       header: "Status",
       accessor: "status",
@@ -238,8 +220,6 @@ const ExamPlans = () => {
     mrp: 0,
     validityDays: 30,
     image: null,
-    isFeatured: false,
-    isFree: false,
     sequence: 0,
     status: true,
   }

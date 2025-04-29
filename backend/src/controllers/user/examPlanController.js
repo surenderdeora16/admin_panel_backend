@@ -109,6 +109,68 @@ exports.getUserExamPlans = async (req, res) => {
   }
 }
 
+
+// * Get exam plans by batch
+exports.getExamPlansByBatch = async (req, res) => {
+  try {
+    const { limit, pageNo: page, query: search, orderBy: sortBy, orderDirection: sortOrder } = req.query;
+    const { batchId } = req.params;
+
+    // Validate batchId
+    if (!batchId) {
+      return res.noRecords("Batch ID is required");
+    }
+
+    // Build query object
+    const query = {
+      batchId: new mongoose.Types.ObjectId(batchId),
+      status: true,
+      deletedAt: null,
+    };
+
+    // Add search filter if provided
+    if (search) {
+      query.$or = [{ title: { $regex: search, $options: "i" } }, { description: { $regex: search, $options: "i" } }];
+    }
+
+    // Calculate pagination values
+    const skip = (Number.parseInt(page) - 1) * Number.parseInt(limit);
+    const sortDirection = sortOrder === "asc" ? 1 : -1;
+
+    // Fetch exam plans
+    const examPlans = await ExamPlan.find(query)
+      .populate("batchId", "name")
+      .sort({ [sortBy]: sortDirection })
+      .skip(skip)
+      .limit(Number.parseInt(limit));
+
+    // Get total count for pagination
+    const totalCount = await ExamPlan.countDocuments(query);
+
+    // Return if no records found
+    if (!examPlans.length) {
+      return res.datatableNoRecords();
+    }
+
+    // Format image URLs and prepare response
+    const formattedExamPlans = examPlans.map((plan) => {
+      const planObj = plan.toObject();
+      if (planObj.image) {
+        planObj.imageUrl = `${process.env.BASE_URL}${planObj.image}`;
+      }
+      return planObj;
+    });
+
+    // Return response with pagination
+    return res.pagination(formattedExamPlans, totalCount, limit, page);
+  } catch (error) {
+    console.error("Error fetching exam plans by batch:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
+
+
 // * Get a single exam plan with purchase status
 exports.getUserExamPlanById = async (req, res) => {
   try {
@@ -398,3 +460,4 @@ exports.getTestSeriesById = async (req, res) => {
     });
   }
 };
+

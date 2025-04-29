@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import * as Yup from "yup"
-import { STATUS } from "../../constant/constant"
+import { STATUS, TRUE_FALSE_OPTIONS } from "../../constant/constant"
 import AxiosHelper from "../../helper/AxiosHelper"
 import DataManager from "../../components/DataManager"
 import { useParams, useNavigate } from "react-router-dom"
@@ -159,6 +159,13 @@ const TestSeries = () => {
       col: 12,
     },
     {
+      label: "Is Free",
+      name: "isFree",
+      type: "select2",
+      options: TRUE_FALSE_OPTIONS,
+      col: 6,
+    },
+    {
       label: "Sequence",
       name: "sequence",
       type: "number",
@@ -170,7 +177,7 @@ const TestSeries = () => {
       name: "status",
       type: "select2",
       options: STATUS,
-      col: 6,
+      col: 12,
     },
   ]
 
@@ -210,6 +217,7 @@ const TestSeries = () => {
     negativeMarks: 0.25,
     passingPercentage: 33,
     instructions: "",
+    isFree: false,
     sequence: 0,
     status: true,
   }

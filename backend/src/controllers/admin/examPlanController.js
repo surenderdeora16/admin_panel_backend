@@ -60,7 +60,7 @@ exports.getExamPlanById = async (req, res) => {
 // Create a new exam plan
 exports.createExamPlan = async (req, res) => {
   try {
-    const { title, description, batchId, price, mrp, validityDays, isFeatured, isFree, sequence, status } = req.body
+    const { title, description, batchId, price, mrp, validityDays, isFree, sequence, status } = req.body
 
     // Check if batch exists
     const batch = await Batch.findById(batchId)
@@ -79,7 +79,6 @@ exports.createExamPlan = async (req, res) => {
       price: price || 0,
       mrp: mrp || 0,
       validityDays: validityDays || 30,
-      isFeatured: isFeatured === "true" || isFeatured === true,
       isFree: isFree === "true" || isFree === true,
       sequence: sequence || 0,
       status: status !== undefined ? status === "true" || status === true : true,
@@ -113,7 +112,7 @@ exports.createExamPlan = async (req, res) => {
 // Update an exam plan
 exports.updateExamPlan = async (req, res) => {
   try {
-    const { title, description, batchId, price, mrp, validityDays, isFeatured, isFree, sequence, status } = req.body
+    const { title, description, batchId, price, mrp, validityDays, isFree, sequence, status } = req.body
 
     // Find exam plan
     const examPlan = await ExamPlan.findById(req.params.id)
@@ -140,7 +139,6 @@ exports.updateExamPlan = async (req, res) => {
     if (price !== undefined) examPlan.price = price
     if (mrp !== undefined) examPlan.mrp = mrp
     if (validityDays !== undefined) examPlan.validityDays = validityDays
-    if (isFeatured !== undefined) examPlan.isFeatured = isFeatured === "true" || isFeatured === true
     if (isFree !== undefined) examPlan.isFree = isFree === "true" || isFree === true
     if (sequence !== undefined) examPlan.sequence = sequence
     if (status !== undefined) examPlan.status = status === "true" || status === true

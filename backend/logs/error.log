@@ -483,3 +483,15 @@
 {"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1744218581782-707725731.jpg - CORS policy violation: Origin not allowed"}
 {"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1744217152925-934963107.jpg - CORS policy violation: Origin not allowed"}
 {"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1744217131092-831243518.jpg - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/batches/image-1745588016089-481900358.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/batches//uploads/batches/image-1745465512546-935053430.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/batches/image-1745587460094-545347706.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/exam_plans/image-1745589648062-507354939.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/batches/image-1745588016089-481900358.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/batches//uploads/batches/image-1745465512546-935053430.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/batches/image-1745587460094-545347706.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/batches/image-1745588016089-481900358.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/batches//uploads/batches/image-1745465512546-935053430.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/batches/image-1745587460094-545347706.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/exam_plans/image-1745589648062-507354939.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/exam_plans/image-1745589648062-507354939.png - CORS policy violation: Origin not allowed"}
