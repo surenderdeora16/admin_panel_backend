@@ -213,3 +213,15 @@ span.flatpickr-weekday,
 [x-cloak] {
   display: none !important;
 }
+
+
+
+.jodit-text-editor a {
+  color: #3c50e0;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.jodit-context table tr td, .jodit-context table tr th, .jodit-wysiwyg table tr td, .jodit-wysiwyg table tr th{
+  border: 2px solid #b8b6b6 !important;
+}

@@ -1181,13 +1181,15 @@ const TextEditer = ({
   field,
   disabled,
   error,
+  placeholder = 'Start typing...'
 }: {
   form: any;
   field: any;
   disabled: any;
   error: any;
+  placeholder?:any
 }) => {
-  const editor = useRef(null);
+  const editor = useRef<any>(null);
   const [canUpdate, setCanUpdate] = useState(true);
   const [content, setContent] = useState<any>('');
 
@@ -1198,77 +1200,30 @@ const TextEditer = ({
     }
   }, [field?.value, canUpdate]);
 
-  return useMemo(() => {
-    const config = {
-      readonly: disabled,
-      theme: 'default',
-      width: '100%',
-      height: 300,
-      toolbarButtonSize: 'medium',
-      buttons: [
-        'bold',
-        'italic',
-        'underline',
-        'strikethrough',
-        '|',
-        'ul',
-        'ol',
-        '|',
-        'font',
-        'fontsize',
-        'brush',
-        'paragraph',
-        '|',
-        'link',
-        'image',
-        'table',
-        '|',
-        'align',
-        'undo',
-        'redo',
-        '|',
-        'hr',
-        'eraser',
-        'fullsize',
-        'source',
-      ],
-      uploader: {
-        insertImageAsBase64URI: true,
-      },
-      colorPickerDefaultTab: 'background',
-      controls: {
-        font: {
-          list: {
-            Arial: 'Arial',
-            'Courier New': 'Courier New',
-            Georgia: 'Georgia',
-            Impact: 'Impact',
-            Tahoma: 'Tahoma',
-            'Times New Roman': 'Times New Roman',
-            Verdana: 'Verdana',
-          },
-        },
-      },
-      style: {
-        borderRadius: '0.5rem',
-        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-      },
-      defaultActionOnPaste: 'insert_as_html',
-      cleanHTML: false,
-      removeEmptyAttributes: false,
-      allowTags: ['*'],
-      allowAttributes: ['*'],
+  const config = useMemo(
+    () => ({
+      readonly: false,
+      height: '400',
+      placeholder: placeholder || 'Start typing...',
+    }),
+    [placeholder]
+  );
 
-      // events: {
-      //   onPaste: (event: ClipboardEvent) => {
-      //     console.log('Pasting something...');
-      //   },
-      // },
-    };
+  return useMemo(() => {
+    // const config = {
+    //   readonly: disabled,
+     
+
+    //   // events: {
+    //   //   onPaste: (event: ClipboardEvent) => {
+    //   //     console.log('Pasting something...');
+    //   //   },
+    //   // },
+    // };
 
     return (
       <div
-        className={`jodit-wrapper rounded-lg overflow-hidden ${
+        className={`text-black jodit-text-editor jodit-wrapper rounded-lg overflow-hidden ${
           error ? 'ring-2 ring-rose-500' : ''
         }`}
       >
@@ -1276,7 +1231,10 @@ const TextEditer = ({
           ref={editor}
           value={content}
           config={config}
+          tabIndex={1} 
+          className='border-2 border-black'
           onBlur={(content: any) => form.setFieldValue(field?.name, content)}
+          onChange={(newContent) => {}}
         />
       </div>
     );
