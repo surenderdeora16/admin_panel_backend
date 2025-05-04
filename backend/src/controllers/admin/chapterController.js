@@ -192,7 +192,6 @@ exports.createChapter = async (req, res) => {
       _id: subjectId, 
       deletedAt: null 
     })
-    
     if (!subject) {
       return res.status(404).json({
         status: false,
@@ -208,7 +207,7 @@ exports.createChapter = async (req, res) => {
         { name: { $regex: new RegExp(`^${name}$`, "i") } }, 
       ]
     })
-
+    
     if (existingChapter) {
       return res.status(409).json({
         status: false,
@@ -227,7 +226,6 @@ exports.createChapter = async (req, res) => {
       chapterSequence = maxSequenceChapter ? 
         maxSequenceChapter.sequence + 1 : 1
     }
-
     // Create new chapter
     const chapter = new Chapter({
       name,
@@ -236,7 +234,6 @@ exports.createChapter = async (req, res) => {
       sequence: chapterSequence,
       createdBy: req.admin._id,
     })
-
     await chapter.save()
 
     return res.successInsert(chapter, "Chapter created successfully")

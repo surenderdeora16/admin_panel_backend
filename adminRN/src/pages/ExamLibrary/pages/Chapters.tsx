@@ -16,10 +16,12 @@ const useSubjects = () => {
       try {
         setLoading(true);
         const response = await AxiosHelper.getData('/subjects');
-        const subjectOptions = response?.data?.data?.record?.map((subject:any) => ({
-          id: subject._id,
-          name: subject.name,
-        }));
+        const subjectOptions = response?.data?.data?.record?.map(
+          (subject: any) => ({
+            id: subject._id,
+            name: subject.name,
+          }),
+        );
         setSubjects(subjectOptions);
       } catch (err) {
         console.error('Failed to fetch subjects:', err);
@@ -39,15 +41,16 @@ const useSubjects = () => {
 const Chapters = () => {
   const [modalType, setModalType] = useState<any>('');
   const { subjects, loading, error } = useSubjects();
+  const [selectedSubject, setSelectedSubject] = useState<any>(null);
+
   const title = 'Chapters Management';
   const itemName = 'Chapter';
-  console.log("subjects", subjects)
 
   const endpoints = {
     list: '/chapters',
     create: '/chapters',
-    update: (id:any) => `/chapters/${id}`,
-    delete: (id:any) => `/chapters/${id}`,
+    update: (id: any) => `/chapters/${id}`,
+    delete: (id: any) => `/chapters/${id}`,
   };
 
   const validationSchema = Yup.object().shape({
@@ -59,7 +62,7 @@ const Chapters = () => {
       500,
       'Description cannot exceed 500 characters',
     ),
-    subjectId: Yup.string().required('Subject is required'),
+    subjectId: Yup.mixed().required('Subject is required'),
     sequence: Yup.number()
       .min(0, 'Sequence must be a non-negative integer')
       .integer('Sequence must be an integer'),
@@ -85,9 +88,16 @@ const Chapters = () => {
       type: 'select',
       options:
         modalType === 'add'
-          ? [{ id: '', name: 'Select Subject' }, ...subjects]
-          : [{ id: '', name: 'Select Subject' }, ...subjects],
-      disabled: loading || !!error, // Disable while loading or if there's an error
+          ? [
+              { id: '', name: 'Select Subject' },
+              ...subjects.sort((a: any, b: any) =>
+                a.id === selectedSubject?._id ? -1 : b.id === selectedSubject?._id ? 1 : 0,
+              ),
+            ]
+          : subjects.sort((a: any, b: any) =>
+              a.id === selectedSubject?._id ? -1 : b.id === selectedSubject?._id ? 1 : 0,
+            ),
+      disabled: loading || !!error,
     },
     {
       label: 'Sequence',
@@ -105,10 +115,10 @@ const Chapters = () => {
   ];
 
   const tableColumns = [
-    { 
-      header: 'Subject', 
+    {
+      header: 'Subject',
       accessor: 'subjectId',
-      render: (value:any) => value?.name || '-' 
+      render: (value: any) => value?.name || '-',
     },
     { header: 'Chapter', accessor: 'name', sortable: true },
     { header: 'Topics', accessor: 'topicCount' },
@@ -124,15 +134,20 @@ const Chapters = () => {
     },
   ];
 
+  const handleRowClick = (row: any) => {
+    console.log('row', row);
+    setSelectedSubject(row.subjectId); // Set selected subject when a row is clicked
+  };
+
   const initialFormValues = {
     name: '',
     description: '',
-    subjectId: '',
+    subjectId: modalType === 'add' ? '' : '',
     sequence: 0,
     status: true,
   };
 
-  const canDelete = (item:any) => item.topicCount === 0;
+  const canDelete = (item: any) => item.topicCount === 0;
 
   // Optional: Show a loading or error message
   if (loading) return <div>Loading subjects...</div>;
@@ -145,6 +160,7 @@ const Chapters = () => {
       setModalType={setModalType}
       endpoints={endpoints}
       validationSchema={validationSchema}
+      handleRowClick={handleRowClick}
       formFields={formFields}
       tableColumns={tableColumns}
       initialFormValues={initialFormValues}

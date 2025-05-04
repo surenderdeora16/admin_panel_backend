@@ -43,15 +43,15 @@ const ChapterSchema = new Schema(
 
 // Create compound index for subject+chapter uniqueness
 ChapterSchema.index({ subjectId: 1, name: 1 }, { unique: true })
-ChapterSchema.index({ subjectId: 1, code: 1 }, { unique: true })
+// ChapterSchema.index({ subjectId: 1, code: 1 }, { unique: true })
 
 // Create text index for search optimization
-ChapterSchema.index({ name: "text", code: "text", description: "text" })
+ChapterSchema.index({ name: "text", description: "text" })
 
 // Add error handling for duplicate entries
 ChapterSchema.post("save", (error, doc, next) => {
-  if (error.name === "MongoError" && error.code === 11000) {
-    next(new Error("Chapter with this name or code already exists for this subject"))
+  if (error.name === "MongoError") {
+    next(new Error("Chapter with this name already exists for this subject"))
   } else {
     next(error)
   }

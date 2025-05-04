@@ -37,12 +37,12 @@ const SubjectSchema = new Schema(
 )
 
 // Create text index for search optimization
-SubjectSchema.index({ name: "text", code: "text", description: "text" })
+SubjectSchema.index({ name: "text", description: "text" })
 
 // Add error handling for duplicate entries
 SubjectSchema.post("save", (error, doc, next) => {
-  if (error.name === "MongoError" && error.code === 11000) {
-    next(new Error("Subject with this name or code already exists"))
+  if (error.name === "MongoError") {
+    next(new Error("Subject with this name already exists"))
   } else {
     next(error)
   }

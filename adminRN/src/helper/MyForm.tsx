@@ -1034,10 +1034,10 @@ const Select2 = ({
         onBlur(myValue?.[0]);
       }}
       onChange={(value: any) => {
-        onChange(value);
-        onChangeCustom(value);
         setMyValue(value);
         form.setFieldValue(field?.name, value?.id || value?._id);
+        onChange(value);
+        onChangeCustom(value);
       }}
     />
   );

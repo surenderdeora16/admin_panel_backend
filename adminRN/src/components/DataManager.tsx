@@ -54,6 +54,7 @@ interface DataManagerProps {
   initialFormValues: Record<string, any>;
   showPagination?: boolean;
   showAdd?: boolean;
+  handleRowClick?:any;
   showEdit?: boolean;
   showDelete?: boolean;
   renderActions?: (item: any) => React.ReactNode;
@@ -68,6 +69,7 @@ const DataManager = ({
   multipartFormData,
   uploadProgress,
   setModalType,
+  handleRowClick,
   tableColumns,
   initialFormValues,
   showPagination = true,
@@ -332,6 +334,7 @@ const DataManager = ({
         ? initialFormValues
         : selectedItem || initialFormValues;
 
+        
     return (
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
@@ -541,6 +544,7 @@ const DataManager = ({
                       <tr
                         key={item._id}
                         className="hover:bg-gray-100 dark:hover:bg-gray-900"
+                        onClick={() => handleRowClick && handleRowClick(item)}
                       >
                         <td className="px-8 py-6 text-gray-900 dark:text-white">
                           {index < 9 ? '0' : ''}
@@ -615,15 +619,15 @@ const DataManager = ({
 
       <AnimatePresence>
         {showModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            <motion.div
+            initial={{ opacity: 0, transition: { duration: 0.1 } }}
+            animate={{ opacity: 1, transition: { duration: 0.2 } }}
+            exit={{ opacity: 0, transition: { duration: 0.2 } }}
             style={{ zIndex: '214748364' }}
             className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
-          >
+            >
             <ModalContent />
-          </motion.div>
+            </motion.div>
         )}
       </AnimatePresence>
     </div>
