@@ -44,6 +44,7 @@ router.use(authCheck);
 
 // ..................... Dashboard Routes .................................
 router.get('/dashboard', AppController.dashboard);
+router.get('/upcoming-govt-exam/:id', AppController.upComingExamPageDetail);
 router.get('/payment-history', AppController.getUserPaymentHistory);
 
 
@@ -118,8 +119,19 @@ router.post("/notes/:noteId/validate-coupon",  notePaymentController.validateNot
 // Start a new exam
 router.post("/exams/start/:testSeriesId",  examController.startExam);
 
+// Get all exam questions structured by sections 
+router.get("/exams/:examId/all-questions", examController.getAllExamQuestions)
+
+// Answer an exam question
+router.post("/exams/:examId/answer-question", examController.answerExamQuestionBatch)
+
+// Update question status in batch 
+router.post("/exams/:examId/update-question-status", examController.updateQuestionStatusBatch)
+
+
 // Get exam questions by section
 router.get("/exams/:examId/sections/:sectionId/questions",  examController.getExamQuestionsBySection);
+
 
 // Get a specific exam question
 router.get("/exams/questions/:examQuestionId",  examController.getExamQuestion);

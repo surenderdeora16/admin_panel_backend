@@ -847,6 +847,352 @@ exports.autoSubmitExam = async (examId) => {
   }
 };
 
+
+/**
+ * @desc    Get all exam questions structured by sections
+ * @route   GET /api/exams/:examId/all-questions
+ * @access  Private (User)
+ */
+exports.getAllExamQuestions = async (req, res) => {
+  try {
+    const { examId } = req.params
+    const userId = req.user._id
+
+    // Check if exam exists and belongs to the user
+    const exam = await Exam.findOne({
+      _id: examId,
+      userId,
+    }).populate({
+      path: "testSeriesId",
+      select: "title duration correctMarks negativeMarks passingPercentage instructions",
+    })
+
+    if (!exam) {
+      return res.noRecords("Exam not found")
+    }
+
+    // Check if exam is still ongoing
+    if (exam.status !== "STARTED") {
+      return res.noRecords("Exam has already been completed")
+    }
+
+    // Check if exam time has expired
+    if (new Date() > new Date(exam.endTime)) {
+      return res.noRecords("Exam time has expired. The exam will be auto-submitted.")
+    }
+
+    // Get all sections for this test series
+    const sections = await Section.find({
+      testSeriesId: exam.testSeriesId._id,
+      status: true,
+    }).sort({ sequence: 1 })
+
+    if (sections.length === 0) {
+      return res.noRecords("No sections found for this exam")
+    }
+
+    // Get all exam questions
+    const examQuestions = await ExamQuestion.find({
+      examId,
+    })
+      .populate({
+        path: "questionId",
+        select: "questionText option1 option2 option3 option4 option5",
+      })
+      .populate({
+        path: "sectionId",
+        select: "name sequence",
+      })
+      .sort({ sequence: 1 })
+
+    if (examQuestions.length === 0) {
+      return res.noRecords("No questions found for this exam")
+    }
+
+    // Structure questions by sections
+    const structuredSections = []
+
+    for (const section of sections) {
+      // Filter questions for this section
+      const sectionQuestions = examQuestions.filter((eq) => eq.sectionId._id.toString() === section._id.toString())
+
+      // Format questions to remove sensitive information
+      const formattedQuestions = sectionQuestions.map((eq) => ({
+        id: eq._id,
+        sequence: eq.sequence,
+        questionText: eq.questionId.questionText,
+        options: {
+          option1: eq.questionId.option1,
+          option2: eq.questionId.option2,
+          option3: eq.questionId.option3,
+          option4: eq.questionId.option4,
+          option5: eq.questionId.option5 || null,
+        },
+        userAnswer: eq.userAnswer,
+        isMarkedForReview: eq.isMarkedForReview,
+        status: eq.status,
+        visitCount: eq.visitCount,
+      }))
+
+      // Get section stats
+      const sectionStats = {
+        totalQuestions: sectionQuestions.length,
+        attempted: sectionQuestions.filter((eq) => eq.status === "ATTEMPTED").length,
+        unattempted: sectionQuestions.filter((eq) => eq.status === "UNATTEMPTED").length,
+        skipped: sectionQuestions.filter((eq) => eq.status === "SKIPPED").length,
+        markedForReview: sectionQuestions.filter((eq) => eq.isMarkedForReview).length,
+      }
+
+      // Add section with its questions to the structured sections array
+      structuredSections.push({
+        id: section._id,
+        name: section.name,
+        sequence: section.sequence,
+        questions: formattedQuestions,
+        stats: sectionStats,
+      })
+    }
+
+    // Calculate overall exam stats
+    const overallStats = {
+      totalQuestions: examQuestions.length,
+      attempted: examQuestions.filter((eq) => eq.status === "ATTEMPTED").length,
+      unattempted: examQuestions.filter((eq) => eq.status === "UNATTEMPTED").length,
+      skipped: examQuestions.filter((eq) => eq.status === "SKIPPED").length,
+      markedForReview: examQuestions.filter((eq) => eq.isMarkedForReview).length,
+    }
+
+    // Calculate remaining time
+    const remainingTime = Math.max(0, new Date(exam.endTime).getTime() - new Date().getTime())
+    const remainingMinutes = Math.floor(remainingTime / 60000)
+    const remainingSeconds = Math.floor((remainingTime % 60000) / 1000)
+
+    // Prepare response data
+    const responseData = {
+      exam: {
+        id: exam._id,
+        testSeries: {
+          id: exam.testSeriesId._id,
+          title: exam.testSeriesId.title,
+          duration: exam.testSeriesId.duration,
+          correctMarks: exam.testSeriesId.correctMarks,
+          negativeMarks: exam.testSeriesId.negativeMarks,
+          passingPercentage: exam.testSeriesId.passingPercentage,
+          instructions: exam.testSeriesId.instructions,
+        },
+        startTime: exam.startTime,
+        endTime: exam.endTime,
+        status: exam.status,
+        remainingTime: {
+          milliseconds: remainingTime,
+          formatted: `${remainingMinutes}:${remainingSeconds.toString().padStart(2, "0")}`,
+        },
+      },
+      sections: structuredSections,
+      stats: overallStats,
+    }
+
+    return res.success(responseData, "Exam questions retrieved successfully")
+  } catch (error) {
+    console.error("Error getting all exam questions:", error)
+    return res.someThingWentWrong(error)
+  }
+}
+
+/**
+ * @desc    Answer an exam question (Batch update)
+ * @route   POST /api/exams/:examId/answer-question
+ * @access  Private (User)
+ */
+exports.answerExamQuestionBatch = async (req, res) => {
+  const session = await mongoose.startSession()
+  session.startTransaction()
+
+  try {
+    const { examId } = req.params
+    const { questionId, answer, timeSpent, isMarkedForReview } = req.body
+    const userId = req.user._id
+
+    // Validate required fields
+    if (!questionId || answer === undefined) {
+      await session.abortTransaction()
+      session.endSession()
+      return res.noRecords("Question ID and answer are required")
+    }
+
+    // Check if exam exists and belongs to the user
+    const exam = await Exam.findOne({
+      _id: examId,
+      userId,
+    })
+
+    if (!exam) {
+      await session.abortTransaction()
+      session.endSession()
+      return res.noRecords("Exam not found")
+    }
+
+    // Check if exam is still ongoing
+    if (exam.status !== "STARTED") {
+      await session.abortTransaction()
+      session.endSession()
+      return res.noRecords("Exam has already been completed")
+    }
+
+    // Check if exam time has expired
+    if (new Date() > new Date(exam.endTime)) {
+      await session.abortTransaction()
+      session.endSession()
+      return res.noRecords("Exam time has expired. The exam will be auto-submitted.")
+    }
+
+    // Get exam question
+    const examQuestion = await ExamQuestion.findOne({
+      examId,
+      _id: questionId,
+    }).populate({
+      path: "questionId",
+      select: "rightAnswer",
+    })
+
+    if (!examQuestion) {
+      await session.abortTransaction()
+      session.endSession()
+      return res.noRecords("Question not found")
+    }
+
+    // Update exam question
+    examQuestion.userAnswer = answer
+    examQuestion.isCorrect = answer === examQuestion.questionId.rightAnswer
+    examQuestion.status = "ATTEMPTED"
+
+    if (isMarkedForReview !== undefined) {
+      examQuestion.isMarkedForReview = isMarkedForReview
+    }
+
+    if (timeSpent) {
+      examQuestion.timeSpent += Number.parseInt(timeSpent)
+    }
+
+    await examQuestion.save({ session })
+
+    // Commit transaction
+    await session.commitTransaction()
+    session.endSession()
+
+    return res.successUpdate({
+      id: examQuestion._id,
+      userAnswer: examQuestion.userAnswer,
+      isMarkedForReview: examQuestion.isMarkedForReview,
+      status: examQuestion.status,
+    })
+  } catch (error) {
+    await session.abortTransaction()
+    session.endSession()
+    console.error("Error answering exam question:", error)
+    return res.someThingWentWrong(error)
+  }
+}
+
+/**
+ * @desc    Update question status in batch (mark/skip/review)
+ * @route   POST /api/exams/:examId/update-question-status
+ * @access  Private (User)
+ */
+exports.updateQuestionStatusBatch = async (req, res) => {
+  const session = await mongoose.startSession()
+  session.startTransaction()
+
+  try {
+    const { examId } = req.params
+    const { questionId, status, isMarkedForReview, timeSpent } = req.body
+    const userId = req.user._id
+
+    // Validate required fields
+    if (!questionId || !status) {
+      await session.abortTransaction()
+      session.endSession()
+      return res.noRecords("Question ID and status are required")
+    }
+
+    // Validate status
+    if (!["ATTEMPTED", "UNATTEMPTED", "SKIPPED"].includes(status)) {
+      await session.abortTransaction()
+      session.endSession()
+      return res.noRecords("Invalid status. Must be ATTEMPTED, UNATTEMPTED, or SKIPPED")
+    }
+
+    // Check if exam exists and belongs to the user
+    const exam = await Exam.findOne({
+      _id: examId,
+      userId,
+    })
+
+    if (!exam) {
+      await session.abortTransaction()
+      session.endSession()
+      return res.noRecords("Exam not found")
+    }
+
+    // Check if exam is still ongoing
+    if (exam.status !== "STARTED") {
+      await session.abortTransaction()
+      session.endSession()
+      return res.noRecords("Exam has already been completed")
+    }
+
+    // Check if exam time has expired
+    if (new Date() > new Date(exam.endTime)) {
+      await session.abortTransaction()
+      session.endSession()
+      return res.noRecords("Exam time has expired. The exam will be auto-submitted.")
+    }
+
+    // Get exam question
+    const examQuestion = await ExamQuestion.findOne({
+      examId,
+      _id: questionId,
+    })
+
+    if (!examQuestion) {
+      await session.abortTransaction()
+      session.endSession()
+      return res.noRecords("Question not found")
+    }
+
+    // Update exam question
+    examQuestion.status = status
+
+    if (isMarkedForReview !== undefined) {
+      examQuestion.isMarkedForReview = isMarkedForReview
+    }
+
+    if (timeSpent) {
+      examQuestion.timeSpent += Number.parseInt(timeSpent)
+    }
+
+    await examQuestion.save({ session })
+
+    // Commit transaction
+    await session.commitTransaction()
+    session.endSession()
+
+    return res.successUpdate({
+      id: examQuestion._id,
+      status: examQuestion.status,
+      isMarkedForReview: examQuestion.isMarkedForReview,
+    })
+  } catch (error) {
+    await session.abortTransaction()
+    session.endSession()
+    console.error("Error updating question status:", error)
+    return res.someThingWentWrong(error)
+  }
+}
+
+
+
+
 /**
  * @desc    Get exam result
  * @route   GET /api/exams/:examId/result

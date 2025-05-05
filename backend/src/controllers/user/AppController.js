@@ -47,6 +47,41 @@ exports.dashboard = async (req, res) => {
   }
 };
 
+exports.upComingExamPageDetail = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const exam = await UpcomingGovtExam.findOne({
+      _id: id,
+      deletedAt: null,
+    });
+
+    if (!exam) {
+      return res.status(404).json({
+        status: false,
+        message: "No Upcoming Exams!",
+      });
+    }
+
+    const fromateUpcomingExamResponse = {
+      _id: exam?._id,
+      title: exam?.title,
+      description: exam?.description,
+      image: exam?.image,
+      examDate: exam?.examDate,
+      dateStatus: exam?.examDate
+        ? exam?.examDate
+        : "Date to be announced soon",
+      status: exam?.status,
+    };
+
+    return res.success(fromateUpcomingExamResponse);
+  } catch (error) {
+    console.error("Error restoring exam:", error);
+    return res.someThingWentWrong(error);
+  }
+};
+
 /**
  * @desc    Get user's payment history for mobile app
  * @route   GET /api/mobile/payments/history
@@ -108,4 +143,3 @@ exports.getUserPaymentHistory = catchAsync(async (req, res) => {
 
   return res.pagination(formattedPayments, total, limit, page);
 });
-

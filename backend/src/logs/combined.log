@@ -134,3 +134,4 @@
 {"level":"info","message":"Internal order created: 6809a7047b93426274835eb3","service":"lms-api","timestamp":"2025-04-24 08:20:44"}
 {"level":"info","message":"Scheduling auto-submit for exam 681136f7833be73d560f4658 in 3600 seconds","service":"lms-api","timestamp":"2025-04-30 02:00:48"}
 {"level":"info","message":"Scheduling auto-submit for exam 681137ae833be73d560f468c in 3600 seconds","service":"lms-api","timestamp":"2025-04-30 02:03:50"}
+{"level":"info","message":"Scheduling auto-submit for exam 6818d4c4c792d9ad62626599 in 1798 seconds","service":"lms-api","timestamp":"2025-05-05 20:39:58"}
