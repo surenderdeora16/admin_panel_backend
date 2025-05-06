@@ -82,6 +82,38 @@ exports.upComingExamPageDetail = async (req, res) => {
   }
 };
 
+exports.getBatches = async (req, res) => {
+  try {
+    const { limit, pageNo, query, orderBy, orderDirection } = req.query
+
+    // Build query
+    const queryObj = {}
+
+    if (query) {
+      queryObj.$or = [{ name: { $regex: query, $options: "i" } }, { description: { $regex: query, $options: "i" } }]
+    }
+
+    // Count total records
+    const total = await Batch.countDocuments(queryObj)
+
+    if (total === 0) {
+      return res.datatableNoRecords()
+    }
+
+    // Execute query with pagination and sorting
+    const batches = await Batch.find(queryObj)
+      .skip((pageNo - 1) * limit)
+      .limit(limit)
+      .sort({ [orderBy]: orderDirection === "asc" ? 1 : -1 })
+
+    return res.pagination(batches, total, limit, pageNo)
+  } catch (error) {
+    console.error("Error fetching batches:", error)
+    return res.someThingWentWrong(error)
+  }
+}
+
+
 /**
  * @desc    Get user's payment history for mobile app
  * @route   GET /api/mobile/payments/history

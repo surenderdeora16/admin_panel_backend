@@ -53,6 +53,8 @@ router.get("/subjects/:subjectId/notes", noteController.getNotesBySubject)
 // router.get("/notes/:noteId/download", checkNotePurchase, noteController.downloadNote)
 router.get("/notes/:noteId/download", noteController.downloadNote)
 
+router.get("/batches", AppController.getBatches)
+
 
 // Exam Plan Payment Flow
 // Create exam plan order

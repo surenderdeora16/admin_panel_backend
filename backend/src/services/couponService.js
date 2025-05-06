@@ -105,23 +105,24 @@ exports.getApplicableCoupons = async (userId, itemType, itemId, amount) => {
     // Get all active coupons
     const coupons = await Coupon.find({
       isActive: true,
-      startDate: { $lte: new Date() },
       endDate: { $gte: new Date() },
+      // startDate: { $lte: new Date() },
       $or: [
-        { applicableFor: "ALL" },
-        { applicableFor: itemType },
-        {
-          specificItems: {
-            $elemMatch: { itemType, itemId },
-          },
+      { applicableFor: "ALL" },
+      { applicableFor: itemType },
+      {
+        specificItems: {
+        $elemMatch: { itemType, itemId },
         },
+      },
       ],
       minPurchaseAmount: { $lte: amount },
+      deletedAt: null
     });
 
     // Filter coupons based on user usage limit
     const applicableCoupons = [];
-
+    
     for (const coupon of coupons) {
       // Check if usage limit is reached
       if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {

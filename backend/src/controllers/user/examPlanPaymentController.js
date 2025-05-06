@@ -231,6 +231,7 @@ exports.getExamPlanCoupons = async (req, res) => {
     // Get exam plan details
     const examPlan = await ExamPlan.findById(examPlanId);
 
+
     if (!examPlan) {
       return res.noRecords("Exam plan not found");
     }
