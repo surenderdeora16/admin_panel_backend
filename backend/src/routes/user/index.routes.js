@@ -12,7 +12,7 @@ const notePaymentController = require("../../controllers/user/notePaymentControl
 const examController = require("../../controllers/user/examController")
 
 // const { checkNotePurchase, checkExamPlanPurchase, checkTestSeriesAccess } = require("../../middelwares/checkPurchase")
-const { checkExamPlanPurchase, checkTestSeriesAccess } = require("../../middelwares/checkPurchase")
+const { checkExamPlanPurchase, checkTestSeriesAccess, checkNoteAccess } = require("../../middelwares/checkPurchase")
 
 
 
@@ -48,10 +48,18 @@ router.get('/upcoming-govt-exam/:id', AppController.upComingExamPageDetail);
 router.get('/payment-history', AppController.getUserPaymentHistory);
 
 
-// Note Routes for users
+// NONTES 
+// Get notes by subject with access status
 router.get("/subjects/:subjectId/notes", noteController.getNotesBySubject)
-// router.get("/notes/:noteId/download", checkNotePurchase, noteController.downloadNote)
-router.get("/notes/:noteId/download", noteController.downloadNote)
+// Get notes by exam plan with access status
+router.get("/exam-plans/:examPlanId/notes", noteController.getNotesByExamPlan)
+// Get subjects with notes count by exam plan
+router.get("/exam-plans/:examPlanId/subjects-notes", noteController.getSubjectsWithNotesCountByExamPlan)
+// Download note (checks access permission)
+router.get("/notes/:noteId/download", checkNoteAccess, noteController.downloadNote)
+
+
+
 
 router.get("/batches", AppController.getBatches)
 
@@ -164,27 +172,6 @@ router.get("/exams/:examId/navigation",  examController.getExamNavigation);
 
 // Get user's exam history
 router.get("/exams/result-list",  examController.getExamResultList);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

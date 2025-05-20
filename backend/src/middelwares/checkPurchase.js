@@ -45,6 +45,7 @@ exports.checkExamPlanPurchase = async (req, res, next) => {
 
     // User has purchased, allow access
     req.examPlan = examPlan
+    req.purchase = hasPurchased
     next()
   } catch (error) {
     console.error("Error checking exam plan purchase:", error)
@@ -55,6 +56,77 @@ exports.checkExamPlanPurchase = async (req, res, next) => {
     })
   }
 }
+
+
+// Middleware to check if user has access to a note
+exports.checkNoteAccess = async (req, res, next) => {
+  try {
+    const { noteId } = req.params
+
+    if (!noteId || !ObjectId.isValid(noteId)) {
+      return res.status(400).json({
+        status: false,
+        message: "Valid Note ID is required",
+      })
+    }
+
+    // Get note details
+    const note = await Note.findById(noteId).populate("examPlanId")
+
+    if (!note) {
+      return res.noRecords("Note not found")
+    }
+
+    // Check if note is active
+    if (!note.status) {
+      return res.status(400).json({
+        status: false,
+        message: "This note is not available",
+      })
+    }
+
+    // If note is free, allow access
+    if (note.isFree) {
+      req.note = note
+      return next()
+    }
+
+    // For paid notes, check if user has purchased the associated exam plan
+    const purchase = await UserPurchase.findOne({
+      userId: req.user._id,
+      itemType: "EXAM_PLAN",
+      itemId: note.examPlanId._id,
+      status: "ACTIVE",
+      expiryDate: { $gt: new Date() },
+    })
+
+    if (!purchase) {
+      return res.status(403).json({
+        status: false,
+        message: "You need to purchase the associated exam plan to access this note",
+        data: {
+          noteId: note._id,
+          title: note.title,
+          examPlanId: note.examPlanId._id,
+          examPlanTitle: note.examPlanId.title,
+          examPlanPrice: note.examPlanId.price,
+          examPlanMrp: note.examPlanId.mrp,
+          validityDays: note.examPlanId.validityDays,
+          requiresPurchase: true,
+        },
+      })
+    }
+
+    // User has purchased the exam plan, allow access
+    req.note = note
+    req.purchase = purchase
+    next()
+  } catch (error) {
+    console.error("Error checking note access:", error)
+    return res.someThingWentWrong(error)
+  }
+}
+
 
 // Middleware to check if user has access to a test series
 exports.checkTestSeriesAccess = async (req, res, next) => {
@@ -91,7 +163,7 @@ exports.checkTestSeriesAccess = async (req, res, next) => {
     });
 
     if (!userPurchase) {
-      return res.noRecords("You need to purchase this exam plan to access this test series");
+      return res.noRecords("You need to purchase the associated exam plan to access this test series");
     }
 
     // User has access, proceed

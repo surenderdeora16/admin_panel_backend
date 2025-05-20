@@ -21,6 +21,12 @@ const NoteSchema = new Schema(
       required: [true, "Subject is required"],
       index: true,
     },
+    examPlanId: {
+      type: Schema.Types.ObjectId,
+      ref: "ExamPlan",
+      required: [true, "Exam Plan is required"],
+      index: true,
+    },
     pdfFile: {
       type: String,
       required: [true, "PDF file is required"],
@@ -29,24 +35,9 @@ const NoteSchema = new Schema(
       type: String,
       default: null,
     },
-    mrp: {
-      type: Number,
-      required: [true, "MRP is required"],
-      min: [0, "MRP cannot be negative"],
-    },
-    price: {
-      type: Number,
-      required: [true, "Price is required"],
-      min: [0, "Price cannot be negative"],
-    },
     isFree: {
       type: Boolean,
       default: false,
-    },
-    validityDays: {
-      type: Number,
-      default: 180,
-      min: [1, "Validity must be at least 1 day"],
     },
     sequence: {
       type: Number,
@@ -74,6 +65,9 @@ const NoteSchema = new Schema(
 
 // Create text index for search optimization
 NoteSchema.index({ title: "text", description: "text" })
+
+// Create composite index for faster exam plan + subject queries
+NoteSchema.index({ examPlanId: 1, subjectId: 1 })
 
 // Pre-find middleware to exclude soft-deleted records
 NoteSchema.pre(/^find/, function (next) {

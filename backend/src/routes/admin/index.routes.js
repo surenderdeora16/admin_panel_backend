@@ -445,25 +445,30 @@ router.get(
 );
 
 // Notes (PDF) Routes
-router.get("/notes", noteController.getNotes);
-router.get("/notes/:id", noteController.getNoteById);
+router.get("/notes", noteController.getNotes)
+router.get("/notes/:id", noteController.getNoteById)
 router.post(
   "/notes",
   uploadNote.fields([
     { name: "pdfFile", maxCount: 1 },
     { name: "thumbnailImage", maxCount: 1 },
   ]),
-  noteController.createNote
-);
+  noteController.createNote,
+)
 router.put(
   "/notes/:id",
   uploadNote.fields([
     { name: "pdfFile", maxCount: 1 },
     { name: "thumbnailImage", maxCount: 1 },
   ]),
-  noteController.updateNote
-);
-router.delete("/notes/:id", noteController.deleteNote);
+  noteController.updateNote,
+)
+router.delete("/notes/:id", noteController.deleteNote)
+
+// Additional routes (NOTES)
+router.get("/exam-plans/:examPlanId/notes", noteController.getNotesByExamPlan)
+// router.get("/subjects/:subjectId/exam-plans/:examPlanId/notes", noteController.getNotesBySubjectAndExamPlan)
+
 
 // Payment Routes for admin
 router.get("/payments", authCheckAdmin, paymentController.getAllPayments);
