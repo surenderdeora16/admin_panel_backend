@@ -10,6 +10,9 @@ const examPlanController = require("../../controllers/user/examPlanController")
 const examPlanPaymentController = require("../../controllers/user/examPlanPaymentController")
 const notePaymentController = require("../../controllers/user/notePaymentController")
 const examController = require("../../controllers/user/examController")
+const userExamStatusController = require("../../controllers/user/userExamStatusController")
+const dynamicContentController = require("../../controllers/user/dynamicContentController")
+
 
 // const { checkNotePurchase, checkExamPlanPurchase, checkTestSeriesAccess } = require("../../middelwares/checkPurchase")
 const { checkExamPlanPurchase, checkTestSeriesAccess, checkNoteAccess } = require("../../middelwares/checkPurchase")
@@ -124,6 +127,11 @@ router.post("/notes/:noteId/validate-coupon",  notePaymentController.validateNot
 
 
 
+router.get("/exams/ongoing", userExamStatusController.checkOngoingExams)
+
+// Get detailed information about a specific ongoing exam
+router.get("/exams/ongoing/:examId", userExamStatusController.getOngoingExamDetails)
+
 
 
 // Start a new exam
@@ -202,6 +210,8 @@ router.post('/booking', checkValid('booking'), showValidationErrors, bookingCont
 router.post('/booking-2', checkValid('booking-2'), showValidationErrors, bookingController.createBooking2);
 router.get('/booking-history', bookingController.bookingHistoryList);
 
+router.get("/policy", dynamicContentController.getAllPublicContent)
+router.get("/policy/:type", dynamicContentController.getDynamicContentByType)
 
 router.all('/user/*', function (req, res) {
     res.status(404).send({

@@ -18,6 +18,7 @@ const noteController = require("../../controllers/admin/noteController");
 const paymentController = require("../../controllers/paymentController");
 const couponController = require("../../controllers/admin/couponController");
 const paymentLogController = require("../../controllers/admin/paymentLogController");
+const dynamicContentController = require("../../controllers/admin/dynamicContentController");
 
 const checkValid = require("../../middelwares/validator");
 const Storage = require("../../helpers/Storage");
@@ -519,6 +520,23 @@ router.get("/users/:id",  usersController.getUserDetails)
 router.get("/payment-logs",  paymentLogController.getPaymentLogs)
 
 
+// Get all dynamic content
+router.get("/policy", dynamicContentController.getAllDynamicContent)
+
+// Get dynamic content by ID
+router.get("/policy/:id", dynamicContentController.getDynamicContentById)
+
+// Get dynamic content by type
+router.get("/policy/type/:type", dynamicContentController.getDynamicContentByType)
+
+// Create dynamic content
+router.post("/policy", dynamicContentController.createDynamicContent)
+
+// Update dynamic content
+router.put("/policy/:id", dynamicContentController.updateDynamicContent)
+
+// Delete dynamic content
+router.delete("/policy/:id", dynamicContentController.deleteDynamicContent)
 
 
 router.get("/contact-us-datatable", CommonController.contactUsList);
