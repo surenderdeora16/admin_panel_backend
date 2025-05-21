@@ -53,3 +53,14 @@
 {"error":{},"level":"error","message":"Error processing payment: Invalid payment signature","service":"lms-api","timestamp":"2025-04-20 02:58:23"}
 {"error":{},"level":"error","message":"Error processing payment: Invalid payment signature","service":"lms-api","timestamp":"2025-04-20 03:18:11"}
 {"error":{},"level":"error","message":"Error creating exam plan order: You have already used this coupon 2 time(s)","service":"lms-api","timestamp":"2025-04-24 08:20:30"}
+{"error":{},"level":"error","message":"Error in getNotesBySubject: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 11:19:54","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in getNotesBySubject: ObjectId is not defined","service":"lms-api","timestamp":"2025-05-21 11:21:53","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in getNotesBySubject: ObjectId is not defined","service":"lms-api","timestamp":"2025-05-21 11:22:44","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in getNotesBySubject: ObjectId is not defined","service":"lms-api","timestamp":"2025-05-21 11:22:46","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in getNotesBySubject: note.toObject is not a function","service":"lms-api","timestamp":"2025-05-21 11:23:40","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in getNotesByExamPlan: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 11:44:35","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in getSubjectsWithNotesCountByExamPlan: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 11:46:10","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in downloadNote: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 12:40:58","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in downloadNote: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 12:41:57","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in downloadNote: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 12:42:37","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in downloadNote: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 12:45:26","userId":"67eef5d7c820b2008c63e357"}

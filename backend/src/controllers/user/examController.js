@@ -1504,14 +1504,20 @@ exports.getExamResultList = async (req, res) => {
       .limit(Number(limit));
 
     // Format exams
+    console.log("exams", exams)
     const formattedExams = exams.map((exam) => {
-      const totalMarks = exam.totalQuestions * exam.testSeriesId.correctMarks;
+      const totalMarks =
+        exam.testSeriesId && exam.testSeriesId.correctMarks
+          ? exam.totalQuestions * exam.testSeriesId.correctMarks
+          : exam.maxScore || 0;
       return {
         id: exam._id,
-        testSeries: {
-          id: exam.testSeriesId._id,
-          title: exam.testSeriesId.title,
-        },
+        testSeries: exam.testSeriesId
+          ? {
+              id: exam.testSeriesId._id,
+              title: exam.testSeriesId.title,
+            }
+          : null,
         startTime: exam.startTime,
         endTime: exam.endTime,
         totalQuestions: exam.totalQuestions,
@@ -1528,6 +1534,7 @@ exports.getExamResultList = async (req, res) => {
 
     return res.pagination(formattedExams, total, limit, pageNo);
   } catch (error) {
+    console.log("error", error)
     console.error("Error getting exam history:", error);
     return res.someThingWentWrong(error);
   }

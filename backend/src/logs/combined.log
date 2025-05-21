@@ -135,3 +135,21 @@
 {"level":"info","message":"Scheduling auto-submit for exam 681136f7833be73d560f4658 in 3600 seconds","service":"lms-api","timestamp":"2025-04-30 02:00:48"}
 {"level":"info","message":"Scheduling auto-submit for exam 681137ae833be73d560f468c in 3600 seconds","service":"lms-api","timestamp":"2025-04-30 02:03:50"}
 {"level":"info","message":"Scheduling auto-submit for exam 6818d4c4c792d9ad62626599 in 1798 seconds","service":"lms-api","timestamp":"2025-05-05 20:39:58"}
+{"error":{},"level":"error","message":"Error in getNotesBySubject: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 11:19:54","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in getNotesBySubject: ObjectId is not defined","service":"lms-api","timestamp":"2025-05-21 11:21:53","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in getNotesBySubject: ObjectId is not defined","service":"lms-api","timestamp":"2025-05-21 11:22:44","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in getNotesBySubject: ObjectId is not defined","service":"lms-api","timestamp":"2025-05-21 11:22:46","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in getNotesBySubject: note.toObject is not a function","service":"lms-api","timestamp":"2025-05-21 11:23:40","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in getNotesByExamPlan: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 11:44:35","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in getSubjectsWithNotesCountByExamPlan: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 11:46:10","userId":"67e989a03de126aa23c879f2"}
+{"level":"info","message":"Creating exam plan order for user 67e989a03de126aa23c879f2, exam plan 6809a7a07b93426274835ec2","service":"lms-api","timestamp":"2025-05-21 11:52:03"}
+{"level":"info","message":"Razorpay order created: order_QXTiRg5hN0Sn0s","service":"lms-api","timestamp":"2025-05-21 11:52:04"}
+{"level":"info","message":"Internal order created: 682d710ccd4c15e91d876be3","service":"lms-api","timestamp":"2025-05-21 11:52:04"}
+{"level":"info","message":"Creating exam plan order for user 67e989a03de126aa23c879f2, exam plan 6809a7a07b93426274835ec2","service":"lms-api","timestamp":"2025-05-21 11:52:54"}
+{"level":"info","message":"Razorpay order created: order_QXTjKNzWd5uy05","service":"lms-api","timestamp":"2025-05-21 11:52:54"}
+{"level":"info","message":"Internal order created: 682d713ecd4c15e91d876be9","service":"lms-api","timestamp":"2025-05-21 11:52:54"}
+{"error":{},"level":"error","message":"Error in downloadNote: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 12:40:58","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in downloadNote: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 12:41:57","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in downloadNote: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 12:42:37","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in downloadNote: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 12:45:26","userId":"67eef5d7c820b2008c63e357"}
+{"examPlanId":"6809a7a07b93426274835ec2","level":"info","message":"Paid note downloaded: dwafwge","noteId":"682b9d68c0fa0ade98ae2919","purchaseId":"682d796134a6262cb0ae54c1","service":"lms-api","timestamp":"2025-05-21 12:45:48","userId":"67eef5d7c820b2008c63e357"}

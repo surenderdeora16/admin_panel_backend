@@ -2,6 +2,9 @@ const razorpayService = require("../services/razorpayService")
 const ExamPlan = require("../models/ExamPlan")
 const TestSeries = require("../models/TestSeries")
 const UserPurchase = require("../models/UserPurchase")
+const mongoose = require("mongoose")
+const Note = require("../models/Note")
+const ObjectId = mongoose.Types.ObjectId
 
 // Middleware to check if user has purchased an exam plan
 exports.checkExamPlanPurchase = async (req, res, next) => {

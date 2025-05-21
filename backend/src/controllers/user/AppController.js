@@ -129,6 +129,7 @@ exports.getUserPaymentHistory = catchAsync(async (req, res) => {
     deletedAt: null,
   });
 
+  console.log("total",total)
   if (total === 0) {
     return res.datatableNoRecords();
   }
@@ -150,28 +151,30 @@ exports.getUserPaymentHistory = catchAsync(async (req, res) => {
       select: "status method amount currency razorpayPaymentId createdAt",
     });
 
+    console.log("orders ou>>",orders)
   // Format the response for mobile app
   const formattedPayments = orders.map((order) => {
     const payment = order.paymentId;
     const item = order.itemId;
-
+// console.log("order INSIDE", order)
     return {
       id: order._id,
       orderNumber: order.orderNumber,
       orderDate: order.createdAt,
       itemType: order.itemType,
       itemName: item ? item.title || item.name : "Unknown Item",
-      amount: payment ? payment.amount / 100 : order.amount / 100, // Convert to rupees
+      amount: payment ? payment.amount : 0, // Convert to rupees
       currency: payment ? payment.currency : "INR",
-      status: payment ? payment.status : order.status,
+      status: payment ? payment.status : "Pending",
       paymentMethod: payment ? payment.method : null,
       paymentId: payment ? payment.razorpayPaymentId : null,
       paymentDate: payment ? payment.createdAt : null,
-      discount: order.discount ? order.discount / 100 : 0, // Convert to rupees
-      originalPrice: item ? item.mrp / 100 : order.amount / 100, // Convert to rupees
-      finalPrice: order.amount / 100, // Convert to rupees
+      discount: order.discountAmount ? order.discountAmount : 0, // Convert to rupees
+      originalPrice: item ? item.price  : order.originalAmount, // Convert to rupees
+      finalPrice: order?.finalAmount || 0, // Convert to rupees
     };
   });
 
+  // console.log("formattedPayments", formattedPayments)
   return res.pagination(formattedPayments, total, limit, page);
 });
