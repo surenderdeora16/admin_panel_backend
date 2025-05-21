@@ -38,6 +38,7 @@ import Coupons from './pages/coupon/Coupons';
 import Users from './pages/User/Users';
 import PaymentLogs from './pages/PaymentLogs';
 import UserDetail from './pages/User/UserDetail';
+import DynamicContent from './pages/DynamicContent';
 
 // import SubjectsPage from './pages/ExamLibrary/vercel/subjects/page';
 
@@ -110,6 +111,15 @@ function App() {
             <>
               <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
               <AppBanner />
+            </>
+          }
+        />
+         <Route
+          path="/policy"
+          element={
+            <>
+              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <DynamicContent />
             </>
           }
         />

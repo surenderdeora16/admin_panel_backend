@@ -6,7 +6,7 @@ import { MdOutlineDisplaySettings, MdOutlineMailOutline } from 'react-icons/md';
 import { LuLayoutDashboard } from 'react-icons/lu';
 import { HiOutlineChatBubbleLeftRight } from 'react-icons/hi2';
 import { IoShareSocialOutline } from 'react-icons/io5';
-import { GiBookAura } from "react-icons/gi";
+import { GiBookAura } from 'react-icons/gi';
 
 import {
   FiGrid,
@@ -21,7 +21,7 @@ import {
 import { FaBook, FaFileAlt, FaMoneyBillAlt, FaUsers } from 'react-icons/fa';
 import { SlBookOpen } from 'react-icons/sl';
 import { RiGovernmentLine } from 'react-icons/ri';
-import { PiExamFill } from "react-icons/pi";
+import { PiExamFill } from 'react-icons/pi';
 
 import { IoMdImages } from 'react-icons/io';
 import { FaMapLocationDot } from 'react-icons/fa6';
@@ -135,7 +135,11 @@ const MENU_CONFIG = {
 
     { name: 'Users', path: '/users', icon: FaUsers },
     { name: 'Payment Logs', path: '/payment-logs', icon: FaMoneyBillAlt },
-
+    {
+      name: 'Policy',
+      path: '/policy',
+      icon: BiSolidCoupon,
+    },
     {
       name: 'Location',
       icon: FaMapLocationDot,
