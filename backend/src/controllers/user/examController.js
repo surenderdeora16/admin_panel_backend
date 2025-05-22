@@ -1264,8 +1264,8 @@ exports.getExamResult = async (req, res) => {
     const result = {
       examId: exam._id,
       testSeries: {
-        id: exam.testSeriesId._id,
-        title: exam.testSeriesId.title,
+        id: exam?.testSeriesId?._id,
+        title: exam.testSeriesId?.title,
       },
       startTime: exam.startTime,
       endTime: exam.endTime,
@@ -1331,14 +1331,17 @@ exports.getExamReview = async (req, res) => {
       })
       .sort({ sequence: 1 });
 
+    
+   
+    
     // Format questions with correct answers
-    const reviewQuestions = examQuestions.map((eq) => ({
-      id: eq._id,
-      sequence: eq.sequence,
+    const reviewQuestions = examQuestions?.map((eq) => ({
+      id: eq?._id,
+      sequence: eq?.sequence,
       section: {
-        id: eq.sectionId._id,
-        name: eq.sectionId.name,
-        sequence: eq.sectionId.sequence,
+        id: eq?.sectionId?._id,
+        name: eq.sectionId?.name,
+        sequence: eq.sectionId?.sequence,
       },
       questionText: eq.questionId.questionText,
       options: {
@@ -1359,14 +1362,14 @@ exports.getExamReview = async (req, res) => {
 
     // Group questions by section
     const sectionMap = new Map();
-    reviewQuestions.forEach((q) => {
-      if (!sectionMap.has(q.section.id.toString())) {
-        sectionMap.set(q.section.id.toString(), {
-          section: q.section,
+    reviewQuestions?.forEach((q) => {
+      if (!sectionMap.has(q?.section?.id?.toString())) {
+        sectionMap.set(q.section?.id?.toString(), {
+          section: q?.section,
           questions: [],
         });
       }
-      sectionMap.get(q.section.id.toString()).questions.push(q);
+      sectionMap.get(q.section.id?.toString()).questions.push(q);
     });
 
     const sectionReviews = Array.from(sectionMap.values());
