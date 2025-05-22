@@ -33,7 +33,7 @@ exports.getAllDynamicContent = catchAsync(async (req, res, next) => {
       .sort(sortObj)
       .skip(skip)
       .limit(limit)
-      .select("type title status updatedAt")
+      .select("type title content status updatedAt")
 
     return res.pagination(dynamicContents, totalCount, limit, pageNo)
   } catch (error) {

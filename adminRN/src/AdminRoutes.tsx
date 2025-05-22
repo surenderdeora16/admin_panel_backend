@@ -55,7 +55,7 @@ function App() {
           index
           element={
             <>
-              <PageTitle title="eCommerce Dashboard | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <ECommerce />
             </>
           }
@@ -73,7 +73,7 @@ function App() {
           path="/profile"
           element={
             <>
-              <PageTitle title="Profile | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <Profile />
             </>
           }
@@ -100,7 +100,7 @@ function App() {
           path="/tables"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <Tables />
             </>
           }
@@ -109,7 +109,7 @@ function App() {
           path="/app-banner"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <AppBanner />
             </>
           }
@@ -118,7 +118,7 @@ function App() {
           path="/policy"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <DynamicContent />
             </>
           }
@@ -127,7 +127,7 @@ function App() {
           path="/upcoming-govt-exam"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <UpcomingGovtExam />
             </>
           }
@@ -137,7 +137,7 @@ function App() {
           path="/exam-library/subjects"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <Subjects />
             </>
           }
@@ -146,7 +146,7 @@ function App() {
           path="/exam-library/chapters"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <Chapters />
             </>
           }
@@ -155,7 +155,7 @@ function App() {
           path="/exam-library/topics"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <Topics />
             </>
           }
@@ -164,7 +164,7 @@ function App() {
           path="/exam-library/topics/manage-questions/:subjectId/:chapterId/:topicId"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <Questions />
             </>
           }
@@ -173,7 +173,7 @@ function App() {
           path="/exam-library/questions/manageTestSeries"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <ManageTestSeries />
             </>
           }
@@ -182,7 +182,7 @@ function App() {
           path="/exam-library/questions/testSeriesQuestions"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <TestSeriesQuestions />
             </>
           }
@@ -193,7 +193,7 @@ function App() {
           path="/batches"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <Batches />
             </>
           }
@@ -203,7 +203,7 @@ function App() {
           path="/exam-plans"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <ExamPlans />
             </>
           }
@@ -213,7 +213,7 @@ function App() {
           path="/test-series"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <TestSeries />
             </>
           }
@@ -274,7 +274,7 @@ function App() {
           path="/state"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <State />
             </>
           }
@@ -283,7 +283,7 @@ function App() {
           path="/district"
           element={
             <>
-              <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+              <PageTitle title="Gnkco" />
               <District />
             </>
           }

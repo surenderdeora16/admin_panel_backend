@@ -9,6 +9,7 @@ const generalSettingsController = require("../controllers/admin/generalSettingsC
 const express = require("express");
 const { checkAndSubmitExpiredExams } = require("../utils/scheduledTasks");
 const router = express.Router();
+const dynamicContentController = require("../controllers/user/dynamicContentController")
 
 router.use(function (req, res, next) {
   res.header(
@@ -21,6 +22,10 @@ router.use(function (req, res, next) {
 // License Check..
 router.use(customMethods);
 router.use(licenseCheck);
+
+
+router.get("/policy/:type", dynamicContentController.getDynamicContentByType)
+
 
 // Admin Routes
 router.get("/settings/:type", generalSettingsController.getGeneralSetting);

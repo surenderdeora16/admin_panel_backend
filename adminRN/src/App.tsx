@@ -7,6 +7,7 @@ import SignIn from './pages/Authentication/SignIn';
 import Loader from './common/Loader';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import PrivicyPolicy from './pages/policy/privicyPolicy';
 
 const App: React.FC = () => {
   const { isLoggedIn, checkAuth } = useAuth();
@@ -18,15 +19,10 @@ const App: React.FC = () => {
   return (
     <React.Fragment>
       <Routes>
+        <Route path="/privacy-policy" element={<PrivicyPolicy />} />
         <Route
           path="/login"
-          element={
-            isLoggedIn ? (
-              <Navigate to="/" replace />
-            ) : (
-              <SignIn />
-            )
-          }
+          element={isLoggedIn ? <Navigate to="/" replace /> : <SignIn />}
         />
         <Route
           path="/*"
@@ -39,11 +35,10 @@ const App: React.FC = () => {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
       <div className="relative z-[2147483644]">
-      <ToastContainer />
+        <ToastContainer />
       </div>
     </React.Fragment>
   );
 };
 
 export default App;
-

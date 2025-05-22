@@ -4,13 +4,14 @@ import { useState } from "react"
 import * as Yup from "yup"
 import { useNavigate } from "react-router-dom"
 import DataManager from "../components/DataManager"
+import { STATUS } from "../constant/constant"
 
 const DynamicContent = () => {
   const [modalType, setModalType] = useState("")
   const navigate = useNavigate()
 
-  const title = "Dynamic Content Management"
-  const itemName = "Content"
+  const title = "Privacy Policy"
+  const itemName = "Privacy Policy"
 
   const endpoints = {
     list: "/policy",
@@ -33,20 +34,16 @@ const DynamicContent = () => {
     { id: "", name: "Select Content Type" },
     { id: "PRIVACY_POLICY", name: "Privacy Policy" },
     { id: "TERMS_CONDITIONS", name: "Terms & Conditions" },
-    { id: "ABOUT_US", name: "About Us" },
-    { id: "CONTACT_US", name: "Contact Us" },
-    { id: "FAQ", name: "FAQ" },
-    { id: "HELP", name: "Help" },
   ]
 
   const formFields = [
-    {
-      label: "Content Type",
-      name: "type",
-      type: "select2",
-      options: contentTypes,
-      col: 12,
-    },
+    // {
+    //   label: "Content Type",
+    //   name: "type",
+    //   type: "select",
+    //   options: contentTypes,
+    //   col: 12,
+    // },
     {
       label: "Title",
       name: "title",
@@ -62,7 +59,8 @@ const DynamicContent = () => {
     {
       label: "Status",
       name: "status",
-      type: "check",
+      type: "select",
+      options: STATUS,
       col: 12,
     },
   ]
@@ -93,7 +91,7 @@ const DynamicContent = () => {
   ]
 
   const initialFormValues = {
-    type: "",
+    type: "PRIVACY_POLICY",
     title: "",
     content: "",
     status: true,
@@ -122,10 +120,10 @@ const DynamicContent = () => {
       tableColumns={tableColumns}
       initialFormValues={initialFormValues}
       showPagination={true}
-      showAdd={true}
+      showAdd={false}
       showEdit={true}
-      showDelete={true}
-      renderActions={renderActions}
+      showDelete={false}
+      // renderActions={renderActions}
     />
   )
 }
