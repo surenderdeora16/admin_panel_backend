@@ -153,3 +153,10 @@
 {"error":{},"level":"error","message":"Error in downloadNote: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 12:42:37","userId":"67eef5d7c820b2008c63e357"}
 {"error":{},"level":"error","message":"Error in downloadNote: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-21 12:45:26","userId":"67eef5d7c820b2008c63e357"}
 {"examPlanId":"6809a7a07b93426274835ec2","level":"info","message":"Paid note downloaded: dwafwge","noteId":"682b9d68c0fa0ade98ae2919","purchaseId":"682d796134a6262cb0ae54c1","service":"lms-api","timestamp":"2025-05-21 12:45:48","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-23 03:53:04","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-23 03:53:06","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-23 03:54:07","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-23 03:54:48","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-23 03:55:40","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading 'title')","service":"lms-api","timestamp":"2025-05-23 03:56:21","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading 'title')","service":"lms-api","timestamp":"2025-05-23 03:56:52","userId":"67eef5d7c820b2008c63e357"}

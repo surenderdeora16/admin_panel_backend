@@ -65,6 +65,7 @@ exports.checkExamPlanPurchase = async (req, res, next) => {
 exports.checkNoteAccess = async (req, res, next) => {
   try {
     const { noteId } = req.params
+    const userId = req.user._id
 
     if (!noteId || !ObjectId.isValid(noteId)) {
       return res.status(400).json({
@@ -73,11 +74,14 @@ exports.checkNoteAccess = async (req, res, next) => {
       })
     }
 
-    // Get note details
-    const note = await Note.findById(noteId).populate("examPlanId")
+    // Find note
+    const note = await Note.findById(noteId)
 
     if (!note) {
-      return res.noRecords("Note not found")
+      return res.status(404).json({
+        status: false,
+        message: "Note not found",
+      })
     }
 
     // Check if note is active
@@ -96,9 +100,9 @@ exports.checkNoteAccess = async (req, res, next) => {
 
     // For paid notes, check if user has purchased the associated exam plan
     const purchase = await UserPurchase.findOne({
-      userId: req.user._id,
+      userId,
       itemType: "EXAM_PLAN",
-      itemId: note.examPlanId._id,
+      itemId: note.examPlanId,
       status: "ACTIVE",
       expiryDate: { $gt: new Date() },
     })
@@ -109,24 +113,23 @@ exports.checkNoteAccess = async (req, res, next) => {
         message: "You need to purchase the associated exam plan to access this note",
         data: {
           noteId: note._id,
-          title: note.title,
-          examPlanId: note.examPlanId._id,
-          examPlanTitle: note.examPlanId.title,
-          examPlanPrice: note.examPlanId.price,
-          examPlanMrp: note.examPlanId.mrp,
-          validityDays: note.examPlanId.validityDays,
+          examPlanId: note.examPlanId,
           requiresPurchase: true,
         },
       })
     }
 
-    // User has purchased the exam plan, allow access
+    // User has access, proceed
     req.note = note
     req.purchase = purchase
     next()
   } catch (error) {
     console.error("Error checking note access:", error)
-    return res.someThingWentWrong(error)
+    return res.status(500).json({
+      status: false,
+      message: "Failed to check note access",
+      error: error.message,
+    })
   }
 }
 

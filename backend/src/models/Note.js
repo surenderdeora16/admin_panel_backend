@@ -15,12 +15,6 @@ const NoteSchema = new Schema(
       trim: true,
       maxlength: [1000, "Description cannot exceed 1000 characters"],
     },
-    subjectId: {
-      type: Schema.Types.ObjectId,
-      ref: "Subject",
-      required: [true, "Subject is required"],
-      index: true,
-    },
     examPlanId: {
       type: Schema.Types.ObjectId,
       ref: "ExamPlan",
@@ -66,8 +60,8 @@ const NoteSchema = new Schema(
 // Create text index for search optimization
 NoteSchema.index({ title: "text", description: "text" })
 
-// Create composite index for faster exam plan + subject queries
-NoteSchema.index({ examPlanId: 1, subjectId: 1 })
+// Create index for faster exam plan queries
+NoteSchema.index({ examPlanId: 1 })
 
 // Pre-find middleware to exclude soft-deleted records
 NoteSchema.pre(/^find/, function (next) {

@@ -446,6 +446,7 @@ router.get(
 );
 
 // Notes (PDF) Routes
+
 router.get("/notes", noteController.getNotes)
 router.get("/notes/:id", noteController.getNoteById)
 router.post(
@@ -466,7 +467,7 @@ router.put(
 )
 router.delete("/notes/:id", noteController.deleteNote)
 
-// Additional routes (NOTES)
+// Additional routes
 router.get("/exam-plans/:examPlanId/notes", noteController.getNotesByExamPlan)
 // router.get("/subjects/:subjectId/exam-plans/:examPlanId/notes", noteController.getNotesBySubjectAndExamPlan)
 

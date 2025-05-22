@@ -3,7 +3,7 @@ const commonController = require('../../controllers/user/commonController');
 const bookingController = require('../../controllers/user/bookingController');
 const locationController = require('../../controllers/locationController');
 const AppController = require('../../controllers/user/AppController');
-const noteController = require("../../controllers/admin/noteController")
+const noteController = require("../../controllers/user/noteController")
 const testSeriesController = require("../../controllers/admin/testSeriesController")
 const paymentController = require("../../controllers/paymentController")
 const examPlanController = require("../../controllers/user/examPlanController")
@@ -52,12 +52,9 @@ router.get('/payment-history', AppController.getUserPaymentHistory);
 
 
 // NONTES 
-// Get notes by subject with access status
-router.get("/subjects/:subjectId/notes", noteController.getNotesBySubject)
-// Get notes by exam plan with access status
-router.get("/exam-plans/:examPlanId/notes", noteController.getNotesByExamPlan)
-// Get subjects with notes count by exam plan
-router.get("/exam-plans/:examPlanId/subjects-notes", noteController.getSubjectsWithNotesCountByExamPlan)
+router.get("/notes/exam-plans/:examPlanId", noteController.getNotesByExamPlan)
+// Get all available notes for user
+router.get("/notes", noteController.getAllNotes)
 // Download note (checks access permission)
 router.get("/notes/:noteId/download", checkNoteAccess, noteController.downloadNote)
 

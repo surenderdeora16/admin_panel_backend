@@ -1,18 +1,17 @@
 const Note = require("../../models/Note")
-const Subject = require("../../models/Subject")
+const ExamPlan = require("../../models/ExamPlan")
 const fs = require("fs")
 const path = require("path")
 const UserPurchase = require("../../models/UserPurchase")
 const razorpayService = require("../../services/razorpayService")
-const logger = require("../../utils/logger")
-const mongoose = require("mongoose")
-const ExamPlan = require("../../models/ExamPlan")
-const ObjectId = mongoose.Types.ObjectId
+const AppError = require("../../utils/appError")
+const catchAsync = require("../../utils/catchAsync")
+const { ObjectId } = require("mongoose").Types
 
 // Get all notes with pagination and filters
 exports.getNotes = async (req, res) => {
   try {
-    const { limit, pageNo, query, orderBy, orderDirection, subjectId } = req.query
+    const { limit, pageNo, query, orderBy, orderDirection, examPlanId } = req.query
 
     // Build query
     const queryObj = {}
@@ -21,8 +20,8 @@ exports.getNotes = async (req, res) => {
       queryObj.$or = [{ title: { $regex: query, $options: "i" } }, { description: { $regex: query, $options: "i" } }]
     }
 
-    if (subjectId) {
-      queryObj.subjectId = subjectId
+    if (examPlanId && ObjectId.isValid(examPlanId)) {
+      queryObj.examPlanId = examPlanId
     }
 
     // Count total records
@@ -34,7 +33,7 @@ exports.getNotes = async (req, res) => {
 
     // Execute query with pagination and sorting
     const notes = await Note.find(queryObj)
-      .populate("subjectId", "name")
+      .populate("examPlanId", "title")
       .skip((pageNo - 1) * limit)
       .limit(limit)
       .sort({ [orderBy]: orderDirection === "asc" ? 1 : -1 })
@@ -49,7 +48,7 @@ exports.getNotes = async (req, res) => {
 // Get a single note by ID
 exports.getNoteById = async (req, res) => {
   try {
-    const note = await Note.findById(req.params.id).populate("subjectId", "name")
+    const note = await Note.findById(req.params.id).populate("examPlanId", "title")
 
     if (!note) {
       return res.noRecords("Note not found")
@@ -65,16 +64,14 @@ exports.getNoteById = async (req, res) => {
 // Create a new note
 exports.createNote = async (req, res) => {
   try {
-    const { title, description, subjectId, examPlanId, mrp, price, isFree, validityDays, sequence, status } = req.body
+    const { title, description, examPlanId, isFree, sequence, status } = req.body
 
-
-console.log("examPlanId", examPlanId)
-    // Check if subject exists
-    const subject = await Subject.findById(subjectId)
-    if (!subject) {
+    // Check if exam plan exists
+    const examPlan = await ExamPlan.findById(examPlanId)
+    if (!examPlan) {
       return res.status(400).json({
         status: false,
-        message: "Subject not found",
+        message: "Exam plan not found",
       })
     }
 
@@ -90,25 +87,19 @@ console.log("examPlanId", examPlanId)
     const noteData = {
       title,
       description,
-      subjectId,
       examPlanId,
       pdfFile: `/uploads/notes/${req.files.pdfFile[0].filename}`,
-      mrp: mrp || 0,
-      price: price || 0,
       isFree: isFree === "true" || isFree === true,
-      validityDays: validityDays || 180,
       sequence: sequence || 0,
       status: status !== undefined ? status === "true" || status === true : true,
       createdBy: req.admin._id,
     }
 
-    console.log("OK yHAA TAK POCH GYA")
     // Add thumbnail image if uploaded
     if (req.files && req.files.thumbnailImage) {
       noteData.thumbnailImage = `/uploads/notes/thumbnails/${req.files.thumbnailImage[0].filename}`
     }
 
-    console.log("noteData", noteData)
     // Create new note
     const note = await Note.create(noteData)
 
@@ -143,7 +134,7 @@ console.log("examPlanId", examPlanId)
 // Update a note
 exports.updateNote = async (req, res) => {
   try {
-    const { title, description, subjectId, examPlanId, mrp, price, isFree, validityDays, sequence, status } = req.body
+    const { title, description, examPlanId, isFree, sequence, status } = req.body
 
     // Find note
     const note = await Note.findById(req.params.id)
@@ -152,24 +143,13 @@ exports.updateNote = async (req, res) => {
       return res.noRecords("Note not found")
     }
 
-    // Check if subject exists if subjectId is provided
-    if (subjectId && subjectId !== note.subjectId.toString()) {
-      const subject = await Subject.findById(subjectId)
-      if (!subject) {
-        return res.status(400).json({
-          status: false,
-          message: "Subject not found",
-        })
-      }
-      note.subjectId = subjectId
-    }
-
-     if (examPlanId && examPlanId !== note.examPlanId?.toString()) {
+    // Check if exam plan exists if examPlanId is provided
+    if (examPlanId && examPlanId !== note.examPlanId.toString()) {
       const examPlan = await ExamPlan.findById(examPlanId)
       if (!examPlan) {
         return res.status(400).json({
           status: false,
-          message: "Exam Plan not found",
+          message: "Exam plan not found",
         })
       }
       note.examPlanId = examPlanId
@@ -178,10 +158,7 @@ exports.updateNote = async (req, res) => {
     // Update note data
     if (title !== undefined) note.title = title
     if (description !== undefined) note.description = description
-    if (mrp !== undefined) note.mrp = mrp
-    if (price !== undefined) note.price = price
     if (isFree !== undefined) note.isFree = isFree === "true" || isFree === true
-    if (validityDays !== undefined) note.validityDays = validityDays
     if (sequence !== undefined) note.sequence = sequence
     if (status !== undefined) note.status = status === "true" || status === true
 
@@ -265,382 +242,19 @@ exports.deleteNote = async (req, res) => {
   }
 }
 
-// Get notes by subject for user
-// exports.getNotesBySubject = async (req, res) => {
-//   try {
-//     const { subjectId } = req.params
-
-//     // Check if subject exists
-//     const subject = await Subject.findById(subjectId)
-//     if (!subject) {
-//       return res.status(404).json({
-//         status: false,
-//         message: "Subject not found",
-//       })
-//     }
-
-//     // Get active notes for this subject
-//     const notes = await Note.find({
-//       subjectId,
-//       status: true,
-//     }).sort({ sequence: 1 })
-
-//     return res.status(200).json({
-//       status: true,
-//       data: notes,
-//     })
-//   } catch (error) {
-//     console.error("Error fetching notes by subject:", error)
-//     return res.status(500).json({
-//       status: false,
-//       message: "Failed to fetch notes",
-//       error: error.message,
-//     })
-//   }
-// }
-
-// // Download note
-// exports.downloadNote = async (req, res) => {
-//   try {
-//     const { noteId } = req.params
-
-//     // Find note
-//     const note = await Note.findById(noteId)
-
-//     if (!note) {
-//       return res.status(404).json({
-//         status: false,
-//         message: "Note not found",
-//       })
-//     }
-
-//     // Check if note is active
-//     if (!note.status) {
-//       return res.status(400).json({
-//         status: false,
-//         message: "This note is not available",
-//       })
-//     }
-
-//     // If note is free, allow download
-//     if (note.isFree) {
-//       // Get the file path
-//       const filePath = path.join(__dirname, "../../../public", note.pdfFile)
-
-//       // Check if file exists
-//       if (!fs.existsSync(filePath)) {
-//         return res.status(404).json({
-//           status: false,
-//           message: "PDF file not found",
-//         })
-//       }
-
-//       // Send file
-//       return res.download(filePath, `${note.title}.pdf`)
-//     } else {
-//       // For paid notes, check if user has purchased it
-//       const hasPurchased = await razorpayService.checkUserPurchase(req.admin._id, "NOTE", noteId)
-
-//       if (!hasPurchased) {
-//         return res.status(403).json({
-//           status: false,
-//           message: "You need to purchase this note to download it",
-//           data: {
-//             noteId: note._id,
-//             title: note.title,
-//             price: note.price,
-//             mrp: note.mrp,
-//             validityDays: note.validityDays,
-//             requiresPurchase: true,
-//           },
-//         })
-//       }
-
-//       // User has purchased, allow download
-//       const filePath = path.join(__dirname, "../../../public", note.pdfFile)
-
-//       // Check if file exists
-//       if (!fs.existsSync(filePath)) {
-//         return res.status(404).json({
-//           status: false,
-//           message: "PDF file not found",
-//         })
-//       }
-
-//       // Send file
-//       return res.download(filePath, `${note.title}.pdf`)
-//     }
-//   } catch (error) {
-//     console.error("Error downloading note:", error)
-//     return res.status(500).json({
-//       status: false,
-//       message: "Failed to download note",
-//       error: error.message,
-//     })
-//   }
-// }
-
-// get notes by subject with purchase status
-exports.getNotesBySubjectWithPurchaseStatus = async (req, res) => {
-  try {
-    const { subjectId } = req.params
-
-    // Check if subject exists
-    const subject = await Subject.findById(subjectId)
-    if (!subject) {
-      return res.status(404).json({
-        status: false,
-        message: "Subject not found",
-      })
-    }
-
-    // Get active notes for this subject
-    const notes = await Note.find({
-      subjectId,
-      status: true,
-    }).sort({ sequence: 1 })
-
-    // Get user's active purchases
-    const userPurchases = await UserPurchase.find({
-      userId: req.admin._id,
-      itemType: "NOTE",
-      status: "ACTIVE",
-      expiryDate: { $gt: new Date() },
-    })
-
-    // Map of purchased note IDs
-    const purchasedNoteIds = new Map(userPurchases.map((purchase) => [purchase.itemId.toString(), purchase]))
-
-    // Add purchase status to each note
-    const notesWithPurchaseStatus = notes.map((note) => {
-      const noteObj = note.toObject()
-
-      if (note.isFree) {
-        noteObj.isPurchased = true
-        noteObj.isFree = true
-      } else {
-        const purchase = purchasedNoteIds.get(note._id.toString())
-        noteObj.isPurchased = !!purchase
-        noteObj.isFree = false
-        if (purchase) {
-          noteObj.purchaseDetails = {
-            purchaseId: purchase._id,
-            purchaseDate: purchase.purchaseDate,
-            expiryDate: purchase.expiryDate,
-          }
-        }
-      }
-
-      return noteObj
-    })
-
-    return res.status(200).json({
-      status: true,
-      data: notesWithPurchaseStatus,
-    })
-  } catch (error) {
-    console.error("Error fetching notes by subject:", error)
-    return res.status(500).json({
-      status: false,
-      message: "Failed to fetch notes",
-      error: error.message,
-    })
-  }
-}
-
-
-// >>>>>>>>>>>>>>>
-
-// Get notes by subject for user with access status
-exports.getNotesBySubject = async (req, res) => {
-  try {
-    const { subjectId } = req.params
-    const userId = req.user._id
-
-    if (!subjectId || !ObjectId.isValid(subjectId)) {
-      return res.status(400).json({
-        status: false,
-        message: "Valid Subject ID is required",
-      })
-    }
-
-    // Check if subject exists
-    const subject = await Subject.findById(subjectId)
-    if (!subject) {
-      return res.noRecords("Subject not found")
-    }
-
-    // Get all active notes for this subject
-    const notes = await Note.find({
-      subjectId,
-      status: true,
-    })
-      .populate("examPlanId", "title price mrp validityDays")
-      .sort({ sequence: 1, createdAt: -1 })
-      .lean();
-
-    // Add full image path for thumbnailImage if exists
-    const baseUrl = process.env.BASEURL || "";
-    notes.forEach((note) => {
-      if (note.thumbnailImage && !note.thumbnailImage.startsWith("http")) {
-      note.thumbnailImage = baseUrl + note.thumbnailImage;
-      }
-       if (note.pdfFile && !note.pdfFile.startsWith("http")) {
-      note.pdfFile = baseUrl + note.pdfFile;
-      }
-    });
-
-    // Get user's active purchases for exam plans
-    const userPurchases = await UserPurchase.find({
-      userId,
-      itemType: "EXAM_PLAN",
-      status: "ACTIVE",
-      expiryDate: { $gt: new Date() },
-    })
-
-    // Create a Set of purchased exam plan IDs for quick lookups
-    const purchasedExamPlanIds = new Set(userPurchases.map((purchase) => purchase.itemId.toString()))
-
-    // Add access status to each note
-    const notesWithAccessInfo = notes.map((note) => {
-      const noteObj = note
-
-      if (note.isFree) {
-        // Free notes are accessible by everyone
-        noteObj.hasAccess = true
-        noteObj.accessType = "FREE"
-      } else {
-        // Check if user has purchased the associated exam plan
-        const hasExamPlanAccess = purchasedExamPlanIds.has(note.examPlanId._id.toString())
-
-        noteObj.hasAccess = hasExamPlanAccess
-        noteObj.accessType = hasExamPlanAccess ? "PURCHASED" : "LOCKED"
-
-        if (hasExamPlanAccess) {
-          const purchase = userPurchases.find((p) => p.itemId.toString() === note.examPlanId._id.toString())
-
-          if (purchase) {
-            noteObj.purchaseInfo = {
-              purchaseId: purchase._id,
-              purchaseDate: purchase.purchaseDate,
-              expiryDate: purchase.expiryDate,
-            }
-          }
-        }
-      }
-
-      return noteObj
-    })
-
-    return res.success(notesWithAccessInfo)
-  } catch (error) {
-    console.log("error", error)
-    logger.error(`Error in getNotesBySubject: ${error.message}`, { error, userId: req.user?._id })
-    return res.someThingWentWrong(error)
-  }
-}
-
-// Get notes by exam plan for user with access status
-exports.getNotesByExamPlan = async (req, res) => {
-  try {
-    const { examPlanId } = req.params
-    const userId = req.user._id
-
-    if (!examPlanId || !ObjectId.isValid(examPlanId)) {
-      return res.status(400).json({
-        status: false,
-        message: "Valid Exam Plan ID is required",
-      })
-    }
-
-    // Check if exam plan exists
-    const examPlan = await ExamPlan.findById(examPlanId)
-    if (!examPlan) {
-      return res.noRecords("Exam plan not found")
-    }
-
-    // Get all active notes for this exam plan
-    const notes = await Note.find({
-      examPlanId,
-      status: true,
-    })
-      .populate("subjectId", "name")
-      .sort({ sequence: 1, createdAt: -1 })
-
-    // Check if the user has purchased this exam plan
-    const purchase = await UserPurchase.findOne({
-      userId,
-      itemType: "EXAM_PLAN",
-      itemId: examPlanId,
-      status: "ACTIVE",
-      expiryDate: { $gt: new Date() },
-    })
-
-    const hasPurchased = !!purchase
-
-    // Add access status to each note
-    const notesWithAccessInfo = notes.map((note) => {
-      const noteObj = note.toObject()
-
-      if (note.isFree) {
-        // Free notes are accessible by everyone
-        noteObj.hasAccess = true
-        noteObj.accessType = "FREE"
-      } else {
-        // For paid notes, check if user has purchased the exam plan
-        noteObj.hasAccess = hasPurchased
-        noteObj.accessType = hasPurchased ? "PURCHASED" : "LOCKED"
-
-        if (hasPurchased) {
-          noteObj.purchaseInfo = {
-            purchaseId: purchase._id,
-            purchaseDate: purchase.purchaseDate,
-            expiryDate: purchase.expiryDate,
-          }
-        }
-      }
-
-      return noteObj
-    })
-
-    return res.success({
-      examPlan: {
-        _id: examPlan._id,
-        title: examPlan.title,
-        hasPurchased,
-        purchaseInfo: hasPurchased
-          ? {
-              purchaseId: purchase._id,
-              purchaseDate: purchase.purchaseDate,
-              expiryDate: purchase.expiryDate,
-            }
-          : null,
-      },
-      notes: notesWithAccessInfo,
-    })
-  } catch (error) {
-    logger.error(`Error in getNotesByExamPlan: ${error.message}`, { error, userId: req.user?._id })
-    return res.someThingWentWrong(error)
-  }
-}
-
 // Download note
 exports.downloadNote = async (req, res) => {
   try {
     const { noteId } = req.params
 
-    if (!noteId || !ObjectId.isValid(noteId)) {
-      return res.status(400).json({
-        status: false,
-        message: "Valid Note ID is required",
-      })
-    }
-
     // Find note
-    const note = await Note.findById(noteId).populate("examPlanId")
+    const note = await Note.findById(noteId)
 
     if (!note) {
-      return res.noRecords("Note not found")
+      return res.status(404).json({
+        status: false,
+        message: "Note not found",
+      })
     }
 
     // Check if note is active
@@ -664,42 +278,26 @@ exports.downloadNote = async (req, res) => {
         })
       }
 
-      // Log the download
-      logger.info(`Free note downloaded: ${note.title}`, {
-        userId: req.user._id,
-        noteId: note._id,
-      })
-
       // Send file
       return res.download(filePath, `${note.title}.pdf`)
     } else {
-      // For paid notes, check if user has purchased the associated exam plan
-      const purchase = await UserPurchase.findOne({
-        userId: req.user._id,
-        itemType: "EXAM_PLAN",
-        itemId: note.examPlanId._id,
-        status: "ACTIVE",
-        expiryDate: { $gt: new Date() },
-      })
+      // For paid notes, check if user has purchased the exam plan
+      const hasPurchasedExamPlan = await razorpayService.checkUserPurchase(req.admin._id, "EXAM_PLAN", note.examPlanId)
 
-      if (!purchase) {
+      if (!hasPurchasedExamPlan) {
         return res.status(403).json({
           status: false,
-          message: "You need to purchase the associated exam plan to access this note",
+          message: "You need to purchase the exam plan to download this note",
           data: {
             noteId: note._id,
             title: note.title,
-            examPlanId: note.examPlanId._id,
-            examPlanTitle: note.examPlanId.title,
-            examPlanPrice: note.examPlanId.price,
-            examPlanMrp: note.examPlanId.mrp,
-            validityDays: note.examPlanId.validityDays,
+            examPlanId: note.examPlanId,
             requiresPurchase: true,
           },
         })
       }
 
-      // User has purchased the exam plan, allow download
+      // User has purchased, allow download
       const filePath = path.join(__dirname, "../../../public", note.pdfFile)
 
       // Check if file exists
@@ -710,34 +308,28 @@ exports.downloadNote = async (req, res) => {
         })
       }
 
-      // Log the download
-      logger.info(`Paid note downloaded: ${note.title}`, {
-        userId: req.user._id,
-        noteId: note._id,
-        examPlanId: note.examPlanId._id,
-        purchaseId: purchase._id,
-      })
-
       // Send file
       return res.download(filePath, `${note.title}.pdf`)
     }
   } catch (error) {
-    console.log("error", error)
-    logger.error(`Error in downloadNote: ${error.message}`, { error, userId: req.user?._id })
-    return res.someThingWentWrong(error)
+    console.error("Error downloading note:", error)
+    return res.status(500).json({
+      status: false,
+      message: "Failed to download note",
+      error: error.message,
+    })
   }
 }
 
-// Get subjects with notes count by exam plan for user
-exports.getSubjectsWithNotesCountByExamPlan = async (req, res) => {
+// Get notes by exam plan ID
+exports.getNotesByExamPlan = async (req, res) => {
   try {
     const { examPlanId } = req.params
-    const userId = req.user._id
 
     if (!examPlanId || !ObjectId.isValid(examPlanId)) {
       return res.status(400).json({
         status: false,
-        message: "Valid Exam Plan ID is required",
+        message: "Valid Exam plan ID is required",
       })
     }
 
@@ -747,81 +339,81 @@ exports.getSubjectsWithNotesCountByExamPlan = async (req, res) => {
       return res.noRecords("Exam plan not found")
     }
 
-    // Check if the user has purchased this exam plan
-    const purchase = await UserPurchase.findOne({
-      userId,
-      itemType: "EXAM_PLAN",
-      itemId: examPlanId,
-      status: "ACTIVE",
-      expiryDate: { $gt: new Date() },
+    // Get active notes for this exam plan
+    const notes = await Note.find({
+      examPlanId,
+      status: true,
+    }).sort({ sequence: 1, createdAt: -1 })
+
+    return res.success(notes)
+  } catch (error) {
+    console.error("Error fetching notes by exam plan:", error)
+    return res.someThingWentWrong(error)
+  }
+}
+
+// Get notes by exam plan with purchase status for users
+exports.getNotesByExamPlanWithPurchaseStatus = async (req, res) => {
+  try {
+    const { examPlanId } = req.params
+
+    if (!examPlanId || !ObjectId.isValid(examPlanId)) {
+      return res.status(400).json({
+        status: false,
+        message: "Valid Exam plan ID is required",
+      })
+    }
+
+    // Check if exam plan exists
+    const examPlan = await ExamPlan.findById(examPlanId)
+    if (!examPlan) {
+      return res.status(404).json({
+        status: false,
+        message: "Exam plan not found",
+      })
+    }
+
+    // Get active notes for this exam plan
+    const notes = await Note.find({
+      examPlanId,
+      status: true,
+    }).sort({ sequence: 1, createdAt: -1 })
+
+    // Check if user has purchased the exam plan
+    const hasPurchasedExamPlan = await razorpayService.checkUserPurchase(req.admin._id, "EXAM_PLAN", examPlanId)
+
+    // Add purchase status to each note
+    const notesWithPurchaseStatus = notes.map((note) => {
+      const noteObj = note.toObject()
+
+      if (note.isFree) {
+        noteObj.isPurchased = true
+        noteObj.isFree = true
+      } else {
+        noteObj.isPurchased = hasPurchasedExamPlan
+        noteObj.isFree = false
+      }
+
+      return noteObj
     })
 
-    const hasPurchased = !!purchase
-
-    // Aggregate to get subjects with notes count for this exam plan
-    const subjectsWithNotesCount = await Note.aggregate([
-      {
-        $match: {
-          examPlanId: ObjectId.createFromHexString(examPlanId),
-          status: true,
-          deletedAt: null,
+    return res.status(200).json({
+      status: true,
+      data: {
+        examPlan: {
+          _id: examPlan._id,
+          title: examPlan.title,
+          isPurchased: hasPurchasedExamPlan,
         },
+        notes: notesWithPurchaseStatus,
       },
-      {
-        $group: {
-          _id: "$subjectId",
-          totalNotes: { $sum: 1 },
-          freeNotes: {
-            $sum: { $cond: [{ $eq: ["$isFree", true] }, 1, 0] },
-          },
-        },
-      },
-      {
-        $lookup: {
-          from: "subjects",
-          localField: "_id",
-          foreignField: "_id",
-          as: "subject",
-        },
-      },
-      {
-        $unwind: "$subject",
-      },
-      {
-        $project: {
-          _id: 1,
-          subjectId: "$_id",
-          subjectName: "$subject.name",
-          totalNotes: 1,
-          freeNotes: 1,
-          paidNotes: { $subtract: ["$totalNotes", "$freeNotes"] },
-          accessibleNotes: {
-            $cond: [hasPurchased, "$totalNotes", "$freeNotes"],
-          },
-        },
-      },
-      {
-        $sort: { "subject.name": 1 },
-      },
-    ])
-
-    return res.success({
-      examPlan: {
-        _id: examPlan._id,
-        title: examPlan.title,
-        hasPurchased,
-        purchaseInfo: hasPurchased
-          ? {
-              purchaseId: purchase._id,
-              purchaseDate: purchase.purchaseDate,
-              expiryDate: purchase.expiryDate,
-            }
-          : null,
-      },
-      subjects: subjectsWithNotesCount,
     })
   } catch (error) {
-    logger.error(`Error in getSubjectsWithNotesCountByExamPlan: ${error.message}`, { error, userId: req.user?._id })
-    return res.someThingWentWrong(error)
+    console.error("Error fetching notes by exam plan:", error)
+    return res.status(500).json({
+      status: false,
+      message: "Failed to fetch notes",
+      error: error.message,
+    })
   }
 }
