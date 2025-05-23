@@ -1,5 +1,5 @@
-const mongoose = require("mongoose")
-const Schema = mongoose.Schema
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
 const SubjectSchema = new Schema(
   {
@@ -8,8 +8,6 @@ const SubjectSchema = new Schema(
       required: [true, "Subject name is required"],
       trim: true,
       maxlength: [100, "Subject name cannot exceed 100 characters"],
-      unique: true,
-      index: true,
     },
     description: {
       type: String,
@@ -29,23 +27,20 @@ const SubjectSchema = new Schema(
       ref: "Admin",
     },
     deletedAt: {
-        type: Date,
-        default: null
+      type: Date,
+      default: null,
     },
   },
-  { timestamps: true },
-)
-
-// Create text index for search optimization
-SubjectSchema.index({ name: "text", description: "text" })
+  { timestamps: true }
+);
 
 // Add error handling for duplicate entries
-SubjectSchema.post("save", (error, doc, next) => {
-  if (error.name === "MongoError") {
-    next(new Error("Subject with this name already exists"))
-  } else {
-    next(error)
-  }
-})
+// SubjectSchema.post("save", (error, doc, next) => {
+//   if (error?.code === 11000) {
+//     next(new Error("Subject with this name already exists"));
+//   } else {
+//     next(error);
+//   }
+// });
 
-module.exports = mongoose.model("Subject", SubjectSchema)
+module.exports = mongoose.model("Subject", SubjectSchema);

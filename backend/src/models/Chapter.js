@@ -8,7 +8,6 @@ const ChapterSchema = new Schema(
       required: [true, "Chapter name is required"],
       trim: true,
       maxlength: [100, "Chapter name cannot exceed 100 characters"],
-      index: true,
     },
     description: {
       type: String,
@@ -19,7 +18,6 @@ const ChapterSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Subject",
       required: [true, "Subject is required"],
-      index: true,
     },
     sequence: {
       type: Number,
@@ -41,21 +39,16 @@ const ChapterSchema = new Schema(
   { timestamps: true },
 )
 
-// Create compound index for subject+chapter uniqueness
-ChapterSchema.index({ subjectId: 1, name: 1 }, { unique: true })
-// ChapterSchema.index({ subjectId: 1, code: 1 }, { unique: true })
 
-// Create text index for search optimization
-ChapterSchema.index({ name: "text", description: "text" })
 
 // Add error handling for duplicate entries
-ChapterSchema.post("save", (error, doc, next) => {
-  if (error.name === "MongoError") {
-    next(new Error("Chapter with this name already exists for this subject"))
-  } else {
-    next(error)
-  }
-})
+// ChapterSchema.post("save", (error, doc, next) => {
+//   if (error.name === "MongoError") {
+//     next(new Error("Chapter with this name already exists for this subject"))
+//   } else {
+//     next(error)
+//   }
+// })
 
 module.exports = mongoose.model("Chapter", ChapterSchema)
   
