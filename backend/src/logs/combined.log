@@ -160,3 +160,6 @@
 {"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading '_id')","service":"lms-api","timestamp":"2025-05-23 03:55:40","userId":"67eef5d7c820b2008c63e357"}
 {"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading 'title')","service":"lms-api","timestamp":"2025-05-23 03:56:21","userId":"67eef5d7c820b2008c63e357"}
 {"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading 'title')","service":"lms-api","timestamp":"2025-05-23 03:56:52","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading 'title')","service":"lms-api","timestamp":"2025-05-23 21:40:27","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading 'title')","service":"lms-api","timestamp":"2025-05-23 21:43:27","userId":"67eef5d7c820b2008c63e357"}
+{"examPlanId":"67fe6febe93ec38615adda86","level":"info","message":"Paid note downloaded: done atoday","noteId":"682fa2e1eca0117e138b3dd0","purchaseId":"681900eb9ed9208b85548427","service":"lms-api","timestamp":"2025-05-23 21:49:17","userId":"67eef5d7c820b2008c63e357"}
