@@ -413,11 +413,11 @@ module.exports = (method) => {
         check("chapterId")
           .optional()
           .notEmpty()
-          .withMessage("Chapter ID cannot be empty")
-          .custom((value) => {
-            return mongoose.Types.ObjectId.isValid(value)
-          })
-          .withMessage("Invalid Chapter ID format"),
+          .withMessage("Chapter ID cannot be empty"),
+          // .custom((value) => {
+          //   return mongoose.Types.ObjectId.isValid(value)
+          // })
+          // .withMessage("Invalid Chapter ID format"),
 
         check("sequence").optional().isInt({ min: 0 }).withMessage("Sequence must be a non-negative integer"),
 

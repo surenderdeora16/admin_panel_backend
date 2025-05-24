@@ -51,7 +51,6 @@ const useExamPlans = () => {
 
 const Notes = () => {
   const { examPlanId } = useParams()
-  const navigate = useNavigate()
   const [modalType, setModalType] = useState("")
   const [examPlanName, setExamPlanName] = useState("")
 
@@ -102,7 +101,7 @@ const Notes = () => {
       then: () => Yup.mixed().required("PDF file is required"),
       otherwise: () => Yup.mixed(),
     }),
-    thumbnailImage: Yup.mixed(),
+    // thumbnailImage: Yup.mixed(),
     isFree: Yup.boolean(),
     sequence: Yup.number().min(0, "Sequence cannot be negative").integer("Sequence must be a whole number"),
     status: Yup.boolean(),
@@ -140,13 +139,13 @@ const Notes = () => {
       col: 12,
       helperText: "Upload PDF file (max 10MB)",
     },
-    {
-      label: "Thumbnail Image",
-      name: "thumbnailImage",
-      type: "image-file",
-      col: 12,
-      helperText: "Upload thumbnail image (optional)",
-    },
+    // {
+    //   label: "Thumbnail Image",
+    //   name: "thumbnailImage",
+    //   type: "image-file",
+    //   col: 12,
+    //   helperText: "Upload thumbnail image (optional)",
+    // },
     {
       label: "Is Free",
       name: "isFree",
@@ -154,14 +153,14 @@ const Notes = () => {
       col: 6,
       helperText: "Free notes are accessible without exam plan purchase",
     },
-    {
-      label: "Sequence",
-      name: "sequence",
-      type: "number",
-      min: 0,
-      col: 6,
-      helperText: "Display order (lower numbers appear first)",
-    },
+    // {
+    //   label: "Sequence",
+    //   name: "sequence",
+    //   type: "number",
+    //   min: 0,
+    //   col: 6,
+    //   helperText: "Display order (lower numbers appear first)",
+    // },
     {
       label: "Status",
       name: "status",
@@ -256,7 +255,7 @@ const Notes = () => {
       showEdit={true}
       showDelete={true}
       multipartFormData={true}
-      renderActions={renderActions}
+      // renderActions={renderActions}
       queryParams={examPlanId ? { examPlanId } : {}}
     />
   )

@@ -1180,12 +1180,14 @@ const TextEditer = ({
   form,
   field,
   disabled,
+  height,
   error,
   placeholder = 'Start typing...'
 }: {
   form: any;
   field: any;
   disabled: any;
+  height?:any;
   error: any;
   placeholder?:any
 }) => {
@@ -1203,7 +1205,7 @@ const TextEditer = ({
   const config = useMemo(
     () => ({
       readonly: false,
-      height: '400',
+      height: height || '400',
       placeholder: placeholder || 'Start typing...',
     }),
     [placeholder]

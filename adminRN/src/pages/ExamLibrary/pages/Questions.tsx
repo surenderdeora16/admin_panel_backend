@@ -103,38 +103,44 @@ const Questions = () => {
     {
       label: 'Question Text',
       name: 'questionText',
-      type: 'textarea',
+      type: 'text-editer',
       col: 12,
+      height: '200',
     },
     {
       label: 'Option 1',
       name: 'option1',
-      type: 'text',
-      col: 6,
+      type: 'text-editer',
+      col: 12,
+      height: '200',
     },
     {
       label: 'Option 2',
       name: 'option2',
-      type: 'text',
-      col: 6,
+      type: 'text-editer',
+      col: 12,
+      height: '200',
     },
     {
       label: 'Option 3',
       name: 'option3',
-      type: 'text',
-      col: 6,
+      type: 'text-editer',
+      col: 12,
+      height: '200',
     },
     {
       label: 'Option 4',
       name: 'option4',
-      type: 'text',
-      col: 6,
+      type: 'text-editer',
+      col: 12,
+      height: '200',
     },
     {
       label: 'Option 5 (Optional)',
       name: 'option5',
-      type: 'text',
-      col: 6,
+      type: 'text-editer',
+      col: 12,
+      height: '200',
     },
     {
       label: 'Right Answer',
@@ -148,13 +154,14 @@ const Questions = () => {
         { id: 'option4', name: 'Option 4' },
         { id: 'option5', name: 'Option 5' },
       ],
-      col: 6,
+      col: 12
     },
     {
       label: 'Explanation (Optional)',
       name: 'explanation',
-      type: 'textarea',
+      type: 'text-editer',
       col: 12,
+      height: '200',
     },
     {
       label: 'Create Question',
@@ -295,14 +302,16 @@ const Questions = () => {
       const response = await AxiosHelper.getData(
         'questions/sample-excel',
         null,
-        { responseType: 'blob' }
+        { responseType: 'blob' },
       );
 
       // Create a download link with correct blob type
       const url = window.URL.createObjectURL(
-        new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        }),
       );
-      console.log(url)
+      console.log(url);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', 'sample_questions_template.xlsx');
@@ -1128,7 +1137,7 @@ const Questions = () => {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-[90%] md:max-w-[80%] w-full max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-[95%] md:max-w-[98%] w-full max-h-[98vh] overflow-y-auto"
             >
               <div className="sticky top-0 z-10 flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center">

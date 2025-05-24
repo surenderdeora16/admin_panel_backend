@@ -298,9 +298,9 @@ function App() {
             </>
           }
         >
-          <Route path="general-setting" element={<GeneralSettings />} />
-          <Route path="sms-service" element={<SMSSettings />} />
-          <Route path="email-service" element={<EmailSettings />} />
+          <Route path="admin-card-and-result" element={<GeneralSettings />} />
+          {/* <Route path="sms-service" element={<SMSSettings />} /> */}
+          {/* <Route path="email-service" element={<EmailSettings />} /> */}
           <Route path="social-media" element={<SocialMediaSettings />} />
         </Route>
         <Route

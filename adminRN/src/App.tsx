@@ -7,7 +7,7 @@ import SignIn from './pages/Authentication/SignIn';
 import Loader from './common/Loader';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import PrivicyPolicy from './pages/policy/privicyPolicy';
+import PrivicyPolicy from './pages/policy/PrivicyPolicy';
 
 const App: React.FC = () => {
   const { isLoggedIn, checkAuth } = useAuth();

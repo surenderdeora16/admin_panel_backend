@@ -12,6 +12,7 @@ const notePaymentController = require("../../controllers/user/notePaymentControl
 const examController = require("../../controllers/user/examController")
 const userExamStatusController = require("../../controllers/user/userExamStatusController")
 const dynamicContentController = require("../../controllers/user/dynamicContentController")
+const generalSettingsController = require("../../controllers/admin/generalSettingsController")
 
 
 // const { checkNotePurchase, checkExamPlanPurchase, checkTestSeriesAccess } = require("../../middelwares/checkPurchase")
@@ -23,7 +24,7 @@ const { showValidationErrors, authCheck } = require('../../middelwares')
 const checkValid = require('../../middelwares/validator');
 const router = require('express').Router();
 const Storage = require('../../helpers/Storage');
-const upload = new Storage.uploadTo({ dir: 'user', isImage: true });
+const uploadUser = new Storage.uploadTo({ dir: 'user', isImage: true });
 
 // User Auth
 router.post('/register', checkValid('register'), showValidationErrors, authController.register);
@@ -47,6 +48,7 @@ router.use(authCheck);
 
 // ..................... Dashboard Routes .................................
 router.get('/dashboard', AppController.dashboard);
+
 router.get('/upcoming-govt-exam/:id', AppController.upComingExamPageDetail);
 router.get('/payment-history', AppController.getUserPaymentHistory);
 
@@ -197,9 +199,11 @@ router.get("/purchases/check/:itemType/:itemId",  paymentController.checkPurchas
 
 // ..................... User Protected Routes .................................
 router.get('/logout', authController.logout);
+
 router.get('/profile', authController.getProfile);
-router.post('/update-profile', upload.single('image'), checkValid('updateProfileUser'), showValidationErrors, authController.updateProfile);
-router.post('/change-profile-image', upload.single('image'), authController.changeProfileImage);
+router.put('/profile', uploadUser.single("image"), authController.updateProfile);
+router.post('/change-profile-image', uploadUser.single('image'), authController.changeProfileImage);
+
 
 router.post('/check-discount-code', showValidationErrors, commonController.checkDiscountCode);
 
@@ -209,6 +213,9 @@ router.get('/booking-history', bookingController.bookingHistoryList);
 
 router.get("/policy", dynamicContentController.getAllPublicContent)
 router.get("/policy/:type", dynamicContentController.getDynamicContentByType)
+
+router.get("/links/:type", generalSettingsController.getGeneralSetting);
+
 
 router.all('/user/*', function (req, res) {
     res.status(404).send({

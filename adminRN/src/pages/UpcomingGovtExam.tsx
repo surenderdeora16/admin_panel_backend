@@ -84,6 +84,7 @@ const UpcomingGovtExam = () => {
         list: 'list-upcoming-govt-exam',
         create: 'create-upcoming-govt-exam',
         update: (id:any) => `update-upcoming-govt-exam/${id}`,
+        delete: (id) => `delete-record/upcominggovtexams/${id}`,
       }}
       multipartFormData={{
         onUploadProgress: (progressEvent: any) => {
@@ -101,7 +102,7 @@ const UpcomingGovtExam = () => {
       showPagination={true} 
       showAdd={true}         
       showEdit={true}        
-      showDelete={false}     
+      showDelete={true}     
     />
   );
 };

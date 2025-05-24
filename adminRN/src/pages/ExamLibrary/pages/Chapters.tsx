@@ -50,7 +50,7 @@ const Chapters = () => {
     list: '/chapters',
     create: '/chapters',
     update: (id: any) => `/chapters/${id}`,
-    delete: (id: any) => `/chapters/${id}`,
+    delete: (id:any) => `delete-record/chapters/${id}`, // DELETE endpoint
   };
 
   const validationSchema = Yup.object().shape({
@@ -91,11 +91,19 @@ const Chapters = () => {
           ? [
               { id: '', name: 'Select Subject' },
               ...subjects.sort((a: any, b: any) =>
-                a.id === selectedSubject?._id ? -1 : b.id === selectedSubject?._id ? 1 : 0,
+                a.id === selectedSubject?._id
+                  ? -1
+                  : b.id === selectedSubject?._id
+                  ? 1
+                  : 0,
               ),
             ]
           : subjects.sort((a: any, b: any) =>
-              a.id === selectedSubject?._id ? -1 : b.id === selectedSubject?._id ? 1 : 0,
+              a.id === selectedSubject?._id
+                ? -1
+                : b.id === selectedSubject?._id
+                ? 1
+                : 0,
             ),
       disabled: loading || !!error,
     },

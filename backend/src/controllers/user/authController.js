@@ -4,6 +4,7 @@ const { sendSms, generateOTP } = require("../../helpers");
 const { calculateExpiryTime } = require("../../helpers/string");
 const Storage = require("../../helpers/Storage");
 const { getCookiesConfig } = require("../../helpers/formValidConfig");
+const catchAsync = require("../../utils/catchAsync");
 
 exports.register = async (req, res) => {
   try {
@@ -358,12 +359,16 @@ exports.sendotp = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { first_name, last_name, email, mobile } = req.body;
-    req.user.first_name = first_name;
-    req.user.last_name = last_name;
-    req.user.email = email;
-    req.user.mobile = mobile;
+    const { name, email, mobile, state, district } = req.body;
+
+    if (name) req.user.name = name;
+    if (email) req.user.email = email;
+    if (mobile) req.user.mobile = mobile;
+    if (state) req.user.state = state;
+    if (district) req.user.district = district;
+
     if (req.file) req.user.image = req.file.filename;
+
     await req.user.save();
 
     return res.json({
@@ -376,17 +381,18 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
+
 exports.changeProfileImage = async (req, res) => {
   try {
     if (req.file != undefined) {
-      Storage.deleteFile(req.admin?.image);
+      Storage.deleteFile(req.user?.image);
 
-      let admin = await Admin.findOneAndUpdate(
-        { _id: req.admin_id, deletedAt: null },
+      let user = await User.findOneAndUpdate(
+        { _id: req.user?._id, deletedAt: null },
         { $set: { image: req.file.filename } },
         { new: true }
       );
-      return res.successUpdate(admin);
+      return res.successUpdate(user);
     } else {
       return res.status(422).json({
         status: false,
@@ -399,17 +405,26 @@ exports.changeProfileImage = async (req, res) => {
   }
 };
 
-exports.getProfile = async (req, res) => {
+// Get student profile
+exports.getProfile = catchAsync(async (req, res, next) => {
   try {
-    return res.json({
-      status: true,
-      message: "Successfully..!!",
-      data: req.user.toJSON(),
-    });
+    const user = await User.findById(req.user.id).select("-password")
+
+    if (!user) {
+      return res.noRecords("User not found")
+    }
+
+    // Add computed fields
+    const profileData = {
+      ...user.toObject(),
+      profileCompleteness: calculateProfileCompleteness(user),
+    }
+
+    res.success(profileData, "Profile retrieved successfully")
   } catch (error) {
-    return res.someThingWentWrong(error);
+    res.someThingWentWrong(error)
   }
-};
+})
 
 exports.logout = async (req, res) => {
   try {
@@ -422,3 +437,26 @@ exports.logout = async (req, res) => {
     return res.someThingWentWrong(error);
   }
 };
+
+
+function calculateProfileCompleteness(user) {
+  const fields = [
+    "name",
+    "email",
+    "mobile",
+    "state",
+    "district",
+  ]
+
+  let completedFields = 0
+
+  fields.forEach((field) => {
+    const fieldValue = field.includes(".") ? field.split(".").reduce((obj, key) => obj?.[key], user) : user[field]
+
+    if (fieldValue && fieldValue.toString().trim() !== "") {
+      completedFields++
+    }
+  })
+
+  return Math.round((completedFields / fields.length) * 100)
+}

@@ -2,22 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import SidebarLinkGroup from './SidebarLinkGroup';
 import Logo from '../../images/logo/logo.svg';
-import { MdOutlineDisplaySettings, MdOutlineMailOutline } from 'react-icons/md';
 import { LuLayoutDashboard } from 'react-icons/lu';
-import { HiOutlineChatBubbleLeftRight } from 'react-icons/hi2';
 import { IoShareSocialOutline } from 'react-icons/io5';
 import { GiBookAura } from 'react-icons/gi';
-
-import {
-  FiGrid,
-  FiCalendar,
-  FiUsers,
-  FiEdit,
-  FiSettings,
-  FiPieChart,
-  FiLayout,
-  FiLogIn,
-} from 'react-icons/fi';
+import { GrScorecard } from "react-icons/gr";
+import { CgWebsite } from "react-icons/cg";
+import { IoBookmarks } from "react-icons/io5";
+import { MdOutlinePolicy } from "react-icons/md";
 import { FaBook, FaFileAlt, FaMoneyBillAlt, FaUsers } from 'react-icons/fa';
 import { SlBookOpen } from 'react-icons/sl';
 import { RiGovernmentLine } from 'react-icons/ri';
@@ -29,9 +20,6 @@ import { FaMapPin } from 'react-icons/fa';
 import { IoLibrary } from 'react-icons/io5';
 import { MdNewspaper } from 'react-icons/md';
 
-import { SlCalender } from 'react-icons/sl';
-import { FaUsersCog } from 'react-icons/fa';
-import { IoSettingsSharp } from 'react-icons/io5';
 import { BiSolidCoupon } from 'react-icons/bi';
 
 interface SidebarProps {
@@ -86,7 +74,7 @@ const MENU_CONFIG = {
         {
           name: 'Topics',
           path: '/exam-library/topics',
-          icon: MdNewspaper,
+          icon: IoBookmarks,
         },
         // {
         //   name: 'Questions',
@@ -138,7 +126,7 @@ const MENU_CONFIG = {
     {
       name: 'Policy',
       path: '/policy',
-      icon: BiSolidCoupon,
+      icon: MdOutlinePolicy,
     },
     {
       name: 'Location',
@@ -157,24 +145,24 @@ const MENU_CONFIG = {
       ],
     },
     {
-      name: 'Settings',
-      icon: IoSettingsSharp,
+      name: 'Admit, Result & Links',
+      icon: CgWebsite,
       children: [
         {
-          name: 'General Setting',
-          path: '/settings/general-setting',
-          icon: MdOutlineDisplaySettings,
+          name: 'Admit & Result',
+          path: '/settings/admin-card-and-result',
+          icon: GrScorecard,
         },
-        {
-          name: 'SMS Service',
-          path: '/settings/sms-service',
-          icon: HiOutlineChatBubbleLeftRight,
-        },
-        {
-          name: 'Email Service',
-          path: '/settings/email-service',
-          icon: MdOutlineMailOutline,
-        },
+        // {
+        //   name: 'SMS Service',
+        //   path: '/settings/sms-service',
+        //   icon: HiOutlineChatBubbleLeftRight,
+        // },
+        // {
+        //   name: 'Email Service',
+        //   path: '/settings/email-service',
+        //   icon: MdOutlineMailOutline,
+        // },
         {
           name: 'Social Media',
           path: '/settings/social-media',

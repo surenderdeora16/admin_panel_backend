@@ -52,16 +52,15 @@ const TopicSchema = new Schema(
 )
 
 // Create compound index for chapter+topic uniqueness
-TopicSchema.index({ chapterId: 1, name: 1 }, { unique: true })
-TopicSchema.index({ chapterId: 1, code: 1 }, { unique: true })
+TopicSchema.index({ chapterId: 1, name: 1 })
 
 // Create text index for search optimization
-TopicSchema.index({ name: "text", code: "text", description: "text" })
+TopicSchema.index({ name: "text", description: "text" })
 
 // Add error handling for duplicate entries
 TopicSchema.post("save", (error, doc, next) => {
   if (error.name === "MongoError" && error.code === 11000) {
-    next(new Error("Topic with this name or code already exists for this chapter"))
+    next(new Error("Topic with this name already exists for this chapter"))
   } else {
     next(error)
   }

@@ -1,148 +1,179 @@
-import { ApexOptions } from 'apexcharts';
-import React, { useState } from 'react';
-import ReactApexChart from 'react-apexcharts';
+"use client"
 
-const options: ApexOptions = {
-  legend: {
-    show: false,
-    position: 'top',
-    horizontalAlign: 'left',
-  },
-  colors: ['#3C50E0', '#80CAEE'],
-  chart: {
-    fontFamily: 'Satoshi, sans-serif',
-    height: 335,
-    type: 'area',
-    dropShadow: {
-      enabled: true,
-      color: '#623CEA14',
-      top: 10,
-      blur: 4,
-      left: 0,
-      opacity: 0.1,
-    },
-
-    toolbar: {
-      show: false,
-    },
-  },
-  responsive: [
-    {
-      breakpoint: 1024,
-      options: {
-        chart: {
-          height: 300,
-        },
-      },
-    },
-    {
-      breakpoint: 1366,
-      options: {
-        chart: {
-          height: 350,
-        },
-      },
-    },
-  ],
-  stroke: {
-    width: [2, 2],
-    curve: 'straight',
-  },
-  // labels: {
-  //   show: false,
-  //   position: "top",
-  // },
-  grid: {
-    xaxis: {
-      lines: {
-        show: true,
-      },
-    },
-    yaxis: {
-      lines: {
-        show: true,
-      },
-    },
-  },
-  dataLabels: {
-    enabled: false,
-  },
-  markers: {
-    size: 4,
-    colors: '#fff',
-    strokeColors: ['#3056D3', '#80CAEE'],
-    strokeWidth: 3,
-    strokeOpacity: 0.9,
-    strokeDashArray: 0,
-    fillOpacity: 1,
-    discrete: [],
-    hover: {
-      size: undefined,
-      sizeOffset: 5,
-    },
-  },
-  xaxis: {
-    type: 'category',
-    categories: [
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-    ],
-    axisBorder: {
-      show: false,
-    },
-    axisTicks: {
-      show: false,
-    },
-  },
-  yaxis: {
-    title: {
-      style: {
-        fontSize: '0px',
-      },
-    },
-    min: 0,
-    max: 100,
-  },
-};
+import type { ApexOptions } from "apexcharts"
+import type React from "react"
+import { useState } from "react"
+import ReactApexChart from "react-apexcharts"
 
 interface ChartOneState {
   series: {
-    name: string;
-    data: number[];
-  }[];
+    name: string
+    data: number[]
+  }[]
 }
 
-const ChartOne: React.FC = () => {
-  const [state, setState] = useState<ChartOneState>({
+interface ChartOneProps {
+  data: Array<{
+    _id: { year: number; month: number; day: number }
+    revenue: number
+    orders: number
+    avgOrderValue?: number
+  }>
+  title?: string
+  subtitle?: string
+}
+
+const ChartOne: React.FC<ChartOneProps> = ({
+  data = [],
+  title = "Revenue Analytics",
+  subtitle = "Monthly revenue and order trends",
+}) => {
+  const [state] = useState<ChartOneState>({
     series: [
       {
-        name: 'Product One',
-        data: [23, 11, 22, 27, 13, 22, 37, 21, 44, 22, 30, 45],
+        name: "Revenue",
+        data: data.map((item) => item.revenue || 0),
       },
-
       {
-        name: 'Product Two',
-        data: [30, 25, 36, 30, 45, 35, 64, 52, 59, 36, 39, 51],
+        name: "Orders",
+        data: data.map((item) => (item.orders || 0) * 1000), // Scale orders for better visualization
       },
     ],
-  });
+  })
 
-  const handleReset = () => {
-    setState((prevState) => ({
-      ...prevState,
-    }));
-  };
-  handleReset;
+  const options: ApexOptions = {
+    legend: {
+      show: true,
+      position: "top",
+      horizontalAlign: "left",
+    },
+    colors: ["#3C50E0", "#80CAEE"],
+    chart: {
+      fontFamily: "Satoshi, sans-serif",
+      height: 335,
+      type: "area",
+      dropShadow: {
+        enabled: true,
+        color: "#623CEA14",
+        top: 10,
+        blur: 4,
+        left: 0,
+        opacity: 0.1,
+      },
+      toolbar: {
+        show: true,
+        tools: {
+          download: true,
+          selection: true,
+          zoom: true,
+          zoomin: true,
+          zoomout: true,
+          pan: true,
+          reset: true,
+        },
+      },
+    },
+    responsive: [
+      {
+        breakpoint: 1024,
+        options: {
+          chart: {
+            height: 300,
+          },
+        },
+      },
+      {
+        breakpoint: 1366,
+        options: {
+          chart: {
+            height: 350,
+          },
+        },
+      },
+    ],
+    stroke: {
+      width: [2, 2],
+      curve: "smooth",
+    },
+    grid: {
+      xaxis: {
+        lines: {
+          show: true,
+        },
+      },
+      yaxis: {
+        lines: {
+          show: true,
+        },
+      },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    markers: {
+      size: 4,
+      colors: "#fff",
+      strokeColors: ["#3056D3", "#80CAEE"],
+      strokeWidth: 3,
+      strokeOpacity: 0.9,
+      strokeDashArray: 0,
+      fillOpacity: 1,
+      discrete: [],
+      hover: {
+        size: undefined,
+        sizeOffset: 5,
+      },
+    },
+    xaxis: {
+      type: "category",
+      categories: data.map((item) => `${item._id.day}/${item._id.month}/${item._id.year}`),
+      axisBorder: {
+        show: false,
+      },
+      axisTicks: {
+        show: false,
+      },
+    },
+    yaxis: [
+      {
+        title: {
+          text: "Revenue (₹)",
+          style: {
+            fontSize: "12px",
+            fontWeight: 600,
+          },
+        },
+        labels: {
+          formatter: (val) => "₹" + (val / 1000).toFixed(0) + "K",
+        },
+      },
+      {
+        opposite: true,
+        title: {
+          text: "Orders",
+          style: {
+            fontSize: "12px",
+            fontWeight: 600,
+          },
+        },
+        labels: {
+          formatter: (val) => (val / 1000).toFixed(0),
+        },
+      },
+    ],
+    tooltip: {
+      shared: true,
+      intersect: false,
+      y: [
+        {
+          formatter: (val) => "₹" + val.toLocaleString(),
+        },
+        {
+          formatter: (val) => (val / 1000).toFixed(0) + " orders",
+        },
+      ],
+    },
+  }
 
   return (
     <div className="col-span-12 rounded-sm border border-stroke bg-white px-5 pt-7.5 pb-5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:col-span-8">
@@ -154,7 +185,9 @@ const ChartOne: React.FC = () => {
             </span>
             <div className="w-full">
               <p className="font-semibold text-primary">Total Revenue</p>
-              <p className="text-sm font-medium">12.04.2022 - 12.05.2022</p>
+              <p className="text-sm font-medium">
+                ₹{data.reduce((acc, curr) => acc + (curr.revenue || 0), 0).toLocaleString()}
+              </p>
             </div>
           </div>
           <div className="flex min-w-47.5">
@@ -162,38 +195,25 @@ const ChartOne: React.FC = () => {
               <span className="block h-2.5 w-full max-w-2.5 rounded-full bg-secondary"></span>
             </span>
             <div className="w-full">
-              <p className="font-semibold text-secondary">Total Sales</p>
-              <p className="text-sm font-medium">12.04.2022 - 12.05.2022</p>
+              <p className="font-semibold text-secondary">Total Orders</p>
+              <p className="text-sm font-medium">
+                {data.reduce((acc, curr) => acc + (curr.orders || 0), 0).toLocaleString()}
+              </p>
             </div>
           </div>
         </div>
-        <div className="flex w-full max-w-45 justify-end">
-          <div className="inline-flex items-center rounded-md bg-whiter p-1.5 dark:bg-meta-4">
-            <button className="rounded bg-white py-1 px-3 text-xs font-medium text-black shadow-card hover:bg-white hover:shadow-card dark:bg-boxdark dark:text-white dark:hover:bg-boxdark">
-              Day
-            </button>
-            <button className="rounded py-1 px-3 text-xs font-medium text-black hover:bg-white hover:shadow-card dark:text-white dark:hover:bg-boxdark">
-              Week
-            </button>
-            <button className="rounded py-1 px-3 text-xs font-medium text-black hover:bg-white hover:shadow-card dark:text-white dark:hover:bg-boxdark">
-              Month
-            </button>
-          </div>
-        </div>
       </div>
 
-      <div>
-        <div id="chartOne" className="-ml-5">
-          <ReactApexChart
-            options={options}
-            series={state.series}
-            type="area"
-            height={350}
-          />
-        </div>
+      <div className="mb-2">
+        <h4 className="text-xl font-semibold text-black dark:text-white">{title}</h4>
+        <p className="text-sm text-body dark:text-bodydark">{subtitle}</p>
+      </div>
+
+      <div id="chartOne" className="-ml-5">
+        <ReactApexChart options={options} series={state.series} type="area" height={350} />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ChartOne;
+export default ChartOne

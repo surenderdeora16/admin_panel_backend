@@ -1,115 +1,985 @@
-import React from 'react';
-import CardDataStats from '../../components/CardDataStats';
-import ChartOne from '../../components/Charts/ChartOne';
-import ChartThree from '../../components/Charts/ChartThree';
-import ChartTwo from '../../components/Charts/ChartTwo';
-import ChatCard from '../../components/Chat/ChatCard';
-import MapOne from '../../components/Maps/MapOne';
-import TableOne from '../../components/Tables/TableOne';
+"use client"
+
+import type React from "react"
+import { useState, useEffect } from "react"
+import {
+  FaUsers,
+  FaBookOpen,
+  FaClipboardList,
+  FaDollarSign,
+  FaShoppingCart,
+  FaChartLine,
+  FaGraduationCap,
+  FaFileAlt,
+  FaDownload,
+  FaCheckCircle,
+  FaArrowUp,
+  FaArrowDown,
+  FaPercent,
+  FaClock,
+  FaAward,
+  FaMoneyBillWave,
+  FaUserCheck,
+  FaDatabase,
+  FaRocket,
+  FaStar,
+  FaHeart,
+  FaThumbsUp,
+  FaFire,
+  FaLightbulb,
+  FaMagic,
+  FaGem,
+  FaCrown,
+  FaTrophy,
+  FaMedal,
+  FaGlobe,
+  FaGift,
+  FaLock,
+  FaQuestionCircle,
+} from "react-icons/fa"
+import ChartOne from "../../components/Charts/ChartOne"
+import ChartTwo from "../../components/Charts/ChartTwo"
+import ChartThree from "../../components/Charts/ChartThree"
+import AxiosHelper from "../../helper/AxiosHelper"
+import { toast } from "react-toastify"
+import { PiTrendUpBold } from "react-icons/pi"
+import { TbTargetArrow } from "react-icons/tb"
+import { IoShieldSharp } from "react-icons/io5"
+import { RiRefreshFill } from "react-icons/ri"
+
+interface DashboardOverview {
+  totalUsers: number
+  totalExamPlans: number
+  totalTestSeries: number
+  totalExams: number
+  totalOrders: number
+  totalRevenue: number
+  totalNotes: number
+  totalCoupons: number
+  activeUsers: number
+  newUsersToday: number
+  newUsersThisWeek: number
+  newUsersThisMonth: number
+  ordersToday: number
+  ordersThisWeek: number
+  ordersThisMonth: number
+  revenueToday: number
+  revenueThisWeek: number
+  revenueThisMonth: number
+  avgOrderValue: number
+  totalFreeNotes: number
+  totalPaidNotes: number
+  activeCoupons: number
+  usedCoupons: number
+  conversionRate: string
+  userGrowthRate: string
+  revenueGrowthRate: string
+}
+
+interface UserAnalytics {
+  userRegistrationTrend: Array<{
+    _id: { year: number; month: number; day: number }
+    count: number
+  }>
+  monthlyUserGrowth: Array<{
+    _id: { year: number; month: number }
+    count: number
+  }>
+  demographics: {
+    gender: Array<{ _id: string; count: number }>
+    age: Array<{ _id: string; count: number }>
+    location: Array<{ _id: string; count: number }>
+    device: Array<{ _id: string; count: number }>
+  }
+  activityPattern: Array<{ _id: number; count: number }>
+  retention: Array<{ _id: string; count: number }>
+}
+
+interface RevenueAnalytics {
+  revenueTrend: Array<{
+    _id: { year: number; month: number; day: number }
+    revenue: number
+    orders: number
+    avgOrderValue: number
+  }>
+  monthlyRevenue: Array<{
+    _id: { year: number; month: number }
+    revenue: number
+    orders: number
+    avgOrderValue: number
+  }>
+  revenueByExamPlan: Array<{
+    _id: string
+    name: string
+    revenue: number
+    orders: number
+    avgPrice: number
+  }>
+  paymentMethodAnalysis: Array<{
+    _id: string
+    count: number
+    revenue: number
+    avgAmount: number
+  }>
+  couponAnalysis: Array<{
+    _id: string
+    code: string
+    usageCount: number
+    totalDiscount: number
+    avgDiscount: number
+  }>
+  revenueByStatus: Array<{
+    _id: string
+    count: number
+    revenue: number
+  }>
+}
+
+interface ExamAnalytics {
+  examParticipation: Array<{
+    _id: { year: number; month: number; day: number }
+    totalExams: number
+    completedExams: number
+    avgScore: number
+  }>
+  monthlyExamTrends: Array<{
+    _id: { year: number; month: number }
+    totalExams: number
+    completedExams: number
+    avgScore: number
+  }>
+  performanceByTestSeries: Array<{
+    _id: string
+    name: string
+    totalAttempts: number
+    completedAttempts: number
+    avgScore: number
+    maxScore: number
+    minScore: number
+    completionRate: number
+  }>
+  scoreDistribution: Array<{ _id: string; count: number; avgScore: number }>
+  examStatusDistribution: Array<{ _id: string; count: number; avgScore: number }>
+  timeAnalysis: {
+    avgTimeTaken: number
+    minTimeTaken: number
+    maxTimeTaken: number
+    totalExams: number
+  }
+}
+
+interface ContentAnalytics {
+  popularExamPlans: Array<{
+    _id: string
+    name: string
+    price: number
+    purchases: number
+    revenue: number
+    avgRating: number
+  }>
+  testSeriesEngagement: Array<{
+    _id: string
+    name: string
+    totalQuestions: number
+    totalAttempts: number
+    completedExams: number
+    avgScore: number
+    completionRate: number
+    engagementRate: number
+  }>
+  notesAnalytics: Array<{
+    _id: string
+    examPlanName: string
+    totalNotes: number
+    freeNotes: number
+    paidNotes: number
+    avgFileSize: number
+  }>
+  contentSummary: {
+    totalExamPlans: number
+    totalTestSeries: number
+    totalNotes: number
+    totalFreeNotes: number
+    totalPaidNotes: number
+    totalQuestions: number
+  }
+}
 
 const ECommerce: React.FC = () => {
+  const [loading, setLoading] = useState(true)
+  const [overview, setOverview] = useState<DashboardOverview | null>(null)
+  const [userAnalytics, setUserAnalytics] = useState<UserAnalytics | null>(null)
+  const [revenueAnalytics, setRevenueAnalytics] = useState<RevenueAnalytics | null>(null)
+  const [examAnalytics, setExamAnalytics] = useState<ExamAnalytics | null>(null)
+  const [contentAnalytics, setContentAnalytics] = useState<ContentAnalytics | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+  const [expandedCard, setExpandedCard] = useState<string | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+
+  useEffect(() => {
+    fetchDashboardData()
+    // Auto refresh every 5 minutes
+    const interval = setInterval(fetchDashboardData, 5 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+
+      const [overviewRes, userRes, revenueRes, examRes, contentRes] = await Promise.all([
+        AxiosHelper.getData("analytics/overview"),
+        AxiosHelper.getData("analytics/users"),
+        AxiosHelper.getData("analytics/revenue"),
+        AxiosHelper.getData("analytics/exams"),
+        AxiosHelper.getData("analytics/content"),
+      ])
+
+      if (overviewRes?.data?.status) {
+        setOverview(overviewRes.data.data)
+      }
+
+      if (userRes?.data?.status) {
+        setUserAnalytics(userRes.data.data)
+      }
+
+      if (revenueRes?.data?.status) {
+        setRevenueAnalytics(revenueRes.data.data)
+      }
+
+      if (examRes?.data?.status) {
+        setExamAnalytics(examRes.data.data)
+      }
+
+      if (contentRes?.data?.status) {
+        setContentAnalytics(contentRes.data.data)
+      }
+
+      setLastUpdated(new Date())
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error)
+      toast.error("Failed to load dashboard data")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await fetchDashboardData()
+    setRefreshing(false)
+    toast.success("Dashboard refreshed successfully")
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  const formatNumber = (num: number) => {
+    if (num >= 10000000) return `${(num / 10000000).toFixed(1)}Cr`
+    if (num >= 100000) return `${(num / 100000).toFixed(1)}L`
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+    return new Intl.NumberFormat("en-IN").format(num)
+  }
+
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    if (hours > 0) return `${hours}h ${minutes}m`
+    return `${minutes}m`
+  }
+
+  const getGrowthColor = (rate: number) => {
+    if (rate > 0) return "text-green-500"
+    if (rate < 0) return "text-red-500"
+    return "text-gray-500"
+  }
+
+  const getGrowthIcon = (rate: number) => {
+    if (rate > 0) return <FaArrowUp className="w-3 h-3" />
+    if (rate < 0) return <FaArrowDown className="w-3 h-3" />
+    return null
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-primary mx-auto mb-4"></div>
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Loading Analytics</h3>
+          <p className="text-gray-500 dark:text-gray-400">Fetching your dashboard data...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="p-10">
-      <h1 className="text-5xl font-medium ">Dashboard {'->'} Coming Soon...</h1>
-      {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
-        <CardDataStats title="Total views" total="$3.456K" rate="0.43%" levelUp>
-          <svg
-            className="fill-primary dark:fill-white"
-            width="22"
-            height="16"
-            viewBox="0 0 22 16"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M11 15.1156C4.19376 15.1156 0.825012 8.61876 0.687512 8.34376C0.584387 8.13751 0.584387 7.86251 0.687512 7.65626C0.825012 7.38126 4.19376 0.918762 11 0.918762C17.8063 0.918762 21.175 7.38126 21.3125 7.65626C21.4156 7.86251 21.4156 8.13751 21.3125 8.34376C21.175 8.61876 17.8063 15.1156 11 15.1156ZM2.26876 8.00001C3.02501 9.27189 5.98126 13.5688 11 13.5688C16.0188 13.5688 18.975 9.27189 19.7313 8.00001C18.975 6.72814 16.0188 2.43126 11 2.43126C5.98126 2.43126 3.02501 6.72814 2.26876 8.00001Z"
-              fill=""
-            />
-            <path
-              d="M11 10.9219C9.38438 10.9219 8.07812 9.61562 8.07812 8C8.07812 6.38438 9.38438 5.07812 11 5.07812C12.6156 5.07812 13.9219 6.38438 13.9219 8C13.9219 9.61562 12.6156 10.9219 11 10.9219ZM11 6.625C10.2437 6.625 9.625 7.24375 9.625 8C9.625 8.75625 10.2437 9.375 11 9.375C11.7563 9.375 12.375 8.75625 12.375 8C12.375 7.24375 11.7563 6.625 11 6.625Z"
-              fill=""
-            />
-          </svg>
-        </CardDataStats>
-        <CardDataStats title="Total Profit" total="$45,2K" rate="4.35%" levelUp>
-          <svg
-            className="fill-primary dark:fill-white"
-            width="20"
-            height="22"
-            viewBox="0 0 20 22"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M11.7531 16.4312C10.3781 16.4312 9.27808 17.5312 9.27808 18.9062C9.27808 20.2812 10.3781 21.3812 11.7531 21.3812C13.1281 21.3812 14.2281 20.2812 14.2281 18.9062C14.2281 17.5656 13.0937 16.4312 11.7531 16.4312ZM11.7531 19.8687C11.2375 19.8687 10.825 19.4562 10.825 18.9406C10.825 18.425 11.2375 18.0125 11.7531 18.0125C12.2687 18.0125 12.6812 18.425 12.6812 18.9406C12.6812 19.4219 12.2343 19.8687 11.7531 19.8687Z"
-              fill=""
-            />
-            <path
-              d="M5.22183 16.4312C3.84683 16.4312 2.74683 17.5312 2.74683 18.9062C2.74683 20.2812 3.84683 21.3812 5.22183 21.3812C6.59683 21.3812 7.69683 20.2812 7.69683 18.9062C7.69683 17.5656 6.56245 16.4312 5.22183 16.4312ZM5.22183 19.8687C4.7062 19.8687 4.2937 19.4562 4.2937 18.9406C4.2937 18.425 4.7062 18.0125 5.22183 18.0125C5.73745 18.0125 6.14995 18.425 6.14995 18.9406C6.14995 19.4219 5.73745 19.8687 5.22183 19.8687Z"
-              fill=""
-            />
-            <path
-              d="M19.0062 0.618744H17.15C16.325 0.618744 15.6031 1.23749 15.5 2.06249L14.95 6.01562H1.37185C1.0281 6.01562 0.684353 6.18749 0.443728 6.46249C0.237478 6.73749 0.134353 7.11562 0.237478 7.45937C0.237478 7.49374 0.237478 7.49374 0.237478 7.52812L2.36873 13.9562C2.50623 14.4375 2.9531 14.7812 3.46873 14.7812H12.9562C14.2281 14.7812 15.3281 13.8187 15.5 12.5469L16.9437 2.26874C16.9437 2.19999 17.0125 2.16562 17.0812 2.16562H18.9375C19.35 2.16562 19.7281 1.82187 19.7281 1.37499C19.7281 0.928119 19.4187 0.618744 19.0062 0.618744ZM14.0219 12.3062C13.9531 12.8219 13.5062 13.2 12.9906 13.2H3.7781L1.92185 7.56249H14.7094L14.0219 12.3062Z"
-              fill=""
-            />
-          </svg>
-        </CardDataStats>
-        <CardDataStats title="Total Product" total="2.450" rate="2.59%" levelUp>
-          <svg
-            className="fill-primary dark:fill-white"
-            width="22"
-            height="22"
-            viewBox="0 0 22 22"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M21.1063 18.0469L19.3875 3.23126C19.2157 1.71876 17.9438 0.584381 16.3969 0.584381H5.56878C4.05628 0.584381 2.78441 1.71876 2.57816 3.23126L0.859406 18.0469C0.756281 18.9063 1.03128 19.7313 1.61566 20.3844C2.20003 21.0375 2.99066 21.3813 3.85003 21.3813H18.1157C18.975 21.3813 19.8 21.0031 20.35 20.3844C20.9 19.7656 21.2094 18.9063 21.1063 18.0469ZM19.2157 19.3531C18.9407 19.6625 18.5625 19.8344 18.15 19.8344H3.85003C3.43753 19.8344 3.05941 19.6625 2.78441 19.3531C2.50941 19.0438 2.37191 18.6313 2.44066 18.2188L4.12503 3.43751C4.19378 2.71563 4.81253 2.16563 5.56878 2.16563H16.4313C17.1532 2.16563 17.7719 2.71563 17.875 3.43751L19.5938 18.2531C19.6282 18.6656 19.4907 19.0438 19.2157 19.3531Z"
-              fill=""
-            />
-            <path
-              d="M14.3345 5.29375C13.922 5.39688 13.647 5.80938 13.7501 6.22188C13.7845 6.42813 13.8189 6.63438 13.8189 6.80625C13.8189 8.35313 12.547 9.625 11.0001 9.625C9.45327 9.625 8.1814 8.35313 8.1814 6.80625C8.1814 6.6 8.21577 6.42813 8.25015 6.22188C8.35327 5.80938 8.07827 5.39688 7.66577 5.29375C7.25327 5.19063 6.84077 5.46563 6.73765 5.87813C6.6689 6.1875 6.63452 6.49688 6.63452 6.80625C6.63452 9.2125 8.5939 11.1719 11.0001 11.1719C13.4064 11.1719 15.3658 9.2125 15.3658 6.80625C15.3658 6.49688 15.3314 6.1875 15.2626 5.87813C15.1595 5.46563 14.747 5.225 14.3345 5.29375Z"
-              fill=""
-            />
-          </svg>
-        </CardDataStats>
-        <CardDataStats title="Total Users" total="3.456" rate="0.95%" levelDown>
-          <svg
-            className="fill-primary dark:fill-white"
-            width="22"
-            height="18"
-            viewBox="0 0 22 18"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M7.18418 8.03751C9.31543 8.03751 11.0686 6.35313 11.0686 4.25626C11.0686 2.15938 9.31543 0.475006 7.18418 0.475006C5.05293 0.475006 3.2998 2.15938 3.2998 4.25626C3.2998 6.35313 5.05293 8.03751 7.18418 8.03751ZM7.18418 2.05626C8.45605 2.05626 9.52168 3.05313 9.52168 4.29063C9.52168 5.52813 8.49043 6.52501 7.18418 6.52501C5.87793 6.52501 4.84668 5.52813 4.84668 4.29063C4.84668 3.05313 5.9123 2.05626 7.18418 2.05626Z"
-              fill=""
-            />
-            <path
-              d="M15.8124 9.6875C17.6687 9.6875 19.1468 8.24375 19.1468 6.42188C19.1468 4.6 17.6343 3.15625 15.8124 3.15625C13.9905 3.15625 12.478 4.6 12.478 6.42188C12.478 8.24375 13.9905 9.6875 15.8124 9.6875ZM15.8124 4.7375C16.8093 4.7375 17.5999 5.49375 17.5999 6.45625C17.5999 7.41875 16.8093 8.175 15.8124 8.175C14.8155 8.175 14.0249 7.41875 14.0249 6.45625C14.0249 5.49375 14.8155 4.7375 15.8124 4.7375Z"
-              fill=""
-            />
-            <path
-              d="M15.9843 10.0313H15.6749C14.6437 10.0313 13.6468 10.3406 12.7874 10.8563C11.8593 9.61876 10.3812 8.79376 8.73115 8.79376H5.67178C2.85303 8.82814 0.618652 11.0625 0.618652 13.8469V16.3219C0.618652 16.975 1.13428 17.4906 1.7874 17.4906H20.2468C20.8999 17.4906 21.4499 16.9406 21.4499 16.2875V15.4625C21.4155 12.4719 18.9749 10.0313 15.9843 10.0313ZM2.16553 15.9438V13.8469C2.16553 11.9219 3.74678 10.3406 5.67178 10.3406H8.73115C10.6562 10.3406 12.2374 11.9219 12.2374 13.8469V15.9438H2.16553V15.9438ZM19.8687 15.9438H13.7499V13.8469C13.7499 13.2969 13.6468 12.7469 13.4749 12.2313C14.0937 11.7844 14.8499 11.5781 15.6405 11.5781H15.9499C18.0812 11.5781 19.8343 13.3313 19.8343 15.4625V15.9438H19.8687Z"
-              fill=""
-            />
-          </svg>
-        </CardDataStats>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Enhanced Header Section */}
+      <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl">
+              <FaChartLine className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Analytics Dashboard
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">Last updated: {lastUpdated.toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900 rounded-lg">
+              <FaCheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <span className="text-sm font-medium text-green-700 dark:text-green-300">System Healthy</span>
+            </div>
+
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              <RiRefreshFill className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+              {refreshing ? "Refreshing..." : "Refresh"}
+            </button>
+
+            <button className="flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+              <FaDownload className="h-4 w-4" />
+              Export
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
-        <ChartOne />
-        <ChartTwo />
-        <ChartThree />
-        <MapOne />
-        <div className="col-span-12 xl:col-span-8">
-          <TableOne />
+      {/* Enhanced Primary Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Total Users Card */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-transparent"></div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                <FaUsers className="h-8 w-8" />
+              </div>
+              <div className="text-right">
+                <div
+                  className={`flex items-center gap-1 ${getGrowthColor(Number.parseFloat(overview?.userGrowthRate || "0"))}`}
+                >
+                  {getGrowthIcon(Number.parseFloat(overview?.userGrowthRate || "0"))}
+                  <span className="text-sm font-medium text-white/80">{overview?.userGrowthRate}% this month</span>
+                </div>
+              </div>
+            </div>
+            <h3 className="text-3xl font-bold mb-2">{formatNumber(overview?.totalUsers || 0)}</h3>
+            <p className="text-blue-100 mb-3">Total Users</p>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-blue-200">Active: {formatNumber(overview?.activeUsers || 0)}</span>
+              <span className="text-blue-200">Today: +{overview?.newUsersToday || 0}</span>
+            </div>
+          </div>
         </div>
-        <ChatCard />
-      </div>   */}
-    </div>
-  );
-};
 
-export default ECommerce;
+        {/* Total Revenue Card */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 to-transparent"></div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                <FaDollarSign className="h-8 w-8" />
+              </div>
+              <div className="text-right">
+                <div
+                  className={`flex items-center gap-1 ${getGrowthColor(Number.parseFloat(overview?.revenueGrowthRate || "0"))}`}
+                >
+                  {getGrowthIcon(Number.parseFloat(overview?.revenueGrowthRate || "0"))}
+                  <span className="text-sm font-medium text-white/80">{overview?.revenueGrowthRate}% this month</span>
+                </div>
+              </div>
+            </div>
+            <h3 className="text-3xl font-bold mb-2">{formatCurrency(overview?.totalRevenue || 0)}</h3>
+            <p className="text-green-100 mb-3">Total Revenue</p>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-green-200">Avg Order: {formatCurrency(overview?.avgOrderValue || 0)}</span>
+              <span className="text-green-200">Today: {formatCurrency(overview?.revenueToday || 0)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Total Orders Card */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-transparent"></div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                <FaShoppingCart className="h-8 w-8" />
+              </div>
+              <div className="text-right">
+                <div className="flex items-center gap-1">
+                  <PiTrendUpBold className="w-3 h-3 text-white/80" />
+                  <span className="text-sm font-medium text-white/80">{overview?.ordersThisMonth || 0} this month</span>
+                </div>
+              </div>
+            </div>
+            <h3 className="text-3xl font-bold mb-2">{formatNumber(overview?.totalOrders || 0)}</h3>
+            <p className="text-purple-100 mb-3">Total Orders</p>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-purple-200">This Week: {overview?.ordersThisWeek || 0}</span>
+              <span className="text-purple-200">Today: {overview?.ordersToday || 0}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Conversion Rate Card */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-transparent"></div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                <FaPercent className="h-8 w-8" />
+              </div>
+              <div className="text-right">
+                <div className="flex items-center gap-1">
+                  <TbTargetArrow className="w-3 h-3 text-white/80" />
+                  <span className="text-sm font-medium text-white/80">Conversion</span>
+                </div>
+              </div>
+            </div>
+            <h3 className="text-3xl font-bold mb-2">{overview?.conversionRate || 0}%</h3>
+            <p className="text-orange-100 mb-3">Conversion Rate</p>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-orange-200">Target: 5%</span>
+              <span className="text-orange-200">
+                {Number.parseFloat(overview?.conversionRate || "0") >= 5 ? "✅ Good" : "⚠️ Low"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Secondary Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
+              <FaBookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <FaRocket className="h-5 w-5 text-gray-400" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+            {formatNumber(overview?.totalExamPlans || 0)}
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">Exam Plans</p>
+          <div className="mt-3 text-xs text-gray-500">Active learning programs</div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-xl">
+              <FaClipboardList className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
+            <FaFire className="h-5 w-5 text-gray-400" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+            {formatNumber(overview?.totalTestSeries || 0)}
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">Test Series</p>
+          <div className="mt-3 text-xs text-gray-500">Practice assessments</div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-xl">
+              <FaGraduationCap className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            </div>
+            <FaTrophy className="h-5 w-5 text-gray-400" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+            {formatNumber(overview?.totalExams || 0)}
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">Exams Conducted</p>
+          <div className="mt-3 text-xs text-gray-500">Total assessments</div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-xl">
+              <FaFileAlt className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <FaGem className="h-5 w-5 text-gray-400" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+            {formatNumber(overview?.totalNotes || 0)}
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">Study Notes</p>
+          <div className="mt-3 text-xs text-gray-500">
+            Free: {overview?.totalFreeNotes || 0} | Paid: {overview?.totalPaidNotes || 0}
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Charts Section */}
+      <div className="grid grid-cols-12 gap-6 mb-8">
+        {/* Revenue Chart */}
+        {revenueAnalytics?.monthlyRevenue && revenueAnalytics.monthlyRevenue.length > 0 && (
+          <div className="col-span-12 xl:col-span-8">
+            <ChartOne
+              data={revenueAnalytics.monthlyRevenue.map((item) => ({
+                _id: { year: item._id.year, month: item._id.month, day: 1 },
+                revenue: item.revenue,
+                orders: item.orders,
+                avgOrderValue: item.avgOrderValue,
+              }))}
+              title="Monthly Revenue Trends"
+              subtitle="Revenue and order analysis over time"
+            />
+          </div>
+        )}
+
+        {/* User Growth Chart */}
+        {userAnalytics?.monthlyUserGrowth && userAnalytics.monthlyUserGrowth.length > 0 && (
+          <div className="col-span-12 xl:col-span-4">
+            <ChartTwo
+              data={userAnalytics.monthlyUserGrowth.map((item) => ({
+                _id: { year: item._id.year, month: item._id.month, day: 1 },
+                count: item.count,
+              }))}
+              title="User Growth"
+              subtitle="Monthly user registrations"
+            />
+          </div>
+        )}
+
+        {/* Score Distribution Chart */}
+        {examAnalytics?.scoreDistribution && examAnalytics.scoreDistribution.length > 0 && (
+          <div className="col-span-12 xl:col-span-6">
+            <ChartThree
+              data={examAnalytics.scoreDistribution}
+              title="Score Distribution"
+              subtitle="Student performance analysis"
+            />
+          </div>
+        )}
+
+        {/* Top Performing Exam Plans */}
+        {revenueAnalytics?.revenueByExamPlan && revenueAnalytics.revenueByExamPlan.length > 0 && (
+          <div className="col-span-12 xl:col-span-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Top Performing Exam Plans</h4>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">Revenue leaders</p>
+                </div>
+                <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl">
+                  <FaCrown className="h-6 w-6 text-white" />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {revenueAnalytics.revenueByExamPlan.slice(0, 5).map((plan, index) => (
+                  <div
+                    key={plan._id}
+                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                          index === 0
+                            ? "bg-yellow-500"
+                            : index === 1
+                              ? "bg-gray-400"
+                              : index === 2
+                                ? "bg-orange-500"
+                                : "bg-blue-500"
+                        }`}
+                      >
+                        {index + 1}
+                      </div>
+                      <div>
+                        <h5 className="font-semibold text-gray-900 dark:text-white">{plan.name}</h5>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{plan.orders} purchases</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-green-600 dark:text-green-400">{formatCurrency(plan.revenue)}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Avg: {formatCurrency(plan.avgPrice)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Enhanced Analytics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+        {/* User Demographics */}
+        {userAnalytics?.demographics && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">User Demographics</h4>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">User distribution analysis</p>
+              </div>
+              <div className="p-3 bg-gradient-to-r from-pink-500 to-rose-600 rounded-xl">
+                <FaUsers className="h-6 w-6 text-white" />
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {/* Gender Distribution */}
+              {userAnalytics.demographics.gender && userAnalytics.demographics.gender.length > 0 && (
+                <div>
+                  <h5 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                    <FaHeart className="h-4 w-4 text-pink-500" />
+                    Gender Distribution
+                  </h5>
+                  <div className="space-y-2">
+                    {userAnalytics.demographics.gender.map((item) => (
+                      <div
+                        key={item._id}
+                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                      >
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {item._id || "Not specified"}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">
+                            {formatNumber(item.count)}
+                          </span>
+                          <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                            <div
+                              className="bg-pink-500 h-2 rounded-full"
+                              style={{
+                                width: `${(item.count / (overview?.totalUsers || 1)) * 100}%`,
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Top Locations */}
+              {userAnalytics.demographics.location && userAnalytics.demographics.location.length > 0 && (
+                <div>
+                  <h5 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                    <FaGlobe className="h-4 w-4 text-blue-500" />
+                    Top Locations
+                  </h5>
+                  <div className="space-y-2">
+                    {userAnalytics.demographics.location.slice(0, 5).map((item) => (
+                      <div
+                        key={item._id}
+                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                      >
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{item._id}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">
+                            {formatNumber(item.count)}
+                          </span>
+                          <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                            <div
+                              className="bg-blue-500 h-2 rounded-full"
+                              style={{
+                                width: `${(item.count / (overview?.totalUsers || 1)) * 100}%`,
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Exam Performance Metrics */}
+        {examAnalytics?.performanceByTestSeries && examAnalytics.performanceByTestSeries.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Test Series Performance</h4>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Top performing test series</p>
+              </div>
+              <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl">
+                <FaAward className="h-6 w-6 text-white" />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {examAnalytics.performanceByTestSeries.slice(0, 5).map((series, index) => (
+                <div
+                  key={series._id}
+                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h5 className="font-semibold text-gray-900 dark:text-white">{series.name}</h5>
+                    <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                      {series.avgScore?.toFixed(1)}% avg
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Attempts: </span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {formatNumber(series.totalAttempts)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Completion: </span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {series.completionRate?.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                      <div
+                        className="bg-green-500 h-2 rounded-full"
+                        style={{ width: `${series.completionRate || 0}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Payment Methods Analysis */}
+        {revenueAnalytics?.paymentMethodAnalysis && revenueAnalytics.paymentMethodAnalysis.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Payment Methods</h4>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Revenue by payment type</p>
+              </div>
+              <div className="p-3 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl">
+                <FaMoneyBillWave className="h-6 w-6 text-white" />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {revenueAnalytics.paymentMethodAnalysis.map((method) => (
+                <div
+                  key={method._id}
+                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl"
+                >
+                  <div>
+                    <h5 className="font-semibold text-gray-900 dark:text-white capitalize">
+                      {method._id || "Unknown"}
+                    </h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {formatNumber(method.count)} transactions
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-purple-600 dark:text-purple-400">{formatCurrency(method.revenue)}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Avg: {formatCurrency(method.avgAmount)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Enhanced System Performance Metrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        <div className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+              <FaClock className="h-6 w-6" />
+            </div>
+            <FaLightbulb className="h-5 w-5 text-white/60" />
+          </div>
+          <h3 className="text-2xl font-bold mb-2">
+            {examAnalytics?.timeAnalysis?.avgTimeTaken ? formatTime(examAnalytics.timeAnalysis.avgTimeTaken) : "N/A"}
+          </h3>
+          <p className="text-cyan-100 mb-3">Avg. Exam Time</p>
+          <div className="text-sm text-cyan-200">
+            Total Exams: {formatNumber(examAnalytics?.timeAnalysis?.totalExams || 0)}
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl shadow-xl p-6 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+              <FaUserCheck className="h-6 w-6" />
+            </div>
+            <FaThumbsUp className="h-5 w-5 text-white/60" />
+          </div>
+          <h3 className="text-2xl font-bold mb-2">
+            {examAnalytics?.examStatusDistribution?.find((status) => status._id === "completed")
+              ? `${Math.round(
+                  ((examAnalytics.examStatusDistribution.find((status) => status._id === "completed")?.count || 0) /
+                    (examAnalytics.examStatusDistribution.reduce((acc, curr) => acc + curr.count, 0) || 1)) *
+                    100,
+                )}%`
+              : "N/A"}
+          </h3>
+          <p className="text-emerald-100 mb-3">Completion Rate</p>
+          <div className="text-sm text-emerald-200">
+            Completed:{" "}
+            {formatNumber(
+              examAnalytics?.examStatusDistribution?.find((status) => status._id === "completed")?.count || 0,
+            )}
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-xl p-6 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+              <FaStar className="h-6 w-6" />
+            </div>
+            <FaMagic className="h-5 w-5 text-white/60" />
+          </div>
+          <h3 className="text-2xl font-bold mb-2">
+            {examAnalytics?.examStatusDistribution?.find((status) => status._id === "completed")?.avgScore
+              ? `${Math.round(examAnalytics.examStatusDistribution.find((status) => status._id === "completed")?.avgScore || 0)}%`
+              : "N/A"}
+          </h3>
+          <p className="text-amber-100 mb-3">Avg. Score</p>
+          <div className="text-sm text-amber-200">Performance metric</div>
+        </div>
+
+        <div className="bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl shadow-xl p-6 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+              <IoShieldSharp className="h-6 w-6" />
+            </div>
+            <FaMedal className="h-5 w-5 text-white/60" />
+          </div>
+          <h3 className="text-2xl font-bold mb-2">
+            {revenueAnalytics?.revenueByStatus?.find((status) => status._id === "completed")
+              ? `${Math.round(
+                  ((revenueAnalytics.revenueByStatus.find((status) => status._id === "completed")?.count || 0) /
+                    (revenueAnalytics.revenueByStatus.reduce((acc, curr) => acc + curr.count, 0) || 1)) *
+                    100,
+                )}%`
+              : "N/A"}
+          </h3>
+          <p className="text-rose-100 mb-3">Payment Success</p>
+          <div className="text-sm text-rose-200">Success Rate</div>
+        </div>
+      </div>
+
+      {/* Content Analytics Summary */}
+      {contentAnalytics?.contentSummary && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Content Overview</h4>
+              <p className="text-gray-600 dark:text-gray-400">Complete content analytics summary</p>
+            </div>
+            <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl">
+              <FaDatabase className="h-8 w-8 text-white" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+              <div className="p-3 bg-blue-500 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                <FaBookOpen className="h-6 w-6 text-white" />
+              </div>
+              <h5 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                {formatNumber(contentAnalytics.contentSummary.totalExamPlans)}
+              </h5>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Exam Plans</p>
+            </div>
+
+            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+              <div className="p-3 bg-green-500 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                <FaClipboardList className="h-6 w-6 text-white" />
+              </div>
+              <h5 className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
+                {formatNumber(contentAnalytics.contentSummary.totalTestSeries)}
+              </h5>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Test Series</p>
+            </div>
+
+            <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
+              <div className="p-3 bg-purple-500 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                <FaFileAlt className="h-6 w-6 text-white" />
+              </div>
+              <h5 className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+                {formatNumber(contentAnalytics.contentSummary.totalNotes)}
+              </h5>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Study Notes</p>
+            </div>
+
+            <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
+              <div className="p-3 bg-yellow-500 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                <FaGift className="h-6 w-6 text-white" />
+              </div>
+              <h5 className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">
+                {formatNumber(contentAnalytics.contentSummary.totalFreeNotes)}
+              </h5>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Free Notes</p>
+            </div>
+
+            <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
+              <div className="p-3 bg-red-500 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                <FaLock className="h-6 w-6 text-white" />
+              </div>
+              <h5 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-1">
+                {formatNumber(contentAnalytics.contentSummary.totalPaidNotes)}
+              </h5>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Paid Notes</p>
+            </div>
+
+            <div className="text-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
+              <div className="p-3 bg-indigo-500 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                <FaQuestionCircle className="h-6 w-6 text-white" />
+              </div>
+              <h5 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mb-1">
+                {formatNumber(contentAnalytics.contentSummary.totalQuestions)}
+              </h5>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Questions</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl">
+              <FaRocket className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h5 className="font-bold text-gray-900 dark:text-white">LMS Analytics Dashboard</h5>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Powered by advanced analytics • Real-time data • Auto-refresh enabled
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900 rounded-lg">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-green-700 dark:text-green-300">Live</span>
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Last sync: {lastUpdated.toLocaleTimeString()}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default ECommerce
