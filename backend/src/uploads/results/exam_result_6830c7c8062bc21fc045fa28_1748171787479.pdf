@@ -1,0 +1,681 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Result - test 01</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .student-info {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 25px;
+            border-radius: 15px;
+            color: white;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .info-item {
+            text-align: center;
+        }
+        
+        .info-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .performance-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.1);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        
+        .metric-card:hover::before {
+            transform: translateX(100%);
+        }
+        
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .metric-label {
+            font-size: 1em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .section-title {
+            font-size: 1.8em;
+            color: #333;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            position: relative;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: #f5576c;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+        
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .analysis-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+        }
+        
+        .pie-chart {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+        }
+        
+        .insights-section {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .insight-item {
+            background: rgba(255,255,255,0.8);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #f5576c;
+        }
+        
+        .question-analysis {
+            margin-top: 40px;
+        }
+        
+        .question-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #f44336;
+        }
+        
+        .question-correct {
+            border-left-color: #4CAF50;
+        }
+        
+        .question-wrong {
+            border-left-color: #f44336;
+        }
+        
+        .question-skipped {
+            border-left-color: #ff9800;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-correct {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .status-wrong {
+            background: #f44336;
+            color: white;
+        }
+        
+        .status-skipped {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-top: 40px;
+            color: #666;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 Exam Result Report</h1>
+            <p>test 01</p>
+        </div>
+        
+        <!-- Student Information -->
+        <div class="student-info">
+            <div class="info-item">
+                <div class="info-label">Student Name</div>
+                <div class="info-value">Priyanka Q</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Email</div>
+                <div class="info-value">Priyanka1111@gmail.com</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Exam Date</div>
+                <div class="info-value">5/24/2025</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Duration</div>
+                <div class="info-value">8 min</div>
+            </div>
+        </div>
+        
+        <!-- Performance Overview -->
+        <div class="performance-overview">
+            <div class="metric-card">
+                <div class="metric-value">-1</div>
+                <div class="metric-label">Total Score</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">-9.09%</div>
+                <div class="metric-label">Percentage</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">#7</div>
+                <div class="metric-label">Rank</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">38.46%</div>
+                <div class="metric-label">Percentile</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">0%</div>
+                <div class="metric-label">Accuracy</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">❌ FAIL</div>
+                <div class="metric-label">Result</div>
+            </div>
+        </div>
+        
+        <!-- Question Breakdown -->
+        <h2 class="section-title">📈 Question Analysis</h2>
+        <div class="chart-container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div>
+                    <h4>Correct Answers</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%; background: #4CAF50;"></div>
+                    </div>
+                    <p>0 / 11</p>
+                </div>
+                <div>
+                    <h4>Wrong Answers</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 36.36363636363637%; background: #f44336;"></div>
+                    </div>
+                    <p>4 / 11</p>
+                </div>
+                <div>
+                    <h4>Skipped Questions</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%; background: #ff9800;"></div>
+                    </div>
+                    <p>0 / 11</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section Analysis -->
+        <h2 class="section-title">📚 Section-wise Performance</h2>
+        <div class="analysis-grid">
+            
+                <div class="analysis-card">
+                    <h3>General</h3>
+                    <div style="margin: 15px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Accuracy:</span>
+                            <strong>0%</strong>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.9em;">
+                        <div>Correct: <strong>0</strong></div>
+                        <div>Wrong: <strong>4</strong></div>
+                        <div>Attempted: <strong>4</strong></div>
+                        <div>Skipped: <strong>0</strong></div>
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+                        <div>Score: <strong>-1 / 11</strong></div>
+                        <div>Time: <strong>8 min</strong></div>
+                    </div>
+                </div>
+            
+                <div class="analysis-card">
+                    <h3>math</h3>
+                    <div style="margin: 15px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Accuracy:</span>
+                            <strong>0%</strong>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.9em;">
+                        <div>Correct: <strong>0</strong></div>
+                        <div>Wrong: <strong>0</strong></div>
+                        <div>Attempted: <strong>0</strong></div>
+                        <div>Skipped: <strong>0</strong></div>
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+                        <div>Score: <strong>0 / 0</strong></div>
+                        <div>Time: <strong>0 min</strong></div>
+                    </div>
+                </div>
+            
+        </div>
+        
+        <!-- Subject Analysis -->
+        <h2 class="section-title">🎯 Subject-wise Performance</h2>
+        <div class="analysis-grid">
+            
+                <div class="analysis-card">
+                    <h3>History</h3>
+                    <div style="margin: 15px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Accuracy:</span>
+                            <strong>0%</strong>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.9em;">
+                        <div>Correct: <strong>0</strong></div>
+                        <div>Wrong: <strong>4</strong></div>
+                        <div>Total: <strong>6</strong></div>
+                        <div>Score: <strong>-1</strong></div>
+                    </div>
+                </div>
+            
+                <div class="analysis-card">
+                    <h3>Mathematics (गणित)</h3>
+                    <div style="margin: 15px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Accuracy:</span>
+                            <strong>0%</strong>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.9em;">
+                        <div>Correct: <strong>0</strong></div>
+                        <div>Wrong: <strong>0</strong></div>
+                        <div>Total: <strong>5</strong></div>
+                        <div>Score: <strong>0</strong></div>
+                    </div>
+                </div>
+            
+        </div>
+        
+        <!-- Performance Insights -->
+        <h2 class="section-title">💡 Performance Insights</h2>
+        <div class="insights-section">
+            
+                <div class="insight-item">
+                    <strong>💪 Need More Practice</strong>
+                    <p>Don't worry! With consistent practice and focus, you can significantly improve your scores.</p>
+                </div>
+            
+                <div class="insight-item">
+                    <strong>📚 Focus on Concepts</strong>
+                    <p>Work on strengthening your fundamentals. Quality practice is more important than quantity.</p>
+                </div>
+            
+                <div class="insight-item">
+                    <strong>📉 Weak Area: General</strong>
+                    <p>Focus more on General. Your accuracy is 0% in this section.</p>
+                </div>
+            
+                <div class="insight-item">
+                    <strong>📊 Attempt More Questions</strong>
+                    <p>You attempted only 36.4% of questions. Try to attempt more questions to maximize your score.</p>
+                </div>
+            
+                <div class="insight-item">
+                    <strong>📖 Subjects to Focus</strong>
+                    <p>Pay special attention to: History, Mathematics (गणित). These subjects need more practice.</p>
+                </div>
+            
+        </div>
+        
+        <!-- Detailed Question Analysis -->
+        <h2 class="section-title">📝 Question-wise Analysis</h2>
+        <div class="question-analysis">
+            
+                <div class="question-item question-wrong">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Question 1</h4>
+                        <span class="status-badge status-wrong">
+                            Wrong
+                        </span>
+                    </div>
+                    <p><strong>Subject:</strong> History | <strong>Chapter:</strong> Test chapter | <strong>Topic:</strong> test topics</p>
+                    <p><strong>Section:</strong> General | <strong>Time Spent:</strong> 240s</p>
+                    
+                        <div style="margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 5px;">
+                            <p><strong>Your Answer:</strong> 86</p>
+                            <p><strong>Correct Answer:</strong> option1</p>
+                        </div>
+                    
+                </div>
+            
+                <div class="question-item question-wrong">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Question 2</h4>
+                        <span class="status-badge status-wrong">
+                            Wrong
+                        </span>
+                    </div>
+                    <p><strong>Subject:</strong> History | <strong>Chapter:</strong> Test chapter | <strong>Topic:</strong> test topics</p>
+                    <p><strong>Section:</strong> General | <strong>Time Spent:</strong> 60s</p>
+                    
+                        <div style="margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 5px;">
+                            <p><strong>Your Answer:</strong> Carbon Dioxide</p>
+                            <p><strong>Correct Answer:</strong> option3</p>
+                        </div>
+                    
+                </div>
+            
+                <div class="question-item question-wrong">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Question 3</h4>
+                        <span class="status-badge status-wrong">
+                            Wrong
+                        </span>
+                    </div>
+                    <p><strong>Subject:</strong> History | <strong>Chapter:</strong> Test chapter | <strong>Topic:</strong> test topics</p>
+                    <p><strong>Section:</strong> General | <strong>Time Spent:</strong> 30s</p>
+                    
+                        <div style="margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 5px;">
+                            <p><strong>Your Answer:</strong> Not Attempted</p>
+                            <p><strong>Correct Answer:</strong> option3</p>
+                        </div>
+                    
+                </div>
+            
+                <div class="question-item question-skipped">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Question 4</h4>
+                        <span class="status-badge status-skipped">
+                            Skipped
+                        </span>
+                    </div>
+                    <p><strong>Subject:</strong> History | <strong>Chapter:</strong> Test chapter | <strong>Topic:</strong> test topics</p>
+                    <p><strong>Section:</strong> General | <strong>Time Spent:</strong> 0s</p>
+                    
+                </div>
+            
+                <div class="question-item question-skipped">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Question 5</h4>
+                        <span class="status-badge status-skipped">
+                            Skipped
+                        </span>
+                    </div>
+                    <p><strong>Subject:</strong> History | <strong>Chapter:</strong> Test chapter | <strong>Topic:</strong> test topics</p>
+                    <p><strong>Section:</strong> General | <strong>Time Spent:</strong> 0s</p>
+                    
+                </div>
+            
+                <div class="question-item question-wrong">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Question 6</h4>
+                        <span class="status-badge status-wrong">
+                            Wrong
+                        </span>
+                    </div>
+                    <p><strong>Subject:</strong> History | <strong>Chapter:</strong> Test chapter | <strong>Topic:</strong> test topics</p>
+                    <p><strong>Section:</strong> General | <strong>Time Spent:</strong> 150s</p>
+                    
+                        <div style="margin-top: 10px; padding: 10px; background: #ffebee; border-radius: 5px;">
+                            <p><strong>Your Answer:</strong> Not Attempted</p>
+                            <p><strong>Correct Answer:</strong> option2</p>
+                        </div>
+                    
+                </div>
+            
+                <div class="question-item question-skipped">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Question 7</h4>
+                        <span class="status-badge status-skipped">
+                            Skipped
+                        </span>
+                    </div>
+                    <p><strong>Subject:</strong> Mathematics (गणित) | <strong>Chapter:</strong> Arithmetic (Percentages, Ratios, Profit and Loss) | <strong>Topic:</strong> SDUYGIKA</p>
+                    <p><strong>Section:</strong> General | <strong>Time Spent:</strong> 0s</p>
+                    
+                </div>
+            
+                <div class="question-item question-skipped">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Question 8</h4>
+                        <span class="status-badge status-skipped">
+                            Skipped
+                        </span>
+                    </div>
+                    <p><strong>Subject:</strong> Mathematics (गणित) | <strong>Chapter:</strong> Arithmetic (Percentages, Ratios, Profit and Loss) | <strong>Topic:</strong> SDUYGIKA</p>
+                    <p><strong>Section:</strong> General | <strong>Time Spent:</strong> 0s</p>
+                    
+                </div>
+            
+                <div class="question-item question-skipped">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Question 9</h4>
+                        <span class="status-badge status-skipped">
+                            Skipped
+                        </span>
+                    </div>
+                    <p><strong>Subject:</strong> Mathematics (गणित) | <strong>Chapter:</strong> Arithmetic (Percentages, Ratios, Profit and Loss) | <strong>Topic:</strong> SDUYGIKA</p>
+                    <p><strong>Section:</strong> General | <strong>Time Spent:</strong> 0s</p>
+                    
+                </div>
+            
+                <div class="question-item question-skipped">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Question 10</h4>
+                        <span class="status-badge status-skipped">
+                            Skipped
+                        </span>
+                    </div>
+                    <p><strong>Subject:</strong> Mathematics (गणित) | <strong>Chapter:</strong> Arithmetic (Percentages, Ratios, Profit and Loss) | <strong>Topic:</strong> SDUYGIKA</p>
+                    <p><strong>Section:</strong> General | <strong>Time Spent:</strong> 0s</p>
+                    
+                </div>
+            
+                <div class="question-item question-skipped">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Question 11</h4>
+                        <span class="status-badge status-skipped">
+                            Skipped
+                        </span>
+                    </div>
+                    <p><strong>Subject:</strong> Mathematics (गणित) | <strong>Chapter:</strong> Arithmetic (Percentages, Ratios, Profit and Loss) | <strong>Topic:</strong> SDUYGIKA</p>
+                    <p><strong>Section:</strong> General | <strong>Time Spent:</strong> 0s</p>
+                    
+                </div>
+            
+            
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>📅 Generated on 5/25/2025 at 4:46:27 PM</p>
+            <p>🎓 LMS - Learning Management System</p>
+            <p>This is an automated report. For any queries, please contact support.</p>
+        </div>
+    </div>
+</body>
+</html>
+  

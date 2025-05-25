@@ -1,985 +1,1366 @@
-"use client"
+'use client';
 
-import type React from "react"
-import { useState, useEffect } from "react"
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import {
   FaUsers,
+  FaChartLine,
+  FaDollarSign,
+  FaGraduationCap,
   FaBookOpen,
   FaClipboardList,
-  FaDollarSign,
-  FaShoppingCart,
-  FaChartLine,
-  FaGraduationCap,
-  FaFileAlt,
-  FaDownload,
-  FaCheckCircle,
+  FaTrophy,
+  FaChartPie,
   FaArrowUp,
   FaArrowDown,
-  FaPercent,
+  FaDownload,
+  FaFilter,
+  FaCog,
+  FaBell,
+  FaFileAlt,
+  FaQuestionCircle,
+  FaTicketAlt,
+  FaCreditCard,
+  FaShoppingCart,
+  FaCheckCircle,
   FaClock,
-  FaAward,
-  FaMoneyBillWave,
-  FaUserCheck,
-  FaDatabase,
+  FaTimesCircle,
+  FaPlay,
+  FaStop,
   FaRocket,
   FaStar,
-  FaHeart,
-  FaThumbsUp,
   FaFire,
   FaLightbulb,
-  FaMagic,
   FaGem,
-  FaCrown,
-  FaTrophy,
-  FaMedal,
-  FaGlobe,
-  FaGift,
-  FaLock,
-  FaQuestionCircle,
-} from "react-icons/fa"
-import ChartOne from "../../components/Charts/ChartOne"
-import ChartTwo from "../../components/Charts/ChartTwo"
-import ChartThree from "../../components/Charts/ChartThree"
-import AxiosHelper from "../../helper/AxiosHelper"
-import { toast } from "react-toastify"
-import { PiTrendUpBold } from "react-icons/pi"
-import { TbTargetArrow } from "react-icons/tb"
-import { IoShieldSharp } from "react-icons/io5"
-import { RiRefreshFill } from "react-icons/ri"
+  FaThumbsUp,
+} from 'react-icons/fa';
+import { GiTargetLaser } from 'react-icons/gi';
+import AxiosHelper from '../../helper/AxiosHelper';
 
+// Types
 interface DashboardOverview {
-  totalUsers: number
-  totalExamPlans: number
-  totalTestSeries: number
-  totalExams: number
-  totalOrders: number
-  totalRevenue: number
-  totalNotes: number
-  totalCoupons: number
-  activeUsers: number
-  newUsersToday: number
-  newUsersThisWeek: number
-  newUsersThisMonth: number
-  ordersToday: number
-  ordersThisWeek: number
-  ordersThisMonth: number
-  revenueToday: number
-  revenueThisWeek: number
-  revenueThisMonth: number
-  avgOrderValue: number
-  totalFreeNotes: number
-  totalPaidNotes: number
-  activeCoupons: number
-  usedCoupons: number
-  conversionRate: string
-  userGrowthRate: string
-  revenueGrowthRate: string
+  totalUsers: number;
+  totalAdmins: number;
+  totalExamPlans: number;
+  totalTestSeries: number;
+  totalExams: number;
+  totalQuestions: number;
+  totalNotes: number;
+  totalCoupons: number;
+  totalBatches: number;
+  totalSubjects: number;
+  totalChapters: number;
+  totalTopics: number;
+  totalSections: number;
+  totalOrders: number;
+  completedOrders: number;
+  pendingOrders: number;
+  failedOrders: number;
+  totalRevenue: number;
+  totalPayments: number;
+  successfulPayments: number;
+  activeUsers: number;
+  newUsersToday: number;
+  newUsersThisWeek: number;
+  newUsersThisMonth: number;
+  newUsersThisYear: number;
+  ordersToday: number;
+  ordersThisWeek: number;
+  ordersThisMonth: number;
+  ordersThisYear: number;
+  revenueToday: number;
+  revenueThisWeek: number;
+  revenueThisMonth: number;
+  revenueThisYear: number;
+  freeNotes: number;
+  paidNotes: number;
+  freeTestSeries: number;
+  paidTestSeries: number;
+  activeCoupons: number;
+  expiredCoupons: number;
+  usedCoupons: number;
+  completedExams: number;
+  ongoingExams: number;
+  abandonedExams: number;
+  activePurchases: number;
+  expiredPurchases: number;
+  avgOrderValue: number;
+  avgExamScore: number;
+  avgTestSeriesDuration: number;
+  conversionRate: number;
+  userGrowthRate: number;
+  revenueGrowthRate: number;
+  examCompletionRate: number;
+  paymentSuccessRate: number;
 }
 
-interface UserAnalytics {
+interface ChartData {
   userRegistrationTrend: Array<{
-    _id: { year: number; month: number; day: number }
-    count: number
-  }>
+    _id: { year: number; month: number; day: number };
+    count: number;
+  }>;
   monthlyUserGrowth: Array<{
-    _id: { year: number; month: number }
-    count: number
-  }>
+    _id: { year: number; month: number };
+    count: number;
+  }>;
   demographics: {
-    gender: Array<{ _id: string; count: number }>
-    age: Array<{ _id: string; count: number }>
-    location: Array<{ _id: string; count: number }>
-    device: Array<{ _id: string; count: number }>
-  }
-  activityPattern: Array<{ _id: number; count: number }>
-  retention: Array<{ _id: string; count: number }>
+    state: Array<{ _id: string; count: number }>;
+    device: Array<{ _id: string; count: number }>;
+  };
+  activityPattern: Array<{ _id: number; count: number }>;
+  retention: Array<{ _id: string; count: number }>;
 }
 
-interface RevenueAnalytics {
-  revenueTrend: Array<{
-    _id: { year: number; month: number; day: number }
-    revenue: number
-    orders: number
-    avgOrderValue: number
-  }>
+interface RevenueData {
+  dailyRevenueTrend: Array<{
+    _id: { year: number; month: number; day: number };
+    revenue: number;
+    orders: number;
+    avgOrderValue: number;
+  }>;
   monthlyRevenue: Array<{
-    _id: { year: number; month: number }
-    revenue: number
-    orders: number
-    avgOrderValue: number
-  }>
+    _id: { year: number; month: number };
+    revenue: number;
+    orders: number;
+    avgOrderValue: number;
+  }>;
   revenueByExamPlan: Array<{
-    _id: string
-    name: string
-    revenue: number
-    orders: number
-    avgPrice: number
-  }>
+    _id: string;
+    name: string;
+    revenue: number;
+    orders: number;
+    avgPrice: number;
+  }>;
   paymentMethodAnalysis: Array<{
-    _id: string
-    count: number
-    revenue: number
-    avgAmount: number
-  }>
+    _id: string;
+    count: number;
+    revenue: number;
+    avgAmount: number;
+  }>;
+  orderStatusDistribution: Array<{
+    _id: string;
+    count: number;
+    revenue: number;
+  }>;
   couponAnalysis: Array<{
-    _id: string
-    code: string
-    usageCount: number
-    totalDiscount: number
-    avgDiscount: number
-  }>
-  revenueByStatus: Array<{
-    _id: string
-    count: number
-    revenue: number
-  }>
+    _id: string;
+    code: string;
+    usageCount: number;
+    totalDiscount: number;
+    avgDiscount: number;
+  }>;
 }
 
-interface ExamAnalytics {
-  examParticipation: Array<{
-    _id: { year: number; month: number; day: number }
-    totalExams: number
-    completedExams: number
-    avgScore: number
-  }>
+interface ExamData {
+  dailyExamParticipation: Array<{
+    _id: { year: number; month: number; day: number };
+    totalExams: number;
+    completedExams: number;
+    avgScore: number;
+  }>;
   monthlyExamTrends: Array<{
-    _id: { year: number; month: number }
-    totalExams: number
-    completedExams: number
-    avgScore: number
-  }>
+    _id: { year: number; month: number };
+    totalExams: number;
+    completedExams: number;
+    avgScore: number;
+  }>;
   performanceByTestSeries: Array<{
-    _id: string
-    name: string
-    totalAttempts: number
-    completedAttempts: number
-    avgScore: number
-    maxScore: number
-    minScore: number
-    completionRate: number
-  }>
-  scoreDistribution: Array<{ _id: string; count: number; avgScore: number }>
-  examStatusDistribution: Array<{ _id: string; count: number; avgScore: number }>
-  timeAnalysis: {
-    avgTimeTaken: number
-    minTimeTaken: number
-    maxTimeTaken: number
-    totalExams: number
-  }
+    _id: string;
+    name: string;
+    totalAttempts: number;
+    completedAttempts: number;
+    avgScore: number;
+    maxScore: number;
+    minScore: number;
+    completionRate: number;
+  }>;
+  scoreDistribution: Array<{
+    _id: string;
+    count: number;
+    avgScore: number;
+  }>;
+  examStatusDistribution: Array<{
+    _id: string;
+    count: number;
+    avgScore: number;
+  }>;
 }
 
-interface ContentAnalytics {
+interface ContentData {
   popularExamPlans: Array<{
-    _id: string
-    name: string
-    price: number
-    purchases: number
-    revenue: number
-    avgRating: number
-  }>
+    _id: string;
+    name: string;
+    price: number;
+    purchases: number;
+    revenue: number;
+  }>;
   testSeriesEngagement: Array<{
-    _id: string
-    name: string
-    totalQuestions: number
-    totalAttempts: number
-    completedExams: number
-    avgScore: number
-    completionRate: number
-    engagementRate: number
-  }>
+    _id: string;
+    title: string;
+    totalQuestions: number;
+    totalAttempts: number;
+    completedExams: number;
+    avgScore: number;
+    completionRate: number;
+    isFree: boolean;
+  }>;
   notesAnalytics: Array<{
-    _id: string
-    examPlanName: string
-    totalNotes: number
-    freeNotes: number
-    paidNotes: number
-    avgFileSize: number
-  }>
-  contentSummary: {
-    totalExamPlans: number
-    totalTestSeries: number
-    totalNotes: number
-    totalFreeNotes: number
-    totalPaidNotes: number
-    totalQuestions: number
-  }
+    _id: string;
+    examPlanName: string;
+    totalNotes: number;
+    freeNotes: number;
+    paidNotes: number;
+  }>;
+  subjectQuestionDistribution: Array<{
+    _id: string;
+    name: string;
+    questionCount: number;
+  }>;
 }
 
-const ECommerce: React.FC = () => {
-  const [loading, setLoading] = useState(true)
-  const [overview, setOverview] = useState<DashboardOverview | null>(null)
-  const [userAnalytics, setUserAnalytics] = useState<UserAnalytics | null>(null)
-  const [revenueAnalytics, setRevenueAnalytics] = useState<RevenueAnalytics | null>(null)
-  const [examAnalytics, setExamAnalytics] = useState<ExamAnalytics | null>(null)
-  const [contentAnalytics, setContentAnalytics] = useState<ContentAnalytics | null>(null)
-  const [refreshing, setRefreshing] = useState(false)
-  const [expandedCard, setExpandedCard] = useState<string | null>(null)
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+// Chart Components
+const LineChart: React.FC<{
+  data: any[];
+  title: string;
+  color: string;
+  yAxisLabel?: string;
+  xAxisLabel?: string;
+}> = ({ data, title, color, yAxisLabel = 'Value', xAxisLabel = 'Time' }) => {
+  const [tooltip, setTooltip] = useState<{
+    x: number;
+    y: number;
+    label: string;
+  } | null>(null);
 
-  useEffect(() => {
-    fetchDashboardData()
-    // Auto refresh every 5 minutes
-    const interval = setInterval(fetchDashboardData, 5 * 60 * 1000)
-    return () => clearInterval(interval)
-  }, [])
+  if (!data || data.length === 0) return null;
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true)
+  const maxValue = Math.max(
+    ...data.map((d) => d.count || d.revenue || d.totalExams || 0),
+  );
+  const chartHeight = 200;
+  const chartWidth = 600;
+  const padding = 50; // Increased padding for axis labels and ticks
 
-      const [overviewRes, userRes, revenueRes, examRes, contentRes] = await Promise.all([
-        AxiosHelper.getData("analytics/overview"),
-        AxiosHelper.getData("analytics/users"),
-        AxiosHelper.getData("analytics/revenue"),
-        AxiosHelper.getData("analytics/exams"),
-        AxiosHelper.getData("analytics/content"),
-      ])
-
-      if (overviewRes?.data?.status) {
-        setOverview(overviewRes.data.data)
-      }
-
-      if (userRes?.data?.status) {
-        setUserAnalytics(userRes.data.data)
-      }
-
-      if (revenueRes?.data?.status) {
-        setRevenueAnalytics(revenueRes.data.data)
-      }
-
-      if (examRes?.data?.status) {
-        setExamAnalytics(examRes.data.data)
-      }
-
-      if (contentRes?.data?.status) {
-        setContentAnalytics(contentRes.data.data)
-      }
-
-      setLastUpdated(new Date())
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error)
-      toast.error("Failed to load dashboard data")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleRefresh = async () => {
-    setRefreshing(true)
-    await fetchDashboardData()
-    setRefreshing(false)
-    toast.success("Dashboard refreshed successfully")
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const formatNumber = (num: number) => {
-    if (num >= 10000000) return `${(num / 10000000).toFixed(1)}Cr`
-    if (num >= 100000) return `${(num / 100000).toFixed(1)}L`
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
-    return new Intl.NumberFormat("en-IN").format(num)
-  }
-
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    if (hours > 0) return `${hours}h ${minutes}m`
-    return `${minutes}m`
-  }
-
-  const getGrowthColor = (rate: number) => {
-    if (rate > 0) return "text-green-500"
-    if (rate < 0) return "text-red-500"
-    return "text-gray-500"
-  }
-
-  const getGrowthIcon = (rate: number) => {
-    if (rate > 0) return <FaArrowUp className="w-3 h-3" />
-    if (rate < 0) return <FaArrowDown className="w-3 h-3" />
-    return null
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-primary mx-auto mb-4"></div>
-          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Loading Analytics</h3>
-          <p className="text-gray-500 dark:text-gray-400">Fetching your dashboard data...</p>
-        </div>
-      </div>
-    )
-  }
+  // Identify max and min points for annotations
+  const maxPoint = data.reduce(
+    (max, d) =>
+      (d.count || d.revenue || d.totalExams || 0) >
+      (max.count || max.revenue || max.totalExams || 0)
+        ? d
+        : max,
+    data[0],
+  );
+  const minPoint = data.reduce(
+    (min, d) =>
+      (d.count || d.revenue || d.totalExams || 0) <
+      (min.count || min.revenue || min.totalExams || 0)
+        ? d
+        : min,
+    data[0],
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Enhanced Header Section */}
-      <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl">
-              <FaChartLine className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Analytics Dashboard
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">Last updated: {lastUpdated.toLocaleString()}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900 rounded-lg">
-              <FaCheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-              <span className="text-sm font-medium text-green-700 dark:text-green-300">System Healthy</span>
-            </div>
-
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-700 relative">
+      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 flex items-center">
+        <FaChartLine className="mr-2 text-blue-500" />
+        {title}
+      </h3>
+      <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+        This graph shows {yAxisLabel.toLowerCase()} over{' '}
+        {xAxisLabel.toLowerCase()}. Higher points indicate higher values, and
+        lower points indicate lower values.
+      </p>
+      <div className="relative w-full">
+        <svg
+          viewBox={`0 0 ${chartWidth + padding * 2} ${
+            chartHeight + padding * 2
+          }`}
+          preserveAspectRatio="none"
+          className="w-full h-52"
+        >
+          <defs>
+            <linearGradient
+              id={`gradient-${color}`}
+              x1="0%"
+              y1="0%"
+              x2="0%"
+              y2="100%"
             >
-              <RiRefreshFill className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-              {refreshing ? "Refreshing..." : "Refresh"}
-            </button>
+              <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+              <stop offset="100%" stopColor={color} stopOpacity="0.05" />
+            </linearGradient>
+          </defs>
 
-            <button className="flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-              <FaDownload className="h-4 w-4" />
-              Export
-            </button>
+          {/* Y-axis */}
+          <line
+            x1={padding}
+            y1={padding}
+            x2={padding}
+            y2={chartHeight + padding}
+            stroke="#e5e7eb"
+            strokeWidth="2"
+          />
+          <text
+            x={padding - 10}
+            y={padding - 10}
+            textAnchor="end"
+            fill="#4b5563"
+            fontSize="12"
+            transform={`rotate(-90, ${padding - 10}, ${padding - 10})`}
+          >
+            {yAxisLabel}
+          </text>
+          {[0, 25, 50, 75, 100].map((percent) => {
+            const y = chartHeight + padding - (percent / 100) * chartHeight;
+            const value = (maxValue * percent) / 100;
+            return (
+              <g key={percent}>
+                <line
+                  x1={padding}
+                  y1={y}
+                  x2={chartWidth + padding}
+                  y2={y}
+                  stroke="#e5e7eb"
+                  strokeWidth="1"
+                  opacity="0.3"
+                />
+                <text
+                  x={padding - 5}
+                  y={y + 4}
+                  textAnchor="end"
+                  fill="#4b5563"
+                  fontSize="10"
+                >
+                  {Math.round(value)}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* X-axis */}
+          <line
+            x1={padding}
+            y1={chartHeight + padding}
+            x2={chartWidth + padding}
+            y2={chartHeight + padding}
+            stroke="#e5e7eb"
+            strokeWidth="2"
+          />
+          <text
+            x={chartWidth + padding}
+            y={chartHeight + padding + 20}
+            textAnchor="end"
+            fill="#4b5563"
+            fontSize="12"
+          >
+            {xAxisLabel}
+          </text>
+          {data.map((d, i) => {
+            const x = padding + (i / (data.length - 1)) * chartWidth;
+            return (
+              <g key={i}>
+                <line
+                  x1={x}
+                  y1={chartHeight + padding}
+                  x2={x}
+                  y2={chartHeight + padding + 5}
+                  stroke="#e5e7eb"
+                  strokeWidth="1"
+                />
+                <text
+                  x={x}
+                  y={chartHeight + padding + 15}
+                  textAnchor="middle"
+                  fill="#4b5563"
+                  fontSize="10"
+                >
+                  {d.month || d.label || `Point ${i + 1}`}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Chart line */}
+          <polyline
+            fill={`url(#gradient-${color})`}
+            stroke={color}
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            points={data
+              .map((d, i) => {
+                const x = padding + (i / (data.length - 1)) * chartWidth;
+                const y =
+                  chartHeight +
+                  padding -
+                  ((d.count || d.revenue || d.totalExams || 0) / maxValue) *
+                    chartHeight;
+                return `${x},${y}`;
+              })
+              .join(' ')}
+          />
+
+          {/* Data points */}
+          {data.map((d, i) => {
+            const value = d.count || d.revenue || d.totalExams || 0;
+            const x = padding + (i / (data.length - 1)) * chartWidth;
+            const y = chartHeight + padding - (value / maxValue) * chartHeight;
+            const isMax = d === maxPoint;
+            const isMin = d === minPoint;
+
+            return (
+              <g key={i}>
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="5"
+                  fill={color}
+                  className="cursor-pointer"
+                  onMouseEnter={() =>
+                    setTooltip({
+                      x,
+                      y,
+                      label: `${
+                        d.month || d.label || `Point ${i + 1}`
+                      }: ${value} ${yAxisLabel.toLowerCase()}`,
+                    })
+                  }
+                  onMouseLeave={() => setTooltip(null)}
+                />
+                {/* Annotations for max and min points */}
+                {(isMax || isMin) && (
+                  <text
+                    x={x}
+                    y={y - 10}
+                    textAnchor="middle"
+                    fill="#4b5563"
+                    fontSize="10"
+                    fontWeight="bold"
+                  >
+                    {isMax ? `Peak: ${value}` : `Low: ${value}`}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+
+        {/* Tooltip */}
+        {tooltip && (
+          <div
+            className="absolute bg-black text-white text-xs px-2 py-1 rounded pointer-events-none z-10"
+            style={{
+              top: `${tooltip.y}px`,
+              left: `${tooltip.x + padding}px`,
+              transform: 'translate(-50%, -100%)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {tooltip.label}
           </div>
-        </div>
+        )}
       </div>
+    </div>
+  );
+};
 
-      {/* Enhanced Primary Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Total Users Card */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-transparent"></div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                <FaUsers className="h-8 w-8" />
-              </div>
-              <div className="text-right">
+const PieChart: React.FC<{ data: any[]; title: string; colors: string[] }> = ({
+  data,
+  title,
+  colors,
+}) => {
+  if (!data || data.length === 0) return null;
+
+  const total = data.reduce(
+    (sum, d) => sum + (d.count || d.revenue || d.questionCount || 0),
+    0,
+  );
+  let currentAngle = 0;
+  const radius = 80;
+  const centerX = 100;
+  const centerY = 100;
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-700">
+      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+        <FaChartPie className="mr-2 text-purple-500" />
+        {title}
+      </h3>
+      <div className="flex items-center justify-between">
+        <svg width="200" height="200" className="flex-shrink-0">
+          {data.map((d, i) => {
+            const value = d.count || d.revenue || d.questionCount || 0;
+            const percentage = (value / total) * 100;
+            const angle = (value / total) * 360;
+            const startAngle = currentAngle;
+            const endAngle = currentAngle + angle;
+
+            const x1 =
+              centerX + radius * Math.cos((startAngle * Math.PI) / 180);
+            const y1 =
+              centerY + radius * Math.sin((startAngle * Math.PI) / 180);
+            const x2 = centerX + radius * Math.cos((endAngle * Math.PI) / 180);
+            const y2 = centerY + radius * Math.sin((endAngle * Math.PI) / 180);
+
+            const largeArcFlag = angle > 180 ? 1 : 0;
+            const pathData = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+
+            currentAngle += angle;
+
+            return (
+              <path
+                key={i}
+                d={pathData}
+                fill={colors[i % colors.length]}
+                className="hover:opacity-80 transition-opacity duration-200"
+                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}
+              />
+            );
+          })}
+
+          {/* Center circle */}
+          <circle
+            cx={centerX}
+            cy={centerY}
+            r="30"
+            fill="white"
+            className="dark:fill-gray-800"
+          />
+          <text
+            x={centerX}
+            y={centerY}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="text-sm font-bold fill-gray-900 dark:fill-white"
+          >
+            Total
+          </text>
+          <text
+            x={centerX}
+            y={centerY + 15}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="text-xs fill-gray-600 dark:fill-gray-300"
+          >
+            {total?.toLocaleString()}
+          </text>
+        </svg>
+
+        <div className="flex-1 ml-6">
+          {data.map((d, i) => (
+            <div key={i} className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
                 <div
-                  className={`flex items-center gap-1 ${getGrowthColor(Number.parseFloat(overview?.userGrowthRate || "0"))}`}
-                >
-                  {getGrowthIcon(Number.parseFloat(overview?.userGrowthRate || "0"))}
-                  <span className="text-sm font-medium text-white/80">{overview?.userGrowthRate}% this month</span>
-                </div>
+                  className="w-3 h-3 rounded-full mr-2"
+                  style={{ backgroundColor: colors[i % colors.length] }}
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                  {d.name || 'Unknown'}
+                </span>
               </div>
-            </div>
-            <h3 className="text-3xl font-bold mb-2">{formatNumber(overview?.totalUsers || 0)}</h3>
-            <p className="text-blue-100 mb-3">Total Users</p>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-blue-200">Active: {formatNumber(overview?.activeUsers || 0)}</span>
-              <span className="text-blue-200">Today: +{overview?.newUsersToday || 0}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Total Revenue Card */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 to-transparent"></div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                <FaDollarSign className="h-8 w-8" />
-              </div>
-              <div className="text-right">
-                <div
-                  className={`flex items-center gap-1 ${getGrowthColor(Number.parseFloat(overview?.revenueGrowthRate || "0"))}`}
-                >
-                  {getGrowthIcon(Number.parseFloat(overview?.revenueGrowthRate || "0"))}
-                  <span className="text-sm font-medium text-white/80">{overview?.revenueGrowthRate}% this month</span>
-                </div>
-              </div>
-            </div>
-            <h3 className="text-3xl font-bold mb-2">{formatCurrency(overview?.totalRevenue || 0)}</h3>
-            <p className="text-green-100 mb-3">Total Revenue</p>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-green-200">Avg Order: {formatCurrency(overview?.avgOrderValue || 0)}</span>
-              <span className="text-green-200">Today: {formatCurrency(overview?.revenueToday || 0)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Total Orders Card */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-transparent"></div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                <FaShoppingCart className="h-8 w-8" />
-              </div>
-              <div className="text-right">
-                <div className="flex items-center gap-1">
-                  <PiTrendUpBold className="w-3 h-3 text-white/80" />
-                  <span className="text-sm font-medium text-white/80">{overview?.ordersThisMonth || 0} this month</span>
-                </div>
-              </div>
-            </div>
-            <h3 className="text-3xl font-bold mb-2">{formatNumber(overview?.totalOrders || 0)}</h3>
-            <p className="text-purple-100 mb-3">Total Orders</p>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-purple-200">This Week: {overview?.ordersThisWeek || 0}</span>
-              <span className="text-purple-200">Today: {overview?.ordersToday || 0}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Conversion Rate Card */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-transparent"></div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                <FaPercent className="h-8 w-8" />
-              </div>
-              <div className="text-right">
-                <div className="flex items-center gap-1">
-                  <TbTargetArrow className="w-3 h-3 text-white/80" />
-                  <span className="text-sm font-medium text-white/80">Conversion</span>
-                </div>
-              </div>
-            </div>
-            <h3 className="text-3xl font-bold mb-2">{overview?.conversionRate || 0}%</h3>
-            <p className="text-orange-100 mb-3">Conversion Rate</p>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-orange-200">Target: 5%</span>
-              <span className="text-orange-200">
-                {Number.parseFloat(overview?.conversionRate || "0") >= 5 ? "✅ Good" : "⚠️ Low"}
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                {(
+                  ((d.count || d.revenue || d.questionCount || 0) / total) *
+                  100
+                ).toFixed(1)}
+                %
               </span>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Enhanced Secondary Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
-              <FaBookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            <FaRocket className="h-5 w-5 text-gray-400" />
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-            {formatNumber(overview?.totalExamPlans || 0)}
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">Exam Plans</p>
-          <div className="mt-3 text-xs text-gray-500">Active learning programs</div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-xl">
-              <FaClipboardList className="h-6 w-6 text-green-600 dark:text-green-400" />
-            </div>
-            <FaFire className="h-5 w-5 text-gray-400" />
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-            {formatNumber(overview?.totalTestSeries || 0)}
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">Test Series</p>
-          <div className="mt-3 text-xs text-gray-500">Practice assessments</div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-xl">
-              <FaGraduationCap className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-            </div>
-            <FaTrophy className="h-5 w-5 text-gray-400" />
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-            {formatNumber(overview?.totalExams || 0)}
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">Exams Conducted</p>
-          <div className="mt-3 text-xs text-gray-500">Total assessments</div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-xl">
-              <FaFileAlt className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
-            </div>
-            <FaGem className="h-5 w-5 text-gray-400" />
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-            {formatNumber(overview?.totalNotes || 0)}
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">Study Notes</p>
-          <div className="mt-3 text-xs text-gray-500">
-            Free: {overview?.totalFreeNotes || 0} | Paid: {overview?.totalPaidNotes || 0}
-          </div>
-        </div>
-      </div>
-
-      {/* Enhanced Charts Section */}
-      <div className="grid grid-cols-12 gap-6 mb-8">
-        {/* Revenue Chart */}
-        {revenueAnalytics?.monthlyRevenue && revenueAnalytics.monthlyRevenue.length > 0 && (
-          <div className="col-span-12 xl:col-span-8">
-            <ChartOne
-              data={revenueAnalytics.monthlyRevenue.map((item) => ({
-                _id: { year: item._id.year, month: item._id.month, day: 1 },
-                revenue: item.revenue,
-                orders: item.orders,
-                avgOrderValue: item.avgOrderValue,
-              }))}
-              title="Monthly Revenue Trends"
-              subtitle="Revenue and order analysis over time"
-            />
-          </div>
-        )}
-
-        {/* User Growth Chart */}
-        {userAnalytics?.monthlyUserGrowth && userAnalytics.monthlyUserGrowth.length > 0 && (
-          <div className="col-span-12 xl:col-span-4">
-            <ChartTwo
-              data={userAnalytics.monthlyUserGrowth.map((item) => ({
-                _id: { year: item._id.year, month: item._id.month, day: 1 },
-                count: item.count,
-              }))}
-              title="User Growth"
-              subtitle="Monthly user registrations"
-            />
-          </div>
-        )}
-
-        {/* Score Distribution Chart */}
-        {examAnalytics?.scoreDistribution && examAnalytics.scoreDistribution.length > 0 && (
-          <div className="col-span-12 xl:col-span-6">
-            <ChartThree
-              data={examAnalytics.scoreDistribution}
-              title="Score Distribution"
-              subtitle="Student performance analysis"
-            />
-          </div>
-        )}
-
-        {/* Top Performing Exam Plans */}
-        {revenueAnalytics?.revenueByExamPlan && revenueAnalytics.revenueByExamPlan.length > 0 && (
-          <div className="col-span-12 xl:col-span-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Top Performing Exam Plans</h4>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">Revenue leaders</p>
-                </div>
-                <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl">
-                  <FaCrown className="h-6 w-6 text-white" />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {revenueAnalytics.revenueByExamPlan.slice(0, 5).map((plan, index) => (
-                  <div
-                    key={plan._id}
-                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                          index === 0
-                            ? "bg-yellow-500"
-                            : index === 1
-                              ? "bg-gray-400"
-                              : index === 2
-                                ? "bg-orange-500"
-                                : "bg-blue-500"
-                        }`}
-                      >
-                        {index + 1}
-                      </div>
-                      <div>
-                        <h5 className="font-semibold text-gray-900 dark:text-white">{plan.name}</h5>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{plan.orders} purchases</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-green-600 dark:text-green-400">{formatCurrency(plan.revenue)}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Avg: {formatCurrency(plan.avgPrice)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Enhanced Analytics Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-        {/* User Demographics */}
-        {userAnalytics?.demographics && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">User Demographics</h4>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">User distribution analysis</p>
-              </div>
-              <div className="p-3 bg-gradient-to-r from-pink-500 to-rose-600 rounded-xl">
-                <FaUsers className="h-6 w-6 text-white" />
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {/* Gender Distribution */}
-              {userAnalytics.demographics.gender && userAnalytics.demographics.gender.length > 0 && (
-                <div>
-                  <h5 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                    <FaHeart className="h-4 w-4 text-pink-500" />
-                    Gender Distribution
-                  </h5>
-                  <div className="space-y-2">
-                    {userAnalytics.demographics.gender.map((item) => (
-                      <div
-                        key={item._id}
-                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                      >
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {item._id || "Not specified"}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-gray-900 dark:text-white">
-                            {formatNumber(item.count)}
-                          </span>
-                          <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                            <div
-                              className="bg-pink-500 h-2 rounded-full"
-                              style={{
-                                width: `${(item.count / (overview?.totalUsers || 1)) * 100}%`,
-                              }}
-                            ></div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Top Locations */}
-              {userAnalytics.demographics.location && userAnalytics.demographics.location.length > 0 && (
-                <div>
-                  <h5 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                    <FaGlobe className="h-4 w-4 text-blue-500" />
-                    Top Locations
-                  </h5>
-                  <div className="space-y-2">
-                    {userAnalytics.demographics.location.slice(0, 5).map((item) => (
-                      <div
-                        key={item._id}
-                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                      >
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{item._id}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-gray-900 dark:text-white">
-                            {formatNumber(item.count)}
-                          </span>
-                          <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                            <div
-                              className="bg-blue-500 h-2 rounded-full"
-                              style={{
-                                width: `${(item.count / (overview?.totalUsers || 1)) * 100}%`,
-                              }}
-                            ></div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Exam Performance Metrics */}
-        {examAnalytics?.performanceByTestSeries && examAnalytics.performanceByTestSeries.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Test Series Performance</h4>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Top performing test series</p>
-              </div>
-              <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl">
-                <FaAward className="h-6 w-6 text-white" />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {examAnalytics.performanceByTestSeries.slice(0, 5).map((series, index) => (
-                <div
-                  key={series._id}
-                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h5 className="font-semibold text-gray-900 dark:text-white">{series.name}</h5>
-                    <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                      {series.avgScore?.toFixed(1)}% avg
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400">Attempts: </span>
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {formatNumber(series.totalAttempts)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400">Completion: </span>
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {series.completionRate?.toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                      <div
-                        className="bg-green-500 h-2 rounded-full"
-                        style={{ width: `${series.completionRate || 0}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Payment Methods Analysis */}
-        {revenueAnalytics?.paymentMethodAnalysis && revenueAnalytics.paymentMethodAnalysis.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Payment Methods</h4>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Revenue by payment type</p>
-              </div>
-              <div className="p-3 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl">
-                <FaMoneyBillWave className="h-6 w-6 text-white" />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {revenueAnalytics.paymentMethodAnalysis.map((method) => (
-                <div
-                  key={method._id}
-                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl"
-                >
-                  <div>
-                    <h5 className="font-semibold text-gray-900 dark:text-white capitalize">
-                      {method._id || "Unknown"}
-                    </h5>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {formatNumber(method.count)} transactions
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-purple-600 dark:text-purple-400">{formatCurrency(method.revenue)}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Avg: {formatCurrency(method.avgAmount)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Enhanced System Performance Metrics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-              <FaClock className="h-6 w-6" />
-            </div>
-            <FaLightbulb className="h-5 w-5 text-white/60" />
-          </div>
-          <h3 className="text-2xl font-bold mb-2">
-            {examAnalytics?.timeAnalysis?.avgTimeTaken ? formatTime(examAnalytics.timeAnalysis.avgTimeTaken) : "N/A"}
-          </h3>
-          <p className="text-cyan-100 mb-3">Avg. Exam Time</p>
-          <div className="text-sm text-cyan-200">
-            Total Exams: {formatNumber(examAnalytics?.timeAnalysis?.totalExams || 0)}
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl shadow-xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-              <FaUserCheck className="h-6 w-6" />
-            </div>
-            <FaThumbsUp className="h-5 w-5 text-white/60" />
-          </div>
-          <h3 className="text-2xl font-bold mb-2">
-            {examAnalytics?.examStatusDistribution?.find((status) => status._id === "completed")
-              ? `${Math.round(
-                  ((examAnalytics.examStatusDistribution.find((status) => status._id === "completed")?.count || 0) /
-                    (examAnalytics.examStatusDistribution.reduce((acc, curr) => acc + curr.count, 0) || 1)) *
-                    100,
-                )}%`
-              : "N/A"}
-          </h3>
-          <p className="text-emerald-100 mb-3">Completion Rate</p>
-          <div className="text-sm text-emerald-200">
-            Completed:{" "}
-            {formatNumber(
-              examAnalytics?.examStatusDistribution?.find((status) => status._id === "completed")?.count || 0,
-            )}
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-              <FaStar className="h-6 w-6" />
-            </div>
-            <FaMagic className="h-5 w-5 text-white/60" />
-          </div>
-          <h3 className="text-2xl font-bold mb-2">
-            {examAnalytics?.examStatusDistribution?.find((status) => status._id === "completed")?.avgScore
-              ? `${Math.round(examAnalytics.examStatusDistribution.find((status) => status._id === "completed")?.avgScore || 0)}%`
-              : "N/A"}
-          </h3>
-          <p className="text-amber-100 mb-3">Avg. Score</p>
-          <div className="text-sm text-amber-200">Performance metric</div>
-        </div>
-
-        <div className="bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl shadow-xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-              <IoShieldSharp className="h-6 w-6" />
-            </div>
-            <FaMedal className="h-5 w-5 text-white/60" />
-          </div>
-          <h3 className="text-2xl font-bold mb-2">
-            {revenueAnalytics?.revenueByStatus?.find((status) => status._id === "completed")
-              ? `${Math.round(
-                  ((revenueAnalytics.revenueByStatus.find((status) => status._id === "completed")?.count || 0) /
-                    (revenueAnalytics.revenueByStatus.reduce((acc, curr) => acc + curr.count, 0) || 1)) *
-                    100,
-                )}%`
-              : "N/A"}
-          </h3>
-          <p className="text-rose-100 mb-3">Payment Success</p>
-          <div className="text-sm text-rose-200">Success Rate</div>
-        </div>
-      </div>
-
-      {/* Content Analytics Summary */}
-      {contentAnalytics?.contentSummary && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Content Overview</h4>
-              <p className="text-gray-600 dark:text-gray-400">Complete content analytics summary</p>
-            </div>
-            <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl">
-              <FaDatabase className="h-8 w-8 text-white" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-              <div className="p-3 bg-blue-500 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
-                <FaBookOpen className="h-6 w-6 text-white" />
-              </div>
-              <h5 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-                {formatNumber(contentAnalytics.contentSummary.totalExamPlans)}
-              </h5>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Exam Plans</p>
-            </div>
-
-            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-              <div className="p-3 bg-green-500 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
-                <FaClipboardList className="h-6 w-6 text-white" />
-              </div>
-              <h5 className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
-                {formatNumber(contentAnalytics.contentSummary.totalTestSeries)}
-              </h5>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Test Series</p>
-            </div>
-
-            <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
-              <div className="p-3 bg-purple-500 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
-                <FaFileAlt className="h-6 w-6 text-white" />
-              </div>
-              <h5 className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-                {formatNumber(contentAnalytics.contentSummary.totalNotes)}
-              </h5>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Study Notes</p>
-            </div>
-
-            <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
-              <div className="p-3 bg-yellow-500 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
-                <FaGift className="h-6 w-6 text-white" />
-              </div>
-              <h5 className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">
-                {formatNumber(contentAnalytics.contentSummary.totalFreeNotes)}
-              </h5>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Free Notes</p>
-            </div>
-
-            <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
-              <div className="p-3 bg-red-500 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
-                <FaLock className="h-6 w-6 text-white" />
-              </div>
-              <h5 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-1">
-                {formatNumber(contentAnalytics.contentSummary.totalPaidNotes)}
-              </h5>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Paid Notes</p>
-            </div>
-
-            <div className="text-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
-              <div className="p-3 bg-indigo-500 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
-                <FaQuestionCircle className="h-6 w-6 text-white" />
-              </div>
-              <h5 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mb-1">
-                {formatNumber(contentAnalytics.contentSummary.totalQuestions)}
-              </h5>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Questions</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl">
-              <FaRocket className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h5 className="font-bold text-gray-900 dark:text-white">LMS Analytics Dashboard</h5>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Powered by advanced analytics • Real-time data • Auto-refresh enabled
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900 rounded-lg">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-green-700 dark:text-green-300">Live</span>
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Last sync: {lastUpdated.toLocaleTimeString()}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ECommerce
+const BarChart: React.FC<{ data: any[]; title: string; color: string }> = ({
+  data,
+  title,
+  color,
+}) => {
+  if (!data || data.length === 0) return null;
+
+  const maxValue = Math.max(
+    ...data.map(
+      (d) => d.count || d.revenue || d.totalAttempts || d.totalNotes || 0,
+    ),
+  );
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-700">
+      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+        <FaChartLine className="mr-2 text-green-500" />
+        {title}
+      </h3>
+      <div className="space-y-3">
+        {data.slice(0, 8).map((d, i) => {
+          const value =
+            d.count || d.revenue || d.totalAttempts || d.totalNotes || 0;
+          const percentage = (value / maxValue) * 100;
+
+          return (
+            <div key={i} className="flex items-center">
+              <div className="w-24 text-xs text-gray-600 dark:text-gray-400 truncate">
+                {d.name || d.title || d.examPlanName || 'Unknown'}
+              </div>
+              <div className="flex-1 mx-3">
+                <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500 ease-out"
+                    style={{
+                      width: `${percentage}%`,
+                      backgroundColor: color,
+                      background: `linear-gradient(90deg, ${color}, ${color}dd)`,
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="w-16 text-xs font-semibold text-gray-900 dark:text-white text-right">
+                {value?.toLocaleString()}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// Metric Card Component
+const MetricCard: React.FC<{
+  title: string;
+  value: number | string;
+  icon: React.ReactNode;
+  color: string;
+  change?: number;
+  changeType?: 'increase' | 'decrease';
+  subtitle?: string;
+  gradient?: boolean;
+}> = ({
+  title,
+  value,
+  icon,
+  color,
+  change,
+  changeType,
+  subtitle,
+  gradient = false,
+}) => {
+  const formatValue = (val: number | string) => {
+    if (typeof val === 'number') {
+      if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
+      if (val >= 1000) return `${(val / 1000).toFixed(1)}K`;
+      return val?.toLocaleString();
+    }
+    return val;
+  };
+
+  return (
+    <div
+      className={`
+      relative overflow-hidden rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-700
+      ${
+        gradient
+          ? `bg-gradient-to-br from-blue-500 to-[#037196] text-white`
+          : 'bg-white dark:bg-gray-800'
+      }
+      hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer
+      group
+    `}
+    >
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute -right-4 -top-4 text-6xl">{icon}</div>
+      </div>
+
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-4">
+          <div
+            className={`
+            p-3 rounded-xl 
+            ${
+              gradient
+                ? 'bg-white bg-opacity-20'
+                : `bg-${color}-100 dark:bg-${color}-900 dark:bg-opacity-30`
+            }
+          `}
+          >
+            <div
+              className={`text-xl ${
+                gradient
+                  ? 'text-white'
+                  : `text-${color}-600 dark:text-${color}-400`
+              }`}
+            >
+              {icon}
+            </div>
+          </div>
+
+          {change !== undefined && (
+            <div
+              className={`
+              flex items-center px-2 py-1 rounded-full text-xs font-semibold
+              ${
+                changeType === 'increase'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+              }
+            `}
+            >
+              {changeType === 'increase' ? (
+                <FaArrowUp className="mr-1" />
+              ) : (
+                <FaArrowDown className="mr-1" />
+              )}
+              {Math.abs(change)}%
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <h3
+            className={`
+            text-sm font-medium 
+            ${
+              gradient
+                ? 'text-white text-opacity-90'
+                : 'text-gray-600 dark:text-gray-400'
+            }
+          `}
+          >
+            {title}
+          </h3>
+          <p
+            className={`
+            text-3xl font-bold 
+            ${gradient ? 'text-white' : 'text-gray-900 dark:text-white'}
+            group-hover:scale-110 transition-transform duration-300
+          `}
+          >
+            {formatValue(value)}
+          </p>
+          {subtitle && (
+            <p
+              className={`
+              text-xs 
+              ${
+                gradient
+                  ? 'text-white text-opacity-75'
+                  : 'text-gray-500 dark:text-gray-400'
+              }
+            `}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Main Dashboard Component
+const ECommerce: React.FC = () => {
+  const [overview, setOverview] = useState<DashboardOverview | null>(null);
+  const [userAnalytics, setUserAnalytics] = useState<ChartData | null>(null);
+  const [revenueAnalytics, setRevenueAnalytics] = useState<RevenueData | null>(
+    null,
+  );
+  const [examAnalytics, setExamAnalytics] = useState<ExamData | null>(null);
+  const [contentAnalytics, setContentAnalytics] = useState<ContentData | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    fetchDashboardData();
+
+    // Auto-refresh every 5 minutes
+    const interval = setInterval(fetchDashboardData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setRefreshing(true);
+
+      const [overviewRes, userRes, revenueRes, examRes, contentRes] =
+        await Promise.all([
+          AxiosHelper.getData('/analytics/overview'),
+          AxiosHelper.getData('/analytics/users'),
+          AxiosHelper.getData('/analytics/revenue'),
+          AxiosHelper.getData('/analytics/exams'),
+          AxiosHelper.getData('/analytics/content'),
+        ]);
+      console.log('overviewRes', overviewRes.data.data);
+      console.log('userRes', userRes);
+      console.log('revenueRes', revenueRes.data);
+      console.log('examRes', examRes.data);
+      console.log('contentRes', contentRes.data);
+
+      console.log('overviewRes status ------>', overviewRes?.status);
+      console.log('userRes status ------>', userRes?.status);
+      console.log('revenueRes status ------>', revenueRes?.status);
+      console.log('examRes status ------>', examRes?.status);
+      console.log('contentRes status ------>', contentRes?.status);
+
+      if (overviewRes?.status) setOverview(overviewRes.data.data);
+      if (userRes?.status) setUserAnalytics(userRes.data.data);
+      if (revenueRes?.status) setRevenueAnalytics(revenueRes.data.data);
+      if (examRes?.status) setExamAnalytics(examRes.data.data);
+      if (contentRes?.status) setContentAnalytics(contentRes.data.data);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+            <FaRocket className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-600 text-xl animate-pulse" />
+          </div>
+          <p className="mt-4 text-lg font-semibold text-gray-700 dark:text-gray-300">
+            Loading Analytics Dashboard...
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Preparing your insights
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const pieChartColors = [
+    '#3B82F6',
+    '#10B981',
+    '#F59E0B',
+    '#EF4444',
+    '#8B5CF6',
+    '#06B6D4',
+    '#84CC16',
+    '#F97316',
+    '#EC4899',
+    '#6366F1',
+  ];
+  console.log('userAnalytics---->', userAnalytics);
+  console.log('revenueAnalytics---->', revenueAnalytics);
+  console.log('examAnalytics---->', examAnalytics);
+  console.log('contentAnalytics---->', contentAnalytics);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700">
+        <div className="px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+                Dashboard
+              </h1>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={fetchDashboardData}
+                disabled={refreshing}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50"
+              >
+                <FaRocket
+                  className={`mr-2 ${refreshing ? 'animate-spin' : ''}`}
+                />
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div className="px-8">
+          <nav className="flex space-x-8">
+            {[
+              { id: 'overview', name: 'Overview', icon: FaRocket },
+              { id: 'revenue', name: 'Revenue', icon: FaDollarSign },
+              { id: 'exams', name: 'Exams', icon: FaGraduationCap },
+              { id: 'content', name: 'Content', icon: FaBookOpen },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200
+                  ${
+                    activeTab === tab.id
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                  }
+                `}
+              >
+                <tab.icon className="mr-2" />
+                {tab.name}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-8">
+        {activeTab === 'overview' && overview && (
+          <div className="space-y-6">
+            {/* Key Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <MetricCard
+                title="Total Users"
+                value={overview?.totalUsers}
+                icon={<FaUsers />}
+                color="blue"
+                change={overview.userGrowthRate}
+                changeType="increase"
+                subtitle={`+${overview.newUsersToday} today`}
+                gradient
+              />
+              <MetricCard
+                title="Total Revenue"
+                value={formatCurrency(overview.totalRevenue)}
+                icon={<FaDollarSign />}
+                color="green"
+                change={overview.revenueGrowthRate}
+                changeType="increase"
+                subtitle={`${formatCurrency(overview.revenueToday)} today`}
+                gradient
+              />
+              <MetricCard
+                title="Total Orders"
+                value={overview.completedOrders}
+                icon={<FaShoppingCart />}
+                color="purple"
+                change={12.5}
+                changeType="increase"
+                subtitle={`${overview.ordersToday} today`}
+                gradient
+              />
+              <MetricCard
+                title="Conversion Rate"
+                value={`${overview.conversionRate}%`}
+                icon={<GiTargetLaser />}
+                color="orange"
+                change={2.3}
+                changeType="increase"
+                subtitle="Users to customers"
+                gradient
+              />
+            </div>
+
+            {/* Secondary Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <MetricCard
+                title="Exam Plans"
+                value={overview.totalExamPlans}
+                icon={<FaGraduationCap />}
+                color="blue"
+              />
+              <MetricCard
+                title="Test Series"
+                value={overview.totalTestSeries}
+                icon={<FaClipboardList />}
+                color="green"
+              />
+              <MetricCard
+                title="Questions"
+                value={overview.totalQuestions}
+                icon={<FaQuestionCircle />}
+                color="purple"
+              />
+              <MetricCard
+                title="Notes"
+                value={overview.totalNotes}
+                icon={<FaFileAlt />}
+                color="orange"
+              />
+              <MetricCard
+                title="Active Coupons"
+                value={overview.activeCoupons}
+                icon={<FaTicketAlt />}
+                color="pink"
+              />
+            </div>
+
+            {/* Performance Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <MetricCard
+                title="Exam Completion Rate"
+                value={`${overview.examCompletionRate}%`}
+                icon={<FaCheckCircle />}
+                color="green"
+                change={5.2}
+                changeType="increase"
+              />
+              <MetricCard
+                title="Payment Success Rate"
+                value={`${overview.paymentSuccessRate}%`}
+                icon={<FaCreditCard />}
+                color="blue"
+                change={1.8}
+                changeType="increase"
+              />
+              <MetricCard
+                title="Avg Order Value"
+                value={formatCurrency(overview.avgOrderValue)}
+                icon={<FaDollarSign />}
+                color="purple"
+              />
+              <MetricCard
+                title="Avg Exam Score"
+                value={`${overview?.avgExamScore?.toFixed(1)}%`}
+                icon={<FaTrophy />}
+                color="orange"
+              />
+            </div>
+
+            {/* Status Overview */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Order Status */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-700">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <FaShoppingCart className="mr-2 text-blue-500" />
+                  Order Status
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FaCheckCircle className="text-green-500 mr-2" />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        Completed
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {overview.completedOrders?.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FaClock className="text-yellow-500 mr-2" />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        Pending
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {overview.pendingOrders?.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FaTimesCircle className="text-red-500 mr-2" />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        Failed
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {overview.failedOrders?.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Exam Status */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-700">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <FaGraduationCap className="mr-2 text-purple-500" />
+                  Exam Status
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FaCheckCircle className="text-green-500 mr-2" />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        Completed
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {overview.completedExams?.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FaPlay className="text-blue-500 mr-2" />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        Ongoing
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {overview.ongoingExams?.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FaStop className="text-red-500 mr-2" />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        Abandoned
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {overview.abandonedExams?.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content Status */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-700">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <FaBookOpen className="mr-2 text-green-500" />
+                  Content Overview
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FaGem className="text-blue-500 mr-2" />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        Free Notes
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {overview.freeNotes?.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FaStar className="text-yellow-500 mr-2" />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        Paid Notes
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {overview.paidNotes?.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FaFire className="text-orange-500 mr-2" />
+                      <span className="text-gray-700 dark:text-gray-300">
+                        Test Series
+                      </span>
+                    </div>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {overview.totalTestSeries?.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'revenue' && revenueAnalytics && (
+          <div className="space-y-6">
+            {/* Revenue Trends */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <LineChart
+                data={revenueAnalytics.dailyRevenueTrend}
+                title="Daily Revenue Trend (Last 30 Days)"
+                color="#10B981"
+              />
+              <LineChart
+                data={revenueAnalytics.monthlyRevenue}
+                title="Monthly Revenue (Last 12 Months)"
+                color="#3B82F6"
+              />
+            </div>
+
+            {/* Revenue Distribution */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PieChart
+                data={revenueAnalytics.paymentMethodAnalysis}
+                title="Revenue by Payment Method"
+                colors={pieChartColors}
+              />
+              <PieChart
+                data={revenueAnalytics.orderStatusDistribution}
+                title="Revenue by Order Status"
+                colors={['#10B981', '#F59E0B', '#EF4444']}
+              />
+            </div>
+
+            {/* Top Performers */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <BarChart
+                data={revenueAnalytics.revenueByExamPlan}
+                title="Top Revenue Generating Exam Plans"
+                color="#10B981"
+              />
+              <BarChart
+                data={revenueAnalytics.couponAnalysis}
+                title="Most Used Coupons"
+                color="#F59E0B"
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'exams' && examAnalytics && (
+          <div className="space-y-6">
+            {/* Exam Participation */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <LineChart
+                data={examAnalytics.dailyExamParticipation}
+                title="Daily Exam Participation (Last 30 Days)"
+                color="#8B5CF6"
+              />
+              <LineChart
+                data={examAnalytics.monthlyExamTrends}
+                title="Monthly Exam Trends (Last 12 Months)"
+                color="#EC4899"
+              />
+            </div>
+
+            {/* Performance Analysis */}
+            {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PieChart data={examAnalytics.scoreDistribution} title="Score Distribution" colors={pieChartColors} />
+              <PieChart
+                data={examAnalytics.examStatusDistribution}
+                title="Exam Status Distribution"
+                colors={["#10B981", "#3B82F6", "#EF4444"]}
+              />
+            </div> */}
+
+            {/* Test Series Performance */}
+            <div className="grid grid-cols-1 gap-6">
+              <BarChart
+                data={examAnalytics.performanceByTestSeries}
+                title="Performance by Test Series"
+                color="#8B5CF6"
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'content' && contentAnalytics && (
+          <div className="space-y-6">
+            {/* Popular Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <BarChart
+                data={contentAnalytics.popularExamPlans}
+                title="Most Popular Exam Plans"
+                color="#3B82F6"
+              />
+              <BarChart
+                data={contentAnalytics.testSeriesEngagement}
+                title="Test Series Engagement"
+                color="#10B981"
+              />
+            </div>
+
+            {/* Content Analytics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <BarChart
+                data={contentAnalytics.notesAnalytics}
+                title="Notes by Exam Plan"
+                color="#F59E0B"
+              />
+              <PieChart
+                data={contentAnalytics.subjectQuestionDistribution}
+                title="Questions by Subject"
+                colors={pieChartColors}
+              />
+            </div>
+
+            {/* Content Performance Table */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-100 dark:border-gray-700">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                <FaLightbulb className="mr-2 text-yellow-500" />
+                Top Performing Content
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Content
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Engagement
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Revenue
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {contentAnalytics.popularExamPlans
+                      .slice(0, 5)
+                      .map((plan, index) => (
+                        <tr
+                          key={index}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <FaGraduationCap className="text-blue-500 mr-3" />
+                              <div>
+                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {plan.name}
+                                </div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  Exam Plan
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            {plan.purchases?.toLocaleString()} purchases
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600 dark:text-green-400">
+                            {formatCurrency(plan.revenue)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              <FaThumbsUp className="mr-1" />
+                              Active
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Last updated: {new Date()?.toLocaleString()}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ECommerce;

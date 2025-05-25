@@ -9,6 +9,13 @@ const UserPurchase = require("../../models/UserPurchase");
 const mongoose = require("mongoose");
 const language = require("../../languages/english");
 const { scheduleExamAutoSubmit } = require("../../services/examService");
+const User = require("../../models/User")
+const { generateResultPDF, generateResultPDFAlternative } = require("../../services/pdfGenerationService")
+const { calculatePercentile, getPerformanceInsights } = require("../../services/analyticsService")
+const path = require("path")
+const fs = require("fs")
+
+
 
 /**
  * @desc    Start a new exam
@@ -1200,65 +1207,139 @@ exports.updateQuestionStatusBatch = async (req, res) => {
  */
 exports.getExamResult = async (req, res) => {
   try {
-    const { examId } = req.params;
-    const userId = req.user._id;
+    const { examId } = req.params
+    const userId = req.user._id
 
     // Check if exam exists and belongs to the user
     const exam = await Exam.findOne({
       _id: examId,
       userId,
-    }).populate("testSeriesId");
+    }).populate("testSeriesId")
 
     if (!exam) {
-      return res.noRecords("Exam not found");
+      return res.noRecords("Exam not found")
     }
 
     // Check if exam is completed
     if (exam.status !== "COMPLETED") {
-      return res.noRecords("Exam has not been completed yet");
+      return res.noRecords("Exam has not been completed yet")
     }
 
     // Get all sections
     const sections = await Section.find({
       testSeriesId: exam.testSeriesId,
-    }).sort({ sequence: 1 });
+    }).sort({ sequence: 1 })
 
     // Get section-wise statistics
-    const sectionStats = [];
+    const sectionStats = []
     for (const section of sections) {
       const sectionQuestions = await ExamQuestion.find({
         examId,
         sectionId: section._id,
-      });
+      })
 
       const sectionStat = {
         sectionId: section._id,
         name: section.name,
         totalQuestions: sectionQuestions.length,
-        attempted: sectionQuestions.filter((eq) => eq.status === "ATTEMPTED")
-          .length,
+        attempted: sectionQuestions.filter((eq) => eq.status === "ATTEMPTED").length,
         correct: sectionQuestions.filter((eq) => eq.isCorrect === true).length,
         wrong: sectionQuestions.filter((eq) => eq.isCorrect === false).length,
-        skipped: sectionQuestions.filter((eq) => eq.status === "SKIPPED")
-          .length,
-      };
+        skipped: sectionQuestions.filter((eq) => eq.status === "SKIPPED").length,
+      }
 
-      sectionStats.push(sectionStat);
+      sectionStats.push(sectionStat)
     }
 
     // Calculate time statistics
-    const totalDuration =
-      (new Date(exam.endTime) - new Date(exam.startTime)) / 1000; // in seconds
+    const totalDuration = (new Date(exam.endTime) - new Date(exam.startTime)) / 1000 // in seconds
     const sectionTimings = exam.sectionTimings.map((st) => {
-      const section = sections.find(
-        (s) => s._id.toString() === st.sectionId.toString()
-      );
+      const section = sections.find((s) => s._id.toString() === st.sectionId.toString())
       return {
         sectionId: st.sectionId,
         name: section ? section.name : "Unknown",
         totalTimeSpent: st.totalTimeSpent,
-      };
-    });
+      }
+    })
+
+    // Generate PDF for this exam result
+    let pdfUrl = null
+    let pdfGenerationError = null
+
+    try {
+      // Check if PDF already exists
+      const timestamp = new Date(exam.endTime).getTime()
+      const filename = `exam_result_${examId}_${timestamp}.pdf`
+      const uploadsDir = path.join(process.cwd(), "public", "uploads", "results")
+      const filepath = path.join(uploadsDir, filename)
+
+      // Ensure uploads directory exists
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true })
+      }
+
+      // Check if PDF already exists
+      if (!fs.existsSync(filepath)) {
+        // Generate new PDF
+        console.log("Generating new PDF for exam:", examId)
+
+        // Get detailed data for PDF generation
+        const examQuestions = await ExamQuestion.find({ examId })
+          .populate({
+            path: "questionId",
+            select:
+              "questionText option1 option2 option3 option4 option5 rightAnswer explanation subjectId chapterId topicId",
+            populate: [
+              { path: "subjectId", select: "name" },
+              { path: "chapterId", select: "name" },
+              { path: "topicId", select: "name" },
+            ],
+          })
+          .populate({
+            path: "sectionId",
+            select: "name sequence",
+          })
+          .sort({ sequence: 1 })
+
+        // Get user data
+        const user = await User.findById(userId).select("name email mobile")
+
+        // Build result data for PDF
+        const resultData = await buildDetailedResultData(exam, examQuestions, sections, user)
+
+        // Try primary PDF generation method (Puppeteer)
+        let pdfBuffer = null
+        try {
+          pdfBuffer = await generateResultPDF(resultData)
+        } catch (puppeteerError) {
+          console.warn("Puppeteer PDF generation failed, trying alternative method:", puppeteerError.message)
+
+          // Try alternative PDF generation method (html-pdf)
+          try {
+            pdfBuffer = await generateResultPDFAlternative(resultData)
+          } catch (alternativeError) {
+            console.error("Alternative PDF generation also failed:", alternativeError.message)
+            throw new Error("Both PDF generation methods failed")
+          }
+        }
+
+        if (pdfBuffer) {
+          // Save PDF file
+          fs.writeFileSync(filepath, pdfBuffer)
+          pdfUrl = `${process.env.BASEURL}/uploads/results/${filename}`
+          console.log("PDF generated successfully:", pdfUrl)
+        } else {
+          pdfGenerationError = "Failed to generate PDF buffer"
+        }
+      } else {
+        // PDF already exists
+        pdfUrl = `${process.env.BASEURL}/uploads/results/${filename}`
+        console.log("Using existing PDF:", pdfUrl)
+      }
+    } catch (error) {
+      console.error("Error generating PDF:", error)
+      pdfGenerationError = error.message
+    }
 
     // Format result
     const result = {
@@ -1282,14 +1363,22 @@ exports.getExamResult = async (req, res) => {
       rank: exam.rank,
       sectionStats,
       sectionTimings,
-    };
+      // PDF download link
+      pdfReport: {
+        url: pdfUrl,
+        isAvailable: !!pdfUrl,
+        error: pdfGenerationError,
+        generatedAt: pdfUrl ? new Date().toISOString() : null,
+      },
+    }
 
-    return res.success(result);
+    return res.success(result)
   } catch (error) {
-    console.error("Error getting exam result:", error);
-    return res.someThingWentWrong(error);
+    console.error("Error getting exam result:", error)
+    return res.someThingWentWrong(error)
   }
-};
+}
+
 
 /**
  * @desc    Get exam review
@@ -1298,22 +1387,22 @@ exports.getExamResult = async (req, res) => {
  */
 exports.getExamReview = async (req, res) => {
   try {
-    const { examId } = req.params;
-    const userId = req.user._id;
+    const { examId } = req.params
+    const userId = req.user._id
 
     // Check if exam exists and belongs to the user
     const exam = await Exam.findOne({
       _id: examId,
       userId,
-    });
+    })
 
     if (!exam) {
-      return res.noRecords("Exam not found");
+      return res.noRecords("Exam not found")
     }
 
     // Check if exam is completed
     if (exam.status !== "COMPLETED") {
-      return res.noRecords("Exam has not been completed yet");
+      return res.noRecords("Exam has not been completed yet")
     }
 
     // Get all exam questions with answers
@@ -1322,18 +1411,14 @@ exports.getExamReview = async (req, res) => {
     })
       .populate({
         path: "questionId",
-        select:
-          "questionText option1 option2 option3 option4 option5 rightAnswer explanation",
+        select: "questionText option1 option2 option3 option4 option5 rightAnswer explanation",
       })
       .populate({
         path: "sectionId",
         select: "name sequence",
       })
-      .sort({ sequence: 1 });
+      .sort({ sequence: 1 })
 
-    
-   
-    
     // Format questions with correct answers
     const reviewQuestions = examQuestions?.map((eq) => ({
       id: eq?._id,
@@ -1358,21 +1443,87 @@ exports.getExamReview = async (req, res) => {
       status: eq.status,
       isMarkedForReview: eq.isMarkedForReview,
       timeSpent: eq.timeSpent,
-    }));
+    }))
 
     // Group questions by section
-    const sectionMap = new Map();
+    const sectionMap = new Map()
     reviewQuestions?.forEach((q) => {
       if (!sectionMap.has(q?.section?.id?.toString())) {
         sectionMap.set(q.section?.id?.toString(), {
           section: q?.section,
           questions: [],
-        });
+        })
       }
-      sectionMap.get(q.section.id?.toString()).questions.push(q);
-    });
+      sectionMap.get(q.section.id?.toString()).questions.push(q)
+    })
 
-    const sectionReviews = Array.from(sectionMap.values());
+    const sectionReviews = Array.from(sectionMap.values())
+
+    // Generate or get existing PDF URL
+    let pdfUrl = null
+    let pdfGenerationError = null
+
+    try {
+      // Check if PDF already exists
+      const timestamp = new Date(exam.endTime).getTime()
+      const filename = `exam_result_${examId}_${timestamp}.pdf`
+      const uploadsDir = path.join(process.cwd(), "public", "uploads", "results")
+      const filepath = path.join(uploadsDir, filename)
+
+      // Ensure uploads directory exists
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true })
+      }
+
+      // Check if PDF already exists
+      if (!fs.existsSync(filepath)) {
+        // Generate new PDF
+        console.log("Generating new PDF for exam review:", examId)
+
+        // Get sections
+        const sections = await Section.find({
+          testSeriesId: exam.testSeriesId,
+        }).sort({ sequence: 1 })
+
+        // Get user data
+        const user = await User.findById(userId).select("name email mobile")
+
+        // Build result data for PDF
+        const resultData = await buildDetailedResultData(exam, examQuestions, sections, user)
+
+        // Try primary PDF generation method (Puppeteer)
+        let pdfBuffer = null
+        try {
+          pdfBuffer = await generateResultPDF(resultData)
+        } catch (puppeteerError) {
+          console.warn("Puppeteer PDF generation failed, trying alternative method:", puppeteerError.message)
+
+          // Try alternative PDF generation method (html-pdf)
+          try {
+            pdfBuffer = await generateResultPDFAlternative(resultData)
+          } catch (alternativeError) {
+            console.error("Alternative PDF generation also failed:", alternativeError.message)
+            throw new Error("Both PDF generation methods failed")
+          }
+        }
+
+        if (pdfBuffer) {
+          // Save PDF file
+          fs.writeFileSync(filepath, pdfBuffer)
+          pdfUrl = `${process.env.BASEURL}/uploads/results/${filename}`
+          console.log("PDF generated successfully for review:", pdfUrl)
+        } else {
+          pdfGenerationError = "Failed to generate PDF buffer"
+        }
+      } else {
+        // PDF already exists
+        pdfUrl = `${process.env.BASEURL}/uploads/results/${filename}`
+        console.log("Using existing PDF for review:", pdfUrl)
+      }
+    } catch (error) {
+      console.error("Error generating PDF for review:", error)
+      pdfGenerationError = error.message
+    }
 
     return res.success({
       examId: exam._id,
@@ -1385,12 +1536,218 @@ exports.getExamReview = async (req, res) => {
         skippedQuestions: exam.skippedQuestions,
         markedForReview: exam.markedForReview,
       },
-    });
+      // PDF download link
+      pdfReport: {
+        url: pdfUrl,
+        isAvailable: !!pdfUrl,
+        error: pdfGenerationError,
+        generatedAt: pdfUrl ? new Date().toISOString() : null,
+      },
+    })
   } catch (error) {
-    console.error("Error getting exam review:", error);
-    return res.someThingWentWrong(error);
+    console.error("Error getting exam review:", error)
+    return res.someThingWentWrong(error)
   }
-};
+}
+
+
+
+async function buildDetailedResultData(exam, examQuestions, sections, user) {
+  try {
+    // Get test series with exam plan
+    const testSeries = await TestSeries.findById(exam.testSeriesId).populate("examPlanId", "title")
+
+    // Build section analysis
+    const sectionAnalysis = []
+    for (const section of sections) {
+      const sectionQuestions = examQuestions.filter(
+        (eq) => eq.sectionId && eq.sectionId._id && eq.sectionId._id.toString() === section._id.toString(),
+      )
+
+      const sectionStats = {
+        sectionId: section._id,
+        name: section.name || "Unknown Section",
+        sequence: section.sequence || 0,
+        totalQuestions: sectionQuestions.length,
+        attempted: sectionQuestions.filter((eq) => eq.status === "ATTEMPTED").length,
+        correct: sectionQuestions.filter((eq) => eq.isCorrect === true).length,
+        wrong: sectionQuestions.filter((eq) => eq.isCorrect === false).length,
+        skipped: sectionQuestions.filter((eq) => eq.status === "SKIPPED").length,
+        markedForReview: sectionQuestions.filter((eq) => eq.isMarkedForReview).length,
+        accuracy: 0,
+        score: 0,
+        maxScore: 0,
+        timeSpent: sectionQuestions.reduce((total, eq) => total + (eq.timeSpent || 0), 0),
+      }
+
+      sectionStats.accuracy =
+        sectionStats.attempted > 0
+          ? Number.parseFloat(((sectionStats.correct / sectionStats.attempted) * 100).toFixed(2))
+          : 0
+
+      const correctMarks = testSeries?.correctMarks || 1
+      const negativeMarks = testSeries?.negativeMarks || 0.25
+
+      sectionStats.score = sectionStats.correct * correctMarks - sectionStats.wrong * negativeMarks
+      sectionStats.maxScore = sectionStats.totalQuestions * correctMarks
+
+      sectionAnalysis.push(sectionStats)
+    }
+
+    // Build subject analysis
+    const subjectAnalysis = {}
+    examQuestions.forEach((eq) => {
+      if (!eq.questionId || !eq.questionId.subjectId || !eq.questionId.subjectId.name) {
+        return
+      }
+
+      const subjectName = eq.questionId.subjectId.name
+      if (!subjectAnalysis[subjectName]) {
+        subjectAnalysis[subjectName] = {
+          total: 0,
+          attempted: 0,
+          correct: 0,
+          wrong: 0,
+          skipped: 0,
+          accuracy: 0,
+          score: 0,
+        }
+      }
+
+      subjectAnalysis[subjectName].total++
+      if (eq.status === "ATTEMPTED") subjectAnalysis[subjectName].attempted++
+      if (eq.isCorrect === true) subjectAnalysis[subjectName].correct++
+      if (eq.isCorrect === false) subjectAnalysis[subjectName].wrong++
+      if (eq.status === "SKIPPED") subjectAnalysis[subjectName].skipped++
+    })
+
+    // Calculate subject accuracies
+    const correctMarks = testSeries?.correctMarks || 1
+    const negativeMarks = testSeries?.negativeMarks || 0.25
+
+    Object.keys(subjectAnalysis).forEach((subject) => {
+      const data = subjectAnalysis[subject]
+      data.accuracy = data.attempted > 0 ? Number.parseFloat(((data.correct / data.attempted) * 100).toFixed(2)) : 0
+      data.score = data.correct * correctMarks - data.wrong * negativeMarks
+    })
+
+    // Get percentile
+    let percentile = 0
+    let totalAttempts = 0
+    try {
+      const allExams = await Exam.find({
+        testSeriesId: exam.testSeriesId,
+        status: "COMPLETED",
+      }).sort({ totalScore: -1 })
+
+      totalAttempts = allExams.length
+      if (totalAttempts > 0) {
+        percentile = calculatePercentile(
+          exam.totalScore || 0,
+          allExams.map((e) => e.totalScore || 0),
+        )
+      }
+    } catch (error) {
+      console.error("Error calculating percentile:", error)
+    }
+
+    // Get insights
+    let insights = []
+    try {
+      const subjectAnalysisArray = Object.keys(subjectAnalysis).map((subject) => ({
+        name: subject,
+        ...subjectAnalysis[subject],
+      }))
+
+      insights = getPerformanceInsights(exam, sectionAnalysis, subjectAnalysisArray)
+    } catch (error) {
+      insights = [
+        {
+          title: "Performance Analysis",
+          description: "Your performance data has been recorded successfully.",
+        },
+      ]
+    }
+
+    // Calculate time analysis
+    const totalTimeSpent = examQuestions.reduce((total, eq) => total + (eq.timeSpent || 0), 0)
+    const avgTimePerQuestion = examQuestions.length > 0 ? totalTimeSpent / examQuestions.length : 0
+    const examDurationSeconds = (testSeries?.duration || 0) * 60
+    const timeEfficiency =
+      examDurationSeconds > 0 ? ((examDurationSeconds - totalTimeSpent) / examDurationSeconds) * 100 : 0
+
+    // Return structured data for PDF generation
+    return {
+      exam: {
+        id: exam._id,
+        startTime: exam.startTime,
+        endTime: exam.endTime,
+        duration: testSeries?.duration || 0,
+        totalTimeSpent: Math.floor(totalTimeSpent / 60),
+        timeEfficiency: Number.parseFloat(timeEfficiency.toFixed(2)),
+      },
+      testSeries: {
+        title: testSeries?.title || "Unknown Test",
+        description: testSeries?.description || "",
+        examPlan: testSeries?.examPlanId?.title || "Unknown Exam Plan",
+        correctMarks: testSeries?.correctMarks || 1,
+        negativeMarks: testSeries?.negativeMarks || 0.25,
+        passingPercentage: testSeries?.passingPercentage || 33,
+      },
+      user: {
+        name: user?.name || "Unknown User",
+        email: user?.email || "",
+        mobile: user?.mobile || "",
+      },
+      performance: {
+        totalQuestions: exam.totalQuestions || 0,
+        attemptedQuestions: exam.attemptedQuestions || 0,
+        correctAnswers: exam.correctAnswers || 0,
+        wrongAnswers: exam.wrongAnswers || 0,
+        skippedQuestions: exam.skippedQuestions || 0,
+        markedForReview: exam.markedForReview || 0,
+        totalScore: exam.totalScore || 0,
+        maxScore: exam.maxScore || 0,
+        percentage: Number.parseFloat((exam.percentage || 0).toFixed(2)),
+        rank: exam.rank || 0,
+        percentile: Number.parseFloat(percentile.toFixed(2)),
+        totalAttempts,
+        accuracy:
+          exam.attemptedQuestions > 0
+            ? Number.parseFloat(((exam.correctAnswers / exam.attemptedQuestions) * 100).toFixed(2))
+            : 0,
+        avgTimePerQuestion: Math.floor(avgTimePerQuestion),
+        isPassed: (exam.percentage || 0) >= (testSeries?.passingPercentage || 33),
+      },
+      sectionAnalysis,
+      subjectAnalysis: Object.keys(subjectAnalysis).map((subject) => ({
+        name: subject,
+        ...subjectAnalysis[subject],
+      })),
+      insights,
+      questionAnalysis: examQuestions.slice(0, 20).map((eq) => ({
+        id: eq._id,
+        sequence: eq.sequence || 0,
+        questionText: eq.questionId?.questionText || "Question not available",
+        userAnswer: eq.userAnswer || null,
+        correctAnswer: eq.questionId?.rightAnswer || null,
+        isCorrect: eq.isCorrect,
+        isMarkedForReview: eq.isMarkedForReview || false,
+        status: eq.status || "UNATTEMPTED",
+        timeSpent: eq.timeSpent || 0,
+        explanation: eq.questionId?.explanation || "",
+        subject: eq.questionId?.subjectId?.name || "Unknown Subject",
+        chapter: eq.questionId?.chapterId?.name || "Unknown Chapter",
+        topic: eq.questionId?.topicId?.name || "Unknown Topic",
+        section: eq.sectionId?.name || "Unknown Section",
+      })),
+    }
+  } catch (error) {
+    console.error("Error building detailed result data:", error)
+    throw error
+  }
+}
+
 
 /**
  * @desc    Get exam navigation
