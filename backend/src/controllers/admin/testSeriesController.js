@@ -15,7 +15,7 @@ exports.getTestSeries = async (req, res) => {
     const { limit, pageNo, query, orderBy, orderDirection, examPlanId } = req.query
 
     // Build query
-    const queryObj = {}
+    const queryObj = {deletedAt: null}
 
     if (query) {
       queryObj.$or = [{ title: { $regex: query, $options: "i" } }, { description: { $regex: query, $options: "i" } }]
@@ -31,6 +31,7 @@ exports.getTestSeries = async (req, res) => {
     if (total === 0) {
       return res.datatableNoRecords()
     }
+
 
     // Execute query with pagination and sorting
     const testSeries = await TestSeries.find(queryObj)
@@ -49,7 +50,7 @@ exports.getTestSeries = async (req, res) => {
     // Get section counts for each test series
     const testSeriesWithSections = await Promise.all(
       testSeries.map(async (series) => {
-        const sectionCount = await Section.countDocuments({ testSeriesId: series._id })
+        const sectionCount = await Section.countDocuments({ testSeriesId: series._id, deletedAt:null })
         const seriesObj = series.toObject()
         seriesObj.sectionCount = sectionCount
         return seriesObj

@@ -10,6 +10,8 @@ const express = require("express");
 const { checkAndSubmitExpiredExams } = require("../utils/scheduledTasks");
 const router = express.Router();
 const dynamicContentController = require("../controllers/user/dynamicContentController")
+const Storage = require("../helpers/Storage");
+const uploadEditor = new Storage.uploadTo({ dir: "editor", isImage: true, fileSize: 10 });
 
 router.use(function (req, res, next) {
   res.header(
@@ -21,6 +23,29 @@ router.use(function (req, res, next) {
 
 // License Check..
 router.use(customMethods);
+
+router.post('/uploads/editor', uploadEditor.single('file'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+    if (req.fileValidationError) {
+      return res.status(400).json({ success: false, message: req.fileValidationError.file });
+    }
+    const fileUrl = `${process.env.BASEURL || 'http://localhost:3000'}/uploads/editor/${req.file.filename}`;
+    res.json({
+      success: true,
+      data: {
+        files: [fileUrl],
+        baseurl: `${process.env.BASEURL || 'http://localhost:3000'}/uploads/editor/`
+      }
+    });
+  } catch (error) {
+    console.error('Editor upload error:', error);
+    res.status(500).json({ success: false, message: 'Upload failed: ' + error.message });
+  }
+});
+
 router.use(licenseCheck);
 
 

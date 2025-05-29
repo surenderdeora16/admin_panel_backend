@@ -1176,71 +1176,175 @@ const SelectMultiple = ({
 };
 
 // Rich Text Editor Component
+// const TextEditer = ({
+//   form,
+//   field,
+//   disabled,
+//   height,
+//   error,
+//   placeholder = 'Start typing...',
+// }: {
+//   form: any;
+//   field: any;
+//   disabled: any;
+//   height?: any;
+//   error: any;
+//   placeholder?: any;
+// }) => {
+//   const editor = useRef<any>(null);
+//   const [canUpdate, setCanUpdate] = useState(true);
+//   const [content, setContent] = useState<any>('');
+
+//   useEffect(() => {
+//     if (canUpdate && field?.value !== '') {
+//       setContent(field?.value);
+//       setCanUpdate(false);
+//     }
+//   }, [field?.value, canUpdate]);
+
+//   const config = useMemo(
+//     () => ({
+//       readonly: disabled,
+//       height: height || '400',
+//       placeholder: placeholder,
+//       buttons: [
+//         'bold',
+//         'italic',
+//         'underline',
+//         '|',
+//         'image',
+//         'link',
+//         '|',
+//         'source',
+//       ],
+//       uploader: {
+//         insertImageAsBase64URI: false,
+//         url: 'http://localhost:3000/uploads/editor',
+//         format: 'json',
+//         filesVariableName: 'file',
+//         method: 'POST',
+//         isSuccess: (resp:any) => {
+//           return resp?.url !== undefined;
+//         },
+//         getMessage: (resp:any) => resp?.message || 'Upload failed',
+//         process: (resp:any) => ({
+//           files: [resp.url],
+//         }),
+//         // headers: {
+//         //   Authorization: 'Bearer your_token_if_needed'
+//         // }
+//       },
+//     }),
+//     [placeholder, disabled, height],
+//   );
+
+//   return useMemo(() => {
+//     return (
+//       <div
+//         className={`text-black jodit-text-editor jodit-wrapper rounded-lg overflow-hidden ${
+//           error ? 'ring-2 ring-rose-500' : ''
+//         }`}
+//       >
+//         <JoditEditor
+//           ref={editor}
+//           value={content}
+//           config={config}
+//           tabIndex={1}
+//           className="border-2 border-black"
+//           onBlur={(content: any) => form.setFieldValue(field?.name, content)}
+//           onChange={() => {}}
+//         />
+//       </div>
+//     );
+//   }, [content, form, field?.name, disabled, error, config]);
+// };
+
 const TextEditer = ({
   form,
   field,
   disabled,
   height,
   error,
-  placeholder = 'Start typing...'
-}: {
-  form: any;
-  field: any;
-  disabled: any;
-  height?:any;
-  error: any;
-  placeholder?:any
-}) => {
-  const editor = useRef<any>(null);
-  const [canUpdate, setCanUpdate] = useState(true);
-  const [content, setContent] = useState<any>('');
+  placeholder = 'Start typing...',
+}:any) => {
+  const editor = useRef(null);
+  const [content, setContent] = useState(field?.value || '');
+ const [canUpdate, setCanUpdate] = useState(true);
+ 
 
-  useEffect(() => {
-    if (canUpdate && field?.value !== '') {
-      setContent(field?.value);
-      setCanUpdate(false);
+ useEffect(() => {
+     if (canUpdate && field?.value !== '') {
+       setContent(field?.value);
+       setCanUpdate(false);
+     }
+   }, [field?.value, canUpdate]);
+
+  const config = {
+    readonly: disabled,
+    height: height || '400',
+    placeholder: placeholder,
+    buttons: ['bold', 'italic', 'underline', '|', 'image', 'link', '|', 'source'],
+    uploader: {
+      insertImageAsBase64URI: false,
+      url: 'http://localhost:3000/api-v1/uploads/editor',
+      format: 'json',
+      filesVariableName: () => 'file', // Fixed from previous error
+      method: 'POST',
+      imagesExtensions: ['jpg', 'png', 'jpeg', 'gif'],
+      isSuccess: (resp:any) => {
+        console.log('Upload response:', resp);
+        return resp.success === true && resp.data?.files?.length > 0;
+      },
+      getMessage: (resp:any) => {
+        console.log('Upload error message:', resp?.message);
+        return resp?.message || 'Upload failed';
+      },
+      process: (resp:any) => {
+        console.log('Processed response:', resp);
+        return {
+          files: resp.data.files || [],
+          baseurl: resp.data.baseurl || ''
+        };
+      },
+      defaultHandlerSuccess: (resp:any) => {
+        console.log('Upload success:', resp);
+        if (resp.data?.files?.length > 0) {
+          const imgUrl = resp.data.files[0];
+          if (editor.current) {
+            editor.current.selection.insertImage(imgUrl, null, 'auto');
+          }
+        }
+      },
+      defaultHandlerError: (e) => {
+        console.error('Upload failed:', e);
+      },
+      error: (e) => {
+        console.error('Jodit upload error:', e);
+      }
     }
-  }, [field?.value, canUpdate]);
+  };
 
-  const config = useMemo(
-    () => ({
-      readonly: false,
-      height: height || '400',
-      placeholder: placeholder || 'Start typing...',
-    }),
-    [placeholder]
+  return (
+    <div
+      className={`text-black jodit-text-editor jodit-wrapper rounded-lg overflow-hidden ${
+        error ? 'ring-2 ring-rose-500' : ''
+      }`}
+    >
+      <JoditEditor
+        ref={editor}
+        value={content}
+        config={config}
+        tabIndex={1}
+        onBlur={(newContent) => {
+          setContent(newContent);
+          form.setFieldValue(field?.name, newContent);
+        }}
+        onChange={(newContent) => {
+          setContent(newContent);
+        }}
+      />
+    </div>
   );
-
-  return useMemo(() => {
-    // const config = {
-    //   readonly: disabled,
-     
-
-    //   // events: {
-    //   //   onPaste: (event: ClipboardEvent) => {
-    //   //     console.log('Pasting something...');
-    //   //   },
-    //   // },
-    // };
-
-    return (
-      <div
-        className={`text-black jodit-text-editor jodit-wrapper rounded-lg overflow-hidden ${
-          error ? 'ring-2 ring-rose-500' : ''
-        }`}
-      >
-        <JoditEditor
-          ref={editor}
-          value={content}
-          config={config}
-          tabIndex={1} 
-          className='border-2 border-black'
-          onBlur={(content: any) => form.setFieldValue(field?.name, content)}
-          onChange={(newContent) => {}}
-        />
-      </div>
-    );
-  }, [content, form, field?.name, disabled, error]);
 };
 
 // Feature Manager Component

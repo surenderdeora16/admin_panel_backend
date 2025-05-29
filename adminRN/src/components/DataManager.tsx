@@ -148,7 +148,6 @@ const DataManager = ({
         const errorMessage =
           err.response?.data?.message || `Failed to fetch ${itemName}`;
         setError(errorMessage);
-        alert("1")
         toast.error(errorMessage);
         setData([]);
       } finally {
@@ -199,7 +198,6 @@ const DataManager = ({
                   err,
                 );
                 newOptions[field.name] = [];
-        alert("2")
                 toast.error(`Failed to load options for ${field.label}`);
               }
             }
@@ -241,7 +239,6 @@ const DataManager = ({
             response?.data?.message || `Failed to add ${itemName}`,
           );
         }
-        alert("3")
         toast.success(`${itemName} added successfully`);
       } else if (modalMode === 'edit' && selectedItem && endpoints.update) {
         let response;
@@ -263,7 +260,6 @@ const DataManager = ({
             response?.data?.message || `Failed to update ${itemName}`,
           );
         }
-        alert("4")
         toast.success(`${itemName} updated successfully`);
       }
       fetchData({
@@ -277,7 +273,6 @@ const DataManager = ({
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || `Failed to ${modalMode} ${itemName}`;
-        alert("5")
       toast.error(errorMessage);
     }
   };
@@ -293,7 +288,6 @@ const DataManager = ({
           response?.data?.message || `Failed to delete ${itemName}`,
         );
       }
-        alert("6")
       toast.success(`${itemName} deleted successfully`);
       setDeleteLoading(false);
       fetchData({
@@ -307,7 +301,6 @@ const DataManager = ({
       setDeleteLoading(false);
       const errorMessage =
         err.response?.data?.message || `Failed to delete ${itemName}`;
-        alert("7")
       toast.error(errorMessage);
     }
   };

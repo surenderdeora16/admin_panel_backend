@@ -154,7 +154,7 @@ const Questions = () => {
         { id: 'option4', name: 'Option 4' },
         { id: 'option5', name: 'Option 5' },
       ],
-      col: 12
+      col: 12,
     },
     {
       label: 'Explanation (Optional)',
@@ -243,6 +243,12 @@ const Questions = () => {
       toast.error('Failed to fetch questions');
     }
   };
+
+  useEffect(() => {
+    if (page || limit || search || topicId || sortField || sortDirection) {
+      fetchQuestions();
+    }
+  }, [page, limit, search, topicId, sortField, sortDirection]);
 
   // Handle file change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -898,7 +904,7 @@ const Questions = () => {
                             scope="col"
                             className="px-4 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide bg-slate-50/50 dark:bg-slate-800/50"
                           >
-                            <span className="flex items-center">
+                            <span className="flex items-center justify-center">
                               Option {num}
                               <span className="ml-1 text-xs text-emerald-600 dark:text-emerald-400">
                                 {num === 1 && '*'}
@@ -913,7 +919,7 @@ const Questions = () => {
                           className="px-4 py-4 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
                           onClick={() => handleSort('rightAnswer')}
                         >
-                          <div className="flex items-center space-x-1">
+                          <div className="flex items-center justify-center space-x-1">
                             <span>Correct</span>
                             {sortField === 'rightAnswer' && (
                               <span className="text-purple-600 dark:text-purple-400">
@@ -926,7 +932,7 @@ const Questions = () => {
                         {/* Actions Column */}
                         <th
                           scope="col"
-                          className="pr-6 pl-3 py-4 text-right text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide"
+                          className="pr-6 pl-3 py-4 text-center text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide"
                         >
                           Actions
                         </th>
@@ -949,11 +955,19 @@ const Questions = () => {
                           {/* Question Cell */}
                           <td className="px-4 py-4 text-sm text-slate-700 dark:text-slate-300 max-w-[280px] break-words leading-relaxed">
                             <div className="font-medium text-slate-900 dark:text-slate-100 mb-1">
-                              {question.questionText}
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: question.questionText,
+                                }}
+                              />
                             </div>
                             {question.description && (
                               <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                {question.description}
+                                <div
+                                  dangerouslySetInnerHTML={{
+                                    __html: question.description,
+                                  }}
+                                />
                               </div>
                             )}
                           </td>
@@ -969,19 +983,26 @@ const Questions = () => {
                                 key={optionKey}
                                 className={`px-4 py-4 text-sm ${
                                   isCorrect
-                                    ? 'bg-emerald-50/50 dark:bg-emerald-900/20 font-medium text-emerald-700 dark:text-emerald-300'
+                                    ? 'bg-emerald-200/80 dark:bg-emerald-900/20 font-medium text-emerald-700 dark:text-emerald-300'
                                     : 'text-slate-600 dark:text-slate-400'
                                 } ${!question[optionKey] ? 'opacity-50' : ''}`}
                               >
-                                <div className="flex items-center">
+                                <div className="flex items-center justify-center">
                                   <span
                                     className={`inline-block w-2 h-2 rounded-full mr-2 ${
                                       isCorrect
-                                        ? 'bg-emerald-500 dark:bg-emerald-400'
+                                        ? 'bg-emerald-600 dark:bg-emerald-400'
                                         : 'bg-slate-300 dark:bg-slate-600'
                                     }`}
                                   />
-                                  {question[optionKey] || (
+
+                                  {question[optionKey] ? (
+                                    <div
+                                      dangerouslySetInnerHTML={{
+                                        __html: question[optionKey],
+                                      }}
+                                    />
+                                  ) : (
                                     <span className="italic text-slate-400 dark:text-slate-500">
                                       Empty
                                     </span>
@@ -993,31 +1014,34 @@ const Questions = () => {
 
                           {/* Correct Answer Cell */}
                           <td className="px-4 py-4 whitespace-nowrap">
-                            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100/80 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                              {question.rightAnswer.replace(
-                                'option',
-                                'Option ',
-                              )}
+                            <div className="w-full h-full flex items-center justify-center">
+                              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100/80 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                {question.rightAnswer.replace(
+                                  'option',
+                                  'Option ',
+                                )}
+                              </div>
                             </div>
                           </td>
 
                           {/* Actions Cell */}
                           <td className="pr-6 pl-3 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="relative inline-block text-left">
-                              <button
-                                type="button"
-                                className="inline-flex justify-center items-center w-8 h-8 rounded-md border border-slate-200 dark:border-slate-600 shadow-sm hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
-                                onClick={() =>
-                                  setShowOptionsFor(
-                                    showOptionsFor === question._id
-                                      ? null
-                                      : question._id,
-                                  )
-                                }
-                              >
-                                <BsThreeDotsVertical className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-                              </button>
-
+                            <div className="w-full h-full flex items-center justify-center">
+                              <div className="relative inline-block text-left">
+                                <button
+                                  type="button"
+                                  className="inline-flex justify-center items-center w-8 h-8 rounded-md border border-slate-200 dark:border-slate-600 shadow-sm hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
+                                  onClick={() =>
+                                    setShowOptionsFor(
+                                      showOptionsFor === question._id
+                                        ? null
+                                        : question._id,
+                                    )
+                                  }
+                                >
+                                  <BsThreeDotsVertical className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                                </button>
+                              </div>
                               {showOptionsFor === question._id && (
                                 <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white dark:bg-slate-700 ring-1 ring-slate-900/5 dark:ring-slate-300/10 focus:outline-none z-10 transition-all duration-150 scale-95 hover:scale-100">
                                   <div className="py-1.5">
@@ -1180,12 +1204,16 @@ const Questions = () => {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-[90%] md:max-w-[600px] w-full"
+              className="bg-white dark:bg-slate-800 rounded-xl overflow-y-auto shadow-xl over
+               max-h-[96vh] max-w-[90%] md:max-w-[1000px] w-full"
             >
               {questions
                 ?.filter((q) => q._id === showPreview)
                 .map((question) => (
-                  <div key={question._id}>
+                  <div
+                    key={question._id}
+                    className="overflow-y-auto w-full h-full "
+                  >
                     <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-700">
                       <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center">
                         <RiQuestionLine className="mr-3 h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -1201,7 +1229,11 @@ const Questions = () => {
                     <div className="p-6">
                       <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-lg mb-6">
                         <p className="text-slate-900 dark:text-white font-medium">
-                          {question.questionText}
+                          <div
+                            dangerouslySetInnerHTML={{
+                              __html: question.questionText,
+                            }}
+                          />
                         </p>
                       </div>
 
@@ -1233,7 +1265,11 @@ const Questions = () => {
                                   : 'text-slate-700 dark:text-slate-300'
                               }`}
                             >
-                              {question.option1}
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: question.option1,
+                                }}
+                              />
                             </span>
                             {question.rightAnswer === 'option1' && (
                               <span className="ml-auto text-emerald-600 dark:text-emerald-400 flex items-center">
@@ -1268,7 +1304,11 @@ const Questions = () => {
                                   : 'text-slate-700 dark:text-slate-300'
                               }`}
                             >
-                              {question.option2}
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: question.option2,
+                                }}
+                              />
                             </span>
                             {question.rightAnswer === 'option2' && (
                               <span className="ml-auto text-emerald-600 dark:text-emerald-400 flex items-center">
@@ -1303,7 +1343,11 @@ const Questions = () => {
                                   : 'text-slate-700 dark:text-slate-300'
                               }`}
                             >
-                              {question.option3}
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: question.option3,
+                                }}
+                              />
                             </span>
                             {question.rightAnswer === 'option3' && (
                               <span className="ml-auto text-emerald-600 dark:text-emerald-400 flex items-center">
@@ -1338,7 +1382,11 @@ const Questions = () => {
                                   : 'text-slate-700 dark:text-slate-300'
                               }`}
                             >
-                              {question.option4}
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: question.option4,
+                                }}
+                              />
                             </span>
                             {question.rightAnswer === 'option4' && (
                               <span className="ml-auto text-emerald-600 dark:text-emerald-400 flex items-center">
@@ -1374,7 +1422,11 @@ const Questions = () => {
                                     : 'text-slate-700 dark:text-slate-300'
                                 }`}
                               >
-                                {question.option5}
+                                <div
+                                  dangerouslySetInnerHTML={{
+                                    __html: question.option5,
+                                  }}
+                                />
                               </span>
                               {question.rightAnswer === 'option5' && (
                                 <span className="ml-auto text-emerald-600 dark:text-emerald-400 flex items-center">
@@ -1392,7 +1444,11 @@ const Questions = () => {
                             Explanation:
                           </h3>
                           <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-amber-800 dark:text-amber-300">
-                            {question.explanation}
+                            <div
+                              dangerouslySetInnerHTML={{
+                                __html: question.option5,
+                              }}
+                            />
                           </div>
                         </div>
                       )}

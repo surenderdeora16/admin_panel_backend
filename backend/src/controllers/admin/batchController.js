@@ -170,7 +170,7 @@ exports.deleteBatch = async (req, res) => {
     }
 
     // Check if batch has associated exam plans
-    const examPlansCount = await ExamPlan.countDocuments({ batchId: req.params.id })
+    const examPlansCount = await ExamPlan.countDocuments({ batchId: req.params.id, deletedAt:null })
 
     if (examPlansCount > 0) {
       return res.status(400).json({

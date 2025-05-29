@@ -409,7 +409,7 @@ const TestSeriesQuestions = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {testSeriesQuestions.map((item) => (
+                    {testSeriesQuestions.map((item:any) => (
                       <tr key={item._id}>
                         <td className="px-4 py-2">{item.questionId.questionText}</td>
                         <td className="px-4 py-2">{item.questionId[item.questionId.rightAnswer]}</td>

@@ -10,7 +10,7 @@ exports.getExamPlans = async (req, res) => {
     const { limit, pageNo, query, orderBy, orderDirection, batchId } = req.query
 
     // Build query
-    const queryObj = {}
+    const queryObj = {deletedAt: null}
 
     if (query) {
       queryObj.$or = [{ title: { $regex: query, $options: "i" } }, { description: { $regex: query, $options: "i" } }]
@@ -187,7 +187,7 @@ exports.deleteExamPlan = async (req, res) => {
     }
 
     // Check if exam plan has associated test series
-    const testSeriesCount = await TestSeries.countDocuments({ examPlanId: req.params.id })
+    const testSeriesCount = await TestSeries.countDocuments({ examPlanId: req.params.id, deletedAt:null })
 
     if (testSeriesCount > 0) {
       return res.status(400).json({
