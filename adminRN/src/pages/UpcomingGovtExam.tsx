@@ -9,14 +9,21 @@ const upcomingExamValidation = Yup.object().shape({
     .required('Exam title is required')
     .max(200, 'Title must be less than 200 characters'),
   description: Yup.string().optional(),
-  examDate: Yup.date().optional().typeError('Invalid date format. Use YYYY-MM-DD'),
+  examDate: Yup.date()
+    .optional()
+    .typeError('Invalid date format. Use YYYY-MM-DD'),
   status: Yup.boolean().required('Status is required'),
   image: Yup.mixed().optional(),
 });
 
 const formFields = [
   { label: 'Exam Title', name: 'title', type: 'text', col: 12 },
-  { label: 'Exam Description', name: 'description', type: 'text-editer', col: 12 },
+  {
+    label: 'Exam Description',
+    name: 'description',
+    type: 'text-editer',
+    col: 12,
+  },
   { label: 'Exam Date', name: 'examDate', type: 'date', col: 6 },
   { label: 'Status', name: 'status', type: 'select2', options: STATUS, col: 6 },
   { label: 'Image', name: 'image', type: 'image-file', col: 12 },
@@ -28,7 +35,11 @@ const tableColumns = [
     accessor: 'image',
     render: (value: any) => (
       <div className="w-[150px] h-[110px] overflow-hidden rounded-lg shadow-3">
-        <img src={value} alt="" className="w-full h-full object-cover object-center" />
+        <img
+          src={value}
+          alt=""
+          className="w-full h-full object-cover object-center"
+        />
       </div>
     ),
   },
@@ -39,9 +50,9 @@ const tableColumns = [
     render: (value: any) => (
       <div
         className="max-w-[400px] max-h-[135px] text-ellipsis overflow-hidden bg-white shadow-3 p-3 rounded-lg line-clamp-5"
-        title={value.replace(/<[^>]*>?/gm, '')}
+        title={value?.replace(/<[^>]*>?/gm, '')}
       >
-        {value.replace(/<[^>]*>?/gm, '')}
+        {value?.replace(/<[^>]*>?/gm, '')}
       </div>
     ),
   },
@@ -65,17 +76,19 @@ const tableColumns = [
   },
 ];
 
-const initialFormValues = {
-  title: '',
-  description: '',
-  examDate: '',
-  status: true,
-  image: null,
-};
-
 const UpcomingGovtExam = () => {
-    const [uploadProgress, setUploadProgress] = useState<any>(0);
-  
+  const [uploadProgress, setUploadProgress] = useState<any>(0);
+  const [initialEditData, setInitialEditData] = useState<any>();
+
+
+  const initialFormValues = {
+    title: '',
+    description: '',
+    examDate:  '',
+    status: true,
+    image: initialEditData?.image || null
+  };
+
   return (
     <DataManager
       title="Upcoming Government Exams"
@@ -83,13 +96,13 @@ const UpcomingGovtExam = () => {
       endpoints={{
         list: 'list-upcoming-govt-exam',
         create: 'create-upcoming-govt-exam',
-        update: (id:any) => `update-upcoming-govt-exam/${id}`,
+        update: (id: any) => `update-upcoming-govt-exam/${id}`,
         delete: (id) => `delete-record/upcominggovtexams/${id}`,
       }}
       multipartFormData={{
         onUploadProgress: (progressEvent: any) => {
           const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
+            (progressEvent.loaded * 100) / progressEvent.total,
           );
           setUploadProgress(percentCompleted);
         },
@@ -97,19 +110,17 @@ const UpcomingGovtExam = () => {
       uploadProgress={uploadProgress}
       validationSchema={upcomingExamValidation}
       formFields={formFields}
+      onEditButton={(editData: any) => setInitialEditData(editData)}
       tableColumns={tableColumns}
       initialFormValues={initialFormValues}
-      showPagination={true} 
-      showAdd={true}         
-      showEdit={true}        
-      showDelete={true}     
+      showPagination={true}
+      showAdd={true}
+      showEdit={true}
+      showDelete={true}
     />
   );
 };
 export default UpcomingGovtExam;
-
-
-
 
 // import { useEffect, useState, useCallback } from 'react';
 // import * as Yup from 'yup';
@@ -610,7 +621,7 @@ export default UpcomingGovtExam;
 //                         <td className="px-8 py-6 font-medium text-gray-900 dark:text-white">
 //                           <div
 //                             className="max-w-[400px] max-h-[135px] overflow-hidden bg-white shadow-3 p-3 rounded-lg
-//                line-clamp-5 [display:-webkit-box] [-webkit-box-orient:vertical] 
+//                line-clamp-5 [display:-webkit-box] [-webkit-box-orient:vertical]
 //                [-webkit-line-clamp:5]  break-words"
 //                             title={exam.description.replace(/<[^>]*>?/gm, '')}
 //                           >

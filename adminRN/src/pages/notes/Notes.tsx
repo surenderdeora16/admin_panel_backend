@@ -94,7 +94,6 @@ const Notes = () => {
       .required("Title is required")
       .min(3, "Title must be at least 3 characters")
       .max(200, "Title cannot exceed 200 characters"),
-    description: Yup.string().max(1000, "Description cannot exceed 1000 characters"),
     examPlanId: Yup.string().required("Exam Plan is required"),
     pdfFile: Yup.mixed().when("_", {
       is: () => modalType === "add",
@@ -187,7 +186,7 @@ const Notes = () => {
       accessor: "isFree",
       render: (value) => (value ? "Free" : "Paid (Requires Exam Plan)"),
     },
-    { header: "Sequence", accessor: "sequence" },
+    // { header: "Sequence", accessor: "sequence" },
     {
       header: "Status",
       accessor: "status",

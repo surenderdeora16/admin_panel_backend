@@ -393,6 +393,7 @@ exports.getAllNotes = async (req, res) => {
     // Get all active notes
     const notes = await Note.find({
       status: true,
+      deletedAt: null, 
     })
       .populate("examPlanId", "title price mrp validityDays")
       .sort({ examPlanId: 1, sequence: 1, createdAt: -1 });
@@ -419,11 +420,7 @@ exports.getAllNotes = async (req, res) => {
       if (!notesByExamPlan[examPlanId]) {
         notesByExamPlan[examPlanId] = {
           examPlan: {
-            _id: note.examPlanId?._id,
-            title: note.examPlanId?.title,
-            price: note.examPlanId?.price,
-            mrp: note.examPlanId?.mrp,
-            validityDays: note?.examPlanId?.validityDays,
+           ...note?.examPlanId?.toObject(),
             hasPurchased: purchasedExamPlanIds?.has(examPlanId),
           },
           notes: [],
@@ -432,7 +429,7 @@ exports.getAllNotes = async (req, res) => {
         // Add purchase info if available
         if (purchasedExamPlanIds.has(examPlanId)) {
           const purchase = userPurchases.find(
-            (p) => p.itemId.toString() === examPlanId
+            (p) => p.itemId?.toString() === examPlanId
           );
           if (purchase) {
             notesByExamPlan[examPlanId].examPlan.purchaseInfo = {

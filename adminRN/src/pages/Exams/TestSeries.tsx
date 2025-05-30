@@ -84,7 +84,6 @@ const TestSeries = () => {
       .required("Title is required")
       .min(3, "Title must be at least 3 characters")
       .max(200, "Title cannot exceed 200 characters"),
-    description: Yup.string().max(1000, "Description cannot exceed 1000 characters"),
     examPlanId: Yup.string().required("Exam plan is required"),
     duration: Yup.number()
       .required("Duration is required")
@@ -165,19 +164,19 @@ const TestSeries = () => {
       options: TRUE_FALSE_OPTIONS,
       col: 6,
     },
-    {
-      label: "Sequence",
-      name: "sequence",
-      type: "number",
-      min: 0,
-      col: 6,
-    },
+    // {
+    //   label: "Sequence",
+    //   name: "sequence",
+    //   type: "number",
+    //   min: 0,
+    //   col: 6,
+    // },
     {
       label: "Status",
       name: "status",
       type: "select2",
       options: STATUS,
-      col: 12,
+      col: 6,
     },
   ]
 
@@ -211,7 +210,7 @@ const TestSeries = () => {
   const initialFormValues = {
     title: "",
     description: "",
-    examPlanId: examPlanId || "",
+    examPlanId: "",
     duration: 60,
     correctMarks: 1,
     negativeMarks: 0.25,

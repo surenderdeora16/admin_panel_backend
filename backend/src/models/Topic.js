@@ -13,7 +13,6 @@ const TopicSchema = new Schema(
     description: {
       type: String,
       trim: true,
-      maxlength: [500, "Description cannot exceed 500 characters"],
     },
     chapterId: {
       type: Schema.Types.ObjectId,

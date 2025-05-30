@@ -58,10 +58,6 @@ const Chapters = () => {
       .required('Chapter name is required')
       .min(2, 'Chapter name should be at least 2 characters')
       .max(100, 'Chapter name cannot exceed 100 characters'),
-    description: Yup.string().max(
-      500,
-      'Description cannot exceed 500 characters',
-    ),
     subjectId: Yup.mixed().required('Subject is required'),
     sequence: Yup.number()
       .min(0, 'Sequence must be a non-negative integer')

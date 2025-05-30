@@ -14,7 +14,6 @@ const CouponSchema = new Schema(
     description: {
       type: String,
       trim: true,
-      maxlength: [500, "Description cannot exceed 500 characters"],
     },
     discountType: {
       type: String,

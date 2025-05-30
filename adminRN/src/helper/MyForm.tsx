@@ -6,6 +6,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { Formik, Form as FormikForm, Field, ErrorMessage } from 'formik';
 import Select from 'react-select';
 import JoditEditor from 'jodit-react';
+import { debounce } from 'lodash';
 
 const MyForm = ({
   errors,
@@ -26,7 +27,7 @@ const MyForm = ({
 }) => {
   const [inactive, setInActive] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
+   
   return (
     <Formik
       initialValues={initialValues}
@@ -607,7 +608,7 @@ const PictureInputPreview = ({
   disabled?: boolean;
   error?: boolean;
 }) => {
-  const [previews, setPreviews] = useState<any>([]);
+  const [previews, setPreviews] = useState<any>([field?.value || '']);
   const [fileSelected, setFileSelected] = useState(false);
 
   useEffect(() => {
@@ -730,7 +731,7 @@ const PictureInputPreview = ({
                 <img
                   src={src || '/placeholder.svg'}
                   alt={`Preview ${index + 1}`}
-                  className="h-24 w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                  className="max-h-[300px] w-full object-contain transition-transform duration-200 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-center p-2">
                   <span className="text-white text-xs font-medium">{`Image ${
@@ -939,8 +940,11 @@ const Select2 = ({
   onChangeUpdateToNull: any;
   error: any;
 }) => {
-  const [myValue, setMyValue] = useState(null);
+  const [myValue, setMyValue] = useState(field?.value || null);
 
+  // useEffect(())
+
+  console.log("select field", field?.value)
   useEffect(() => {
     if (onChangeUpdateToNull) {
       var selected = options.filter((row: any) =>
@@ -1266,63 +1270,116 @@ const TextEditer = ({
   height,
   error,
   placeholder = 'Start typing...',
-}:any) => {
-  const editor = useRef(null);
+}: {
+  form: any;
+  field: any;
+  disabled?: boolean;
+  height?: string;
+  error?: boolean;
+  placeholder?: string;
+}) => {
+  const editorRef = useRef<any>(null);
   const [content, setContent] = useState(field?.value || '');
- const [canUpdate, setCanUpdate] = useState(true);
- 
+  const [isMounted, setIsMounted] = useState(false);
 
- useEffect(() => {
-     if (canUpdate && field?.value !== '') {
-       setContent(field?.value);
-       setCanUpdate(false);
-     }
-   }, [field?.value, canUpdate]);
+  // Debounced content update
+  const debouncedUpdate = useMemo(
+    () =>
+      debounce((newContent: string) => {
+        setContent(newContent);
+        form.setFieldValue(field?.name, newContent);
+        form.validateField(field?.name);
+      }, 300),
+    [form, field?.name]
+  );
 
-  const config = {
-    readonly: disabled,
-    height: height || '400',
-    placeholder: placeholder,
-    buttons: ['bold', 'italic', 'underline', '|', 'image', 'link', '|', 'source'],
-    uploader: {
-      insertImageAsBase64URI: false,
-      url: 'http://localhost:3000/api-v1/uploads/editor',
-      format: 'json',
-      filesVariableName: () => 'file', // Fixed from previous error
-      method: 'POST',
-      imagesExtensions: ['jpg', 'png', 'jpeg', 'gif'],
-      isSuccess: (resp:any) => {
-        console.log('Upload response:', resp);
-        return resp.success === true && resp.data?.files?.length > 0;
-      },
-      getMessage: (resp:any) => {
-        console.log('Upload error message:', resp?.message);
-        return resp?.message || 'Upload failed';
-      },
-      process: (resp:any) => {
-        console.log('Processed response:', resp);
-        return {
-          files: resp.data.files || [],
-          baseurl: resp.data.baseurl || ''
-        };
-      },
-      defaultHandlerSuccess: (resp:any) => {
-        console.log('Upload success:', resp);
-        if (resp.data?.files?.length > 0) {
-          const imgUrl = resp.data.files[0];
-          if (editor.current) {
-            editor.current.selection.insertImage(imgUrl, null, 'auto');
-          }
-        }
-      },
-      defaultHandlerError: (e) => {
-        console.error('Upload failed:', e);
-      },
-      error: (e) => {
-        console.error('Jodit upload error:', e);
-      }
+  // Initialize content
+  useEffect(() => {
+    setIsMounted(true);
+    if (field?.value !== content) {
+      setContent(field?.value || '');
     }
-  };
+  }, [field?.value]);
+
+  // Cleanup debounce
+  useEffect(() => {
+    return () => {
+      debouncedUpdate.cancel();
+    };
+  }, [debouncedUpdate]);
+
+  const config = useMemo(
+    () => ({
+      readonly: disabled,
+      height: height || '400',
+      placeholder,
+      buttons: ['bold', 'italic', 'underline', '|', 'image', 'link', '|', 'source'],
+      askBeforePasteHTML: false,
+      askBeforePasteFromWord: false,
+      defaultActionOnPaste: 'insert_clear_html',
+      clipboard: {
+        pasteImage: true,
+        insertImageAsBase64URI: true,
+      },
+      events: {
+        afterPaste: (e: any) => {
+          console.log('Paste event triggered:', e);
+          const clipboardData = e?.clipboardData || (window as any)?.clipboardData;
+          const items = clipboardData?.items;
+
+          // Update content after paste
+          setTimeout(() => {
+            const newContent = editorRef.current?.value;
+            if (newContent !== undefined) {
+              debouncedUpdate(newContent);
+            }
+          }, 0);
+
+          return true; // Allow default paste behavior
+        },
+      },
+      uploader: {
+        insertImageAsBase64URI: false,
+        url: import.meta.env?.VITE_API_BASE_URL + 'upload-editor-image',
+        format: 'json',
+        pathVariableName: 'path',
+        filesVariableName: () => 'file',
+        headers: {
+          'x-api-key': import.meta.env?.VITE_LICENCE,
+        },
+        prepareData: (formData: any) => formData,
+        isSuccess: (resp: any) => !resp.error,
+        getMsg: (resp: any) => (Array.isArray(resp.msg) ? resp.msg.join(' ') : resp.msg) || 'Unknown error',
+        process: (resp: any) => ({
+          files: [resp.data],
+          path: '',
+          baseurl: '',
+          error: resp.error ? 1 : 0,
+          msg: resp.msg,
+        }),
+        defaultHandlerSuccess: function (data: any) {
+          const files = data.files || [];
+          if (files.length) {
+            this.selection.insertImage(files[0], null, 250);
+            setTimeout(() => {
+              const newContent = editorRef.current?.value;
+              if (newContent !== undefined) {
+                debouncedUpdate(newContent);
+              }
+            }, 0);
+          }
+        },
+        defaultHandlerError: function (resp: any) {
+          this.events?.fire('errorPopap', this.i18n(resp.msg));
+        },
+        withCredentials: false,
+      },
+    }),
+    [disabled, height, placeholder, debouncedUpdate]
+  );
+
+  // Only render JoditEditor after mount to prevent server-client mismatch
+  if (!isMounted) return null;
 
   return (
     <div
@@ -1331,17 +1388,12 @@ const TextEditer = ({
       }`}
     >
       <JoditEditor
-        ref={editor}
+        ref={editorRef}
         value={content}
         config={config}
         tabIndex={1}
-        onBlur={(newContent) => {
-          setContent(newContent);
-          form.setFieldValue(field?.name, newContent);
-        }}
-        onChange={(newContent) => {
-          setContent(newContent);
-        }}
+        onBlur={(newContent) => debouncedUpdate(newContent)}
+        onChange={(newContent) => debouncedUpdate(newContent)}
       />
     </div>
   );

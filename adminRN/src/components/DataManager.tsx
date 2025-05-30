@@ -56,6 +56,7 @@ interface DataManagerProps {
   showPagination?: boolean;
   showAdd?: boolean;
   handleRowClick?:any;
+  onEditButton?: (editData: any) => void;
   showEdit?: boolean;
   showDelete?: boolean;
   renderActions?: (item: any) => React.ReactNode;
@@ -72,6 +73,7 @@ const DataManager = ({
   setModalType,
   handleRowClick,
   tableColumns,
+  onEditButton,
   initialFormValues,
   showPagination = true,
   showAdd = true,
@@ -270,6 +272,7 @@ const DataManager = ({
         orderDirection,
       });
       setShowModal(false);
+       onEditButton?.(null); 
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || `Failed to ${modalMode} ${itemName}`;
@@ -330,12 +333,21 @@ const DataManager = ({
       },
     ];
 
-    const initialValues =
-      modalMode === 'add'
-        ? initialFormValues
-        : selectedItem || initialFormValues;
+    const formatDate = (date: string | Date | undefined): string => {
+      if (!date) return '';
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return ''; // Invalid date
+      return d.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+    };
 
-        
+   const initialValues = modalMode === 'add'
+      ? initialFormValues
+      : {
+          ...initialFormValues,
+          ...selectedItem,
+          examDate: formatDate(selectedItem?.examDate), // Ensure examDate is formatted
+        };
+
     return (
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
@@ -350,12 +362,12 @@ const DataManager = ({
                 {modalMode === 'add' ? `Add ${itemName}` : `Update ${itemName}`}
               </h2>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {setShowModal(false); onEditButton?.(null);}}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-2 rounded-full hover:bg-gray-100"
               >
                 <XMarkIcon className="w-6 h-6" />
               </button>
-            </div>
+            </div>  
           </div>
           <div className="px-6 pt-4 pb-6">
             <MyForm
@@ -364,7 +376,7 @@ const DataManager = ({
               validSchema={validationSchema}
               onSubmit={handleFormSubmit}
               dependentOptions={dependentOptions}
-              onValueChange={(values) => setFormValues(values)}
+              onValueChange={(values:any) => setFormValues(values)}
             />
           </div>
         </div>
@@ -380,6 +392,7 @@ const DataManager = ({
           onClick={() => {
             setModalMode('edit');
             setSelectedItem(item);
+            onEditButton?.(item);
             setShowModal(true);
           }}
         >
@@ -424,6 +437,7 @@ const DataManager = ({
               onClick={() => {
                 setModalMode('add');
                 setSelectedItem(null);
+                onEditButton?.(null);
                 setShowModal(true);
               }}
               className="cursor-pointer scale-100 hover:scale-105 duration-150 bg-sky-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2"

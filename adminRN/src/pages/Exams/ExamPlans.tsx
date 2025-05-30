@@ -84,7 +84,6 @@ const ExamPlans = () => {
       .required("Title is required")
       .min(3, "Title must be at least 3 characters")
       .max(200, "Title cannot exceed 200 characters"),
-    // description: Yup.string().max(1000, "Description cannot exceed 1000 characters"),
     // batchId: Yup.string().required("Batch is required"),
     // price: Yup.number()
     //   .min(0, "Price cannot be negative")
@@ -155,19 +154,19 @@ const ExamPlans = () => {
       min: 1,
       col: 6,
     },
-    {
-      label: "Sequence",
-      name: "sequence",
-      type: "number",
-      min: 0,
-      col: 6,
-    },
+    // {
+    //   label: "Sequence",
+    //   name: "sequence",
+    //   type: "number",
+    //   min: 0,
+    //   col: 6,
+    // },
     {
       label: "Status",
       name: "status",
       type: "select2",
       options: STATUS,
-      col: 12,
+      col: 6,
     },
   ]
 

@@ -16,6 +16,7 @@ const AdminLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
   useEffect(() => {
     const updateDataAdmin = async () => {
       try {
+            console.log("AdminLayout")
         const { data } = await AxiosHelper.getData('profile');
         if (data?.status === true) {
           dispatch(updateAdmin(data?.data));

@@ -9,9 +9,7 @@ const subjectValidation = Yup.object().shape({
     .required('Subject name is required')
     .min(2, 'Subject name should be at least 2 characters')
     .max(100, 'Subject name cannot exceed 100 characters'),
-  description: Yup.string()
-    .optional()
-    .max(500, 'Description cannot exceed 500 characters'),
+
   status: Yup.boolean().required('Status is required'),
 });
 

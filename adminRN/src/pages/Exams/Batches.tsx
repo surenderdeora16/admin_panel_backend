@@ -25,7 +25,6 @@ const Batches = () => {
       .required("Batch name is required")
       .min(2, "Batch name must be at least 2 characters")
       .max(100, "Batch name cannot exceed 100 characters"),
-    description: Yup.string().max(500, "Description cannot exceed 500 characters"),
     image: Yup.mixed(),
     sequence: Yup.number().min(0, "Sequence must be a non-negative integer").integer("Sequence must be an integer"),
     status: Yup.boolean(),
@@ -50,18 +49,18 @@ const Batches = () => {
       type: "image-file",
       col: 12,
     },
-    {
-      label: "Sequence",
-      name: "sequence",
-      type: "number",
-      col: 6,
-    },
+    // {
+    //   label: "Sequence",
+    //   name: "sequence",
+    //   type: "number",
+    //   col: 6,
+    // },
     {
       label: "Status",
       name: "status",
       type: "select2",
       options: STATUS,
-      col: 6,
+      col: 12,
     },
   ]
 

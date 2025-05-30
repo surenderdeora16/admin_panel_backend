@@ -14,7 +14,6 @@ const BatchSchema = new Schema(
     description: {
       type: String,
       trim: true,
-      maxlength: [500, "Description cannot exceed 500 characters"],
     },
     image: {
       type: String,

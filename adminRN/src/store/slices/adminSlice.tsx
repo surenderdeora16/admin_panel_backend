@@ -79,6 +79,7 @@ export const fetchAdminProfile = createAsyncThunk(
     'fetchProfile',
     async (_, { rejectWithValue }) => {
         try {
+            console.log("AdminSLIce")
             const response = await retryRequest(() => AxiosHelper.getData('profile'), 3);
             return response.data;
         } catch (error: any) {

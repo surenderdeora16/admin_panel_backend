@@ -304,7 +304,6 @@ module.exports = (method) => {
           .notEmpty()
           .withMessage("Subject name cannot be empty"),
 
-        check("description").optional().isLength({ max: 1000 }).withMessage("Description cannot exceed 500 characters"),
       ]
 
     case "updateSubject":
@@ -316,7 +315,6 @@ module.exports = (method) => {
           .isLength({ min: 2, max: 100 })
           .withMessage("Subject name should be between 2 and 100 characters"),
 
-        check("description").optional().isLength({ max: 1000 }).withMessage("Description cannot exceed 500 characters"),
 
         check("status").optional().isBoolean().withMessage("Status must be a boolean value"),
       ] 
@@ -332,7 +330,6 @@ module.exports = (method) => {
           .isLength({ min: 2, max: 100 })
           .withMessage("Chapter name should be between 2 and 100 characters"),
 
-        check("description").optional().isLength({ max: 1000 }).withMessage("Description cannot exceed 500 characters"),
 
         check("subjectId")
           .exists()
@@ -357,7 +354,6 @@ module.exports = (method) => {
           .isLength({ min: 2, max: 100 })
           .withMessage("Chapter name should be between 2 and 100 characters"),
 
-        check("description").optional().isLength({ max: 1000 }).withMessage("Description cannot exceed 500 characters"),
 
         check("subjectId")
           .optional()
@@ -384,7 +380,6 @@ module.exports = (method) => {
           .isLength({ min: 2, max: 100 })
           .withMessage("Topic name should be between 2 and 100 characters"),
 
-        check("description").optional().isLength({ max: 1000 }).withMessage("Description cannot exceed 500 characters"),
 
         check("chapterId")
           .exists()
@@ -408,7 +403,6 @@ module.exports = (method) => {
           .isLength({ min: 2, max: 100 })
           .withMessage("Topic name should be between 2 and 100 characters"),
 
-        check("description").optional().isLength({ max: 1000 }).withMessage("Description cannot exceed 500 characters"),
 
         check("chapterId")
           .optional()

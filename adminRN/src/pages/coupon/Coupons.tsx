@@ -20,10 +20,7 @@ const validationSchema = Yup.object().shape({
     .required('Coupon code is required')
     .min(3, 'Coupon code must be at least 3 characters')
     .max(20, 'Coupon code cannot exceed 20 characters'),
-  description: Yup.string().max(
-    500,
-    'Description cannot exceed 500 characters',
-  ),
+ 
   discountType: Yup.string()
     .required('Discount type is required')
     .oneOf(['PERCENTAGE', 'FIXED'], 'Invalid discount type'),

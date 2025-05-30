@@ -75,7 +75,6 @@ const TopicSchema = Yup.object().shape({
     .required('Topic name is required')
     .min(2, 'Topic name must be at least 2 characters')
     .max(100, 'Topic name cannot exceed 100 characters'),
-  description: Yup.string().max(500, 'Description cannot exceed 500 characters'),
   subjectId: Yup.string().required('Subject is required'),
   chapterId: Yup.string().required('Chapter is required'),
   sequence: Yup.number()

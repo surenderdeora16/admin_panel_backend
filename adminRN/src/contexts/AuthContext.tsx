@@ -23,6 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const checkAuthStatus = async () => {
         try {
+            console.log("AuthContext")
             const response = await axios.get('profile', {
                 withCredentials: true
             });

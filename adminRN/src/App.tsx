@@ -14,11 +14,11 @@ const App: React.FC = () => {
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
   return (
     <React.Fragment>
-      <Routes>
+      <Routes>    
         <Route path="/privacy-policy" element={<PrivicyPolicy />} />
         <Route
           path="/login"
