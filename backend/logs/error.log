@@ -510,3 +510,11 @@
 {"level":"error","message":"OPTIONS /api-v1/admin/login - CORS policy violation: Origin not allowed"}
 {"level":"error","message":"OPTIONS /api-v1/admin/login - CORS policy violation: Origin not allowed"}
 {"level":"error","message":"OPTIONS /api-v1/admin/login - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1748636563306-417602256.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1748629326646-674178037.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1748629787223-553647745.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1748628892137-459238909.jpeg - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1748636563306-417602256.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1748629326646-674178037.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1748629787223-553647745.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1748628892137-459238909.jpeg - CORS policy violation: Origin not allowed"}
