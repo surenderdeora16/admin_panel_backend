@@ -47,7 +47,7 @@ router.use(customMethods);
 // });
 
 
-router.post("/upload-edior-image", uploadEditor.single('file'),function (req, res) {
+router.post("/upload-editor-image", uploadEditor.single('file'),function (req, res) {
   console.log("editorimage",);
   if (!req.file) {
     return res.status(400).json({ error: true, msg: "No file uploaded" });

@@ -14,7 +14,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+  }, []);
 
   return (
     <React.Fragment>
