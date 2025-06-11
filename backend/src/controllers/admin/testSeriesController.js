@@ -660,12 +660,19 @@ exports.removeQuestionsFromSection = async (req, res) => {
     }
 
     // Remove questions from section (soft delete)
+    console.log("questionIds??", questionIds)
+    console.log("testSeriesId??", testSeriesId)
+    console.log("sectionId??", sectionId)
+
     const result = await TestSeriesQuestion.updateMany(
-      { testSeriesId, sectionId, questionId: { $in: questionIds } },
+      { testSeriesId, sectionId, questionId: { $in: questionIds }, deletedAt: null },
       { deletedAt: new Date(), updatedBy: req.admin._id },
     )
 
-    if (result.nModified === 0) {
+    // For Mongoose 6+, use result.modifiedCount; for older, use result.nModified
+    const removedCount = result.modifiedCount !== undefined ? result.modifiedCount : result.nModified
+
+    if (removedCount === 0) {
       return res.status(400).json({
         status: false,
         message: "No questions found in the section",
@@ -674,17 +681,17 @@ exports.removeQuestionsFromSection = async (req, res) => {
 
     // Update test series total questions count
     await TestSeries.findByIdAndUpdate(testSeriesId, {
-      $inc: { totalQuestions: -result.nModified },
+      $inc: { totalQuestions: -removedCount },
     })
 
     // Update section total questions count
     await Section.findByIdAndUpdate(sectionId, {
-      $inc: { totalQuestions: -result.nModified },
+      $inc: { totalQuestions: -removedCount },
     })
 
     return res.success({
-      removedCount: result.nModified,
-      message: `${result.nModified} questions removed from section successfully`,
+      removedCount,
+      message: `${removedCount} questions removed from section successfully`,
     })
   } catch (error) {
     console.error("Error removing questions from section:", error)

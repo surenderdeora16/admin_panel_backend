@@ -20,6 +20,7 @@ import {
   FiAlertCircle,
   FiInfo,
   FiArrowLeft,
+  FiEdit,
 } from 'react-icons/fi';
 import {
   BiBook,
@@ -68,6 +69,8 @@ const Questions = () => {
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [showPreview, setShowPreview] = useState<string | null>(null);
+  const [showUpdateModal, setShowUpdateModal] = useState<string | null>(null);
+  const [updateLoading, setUpdateLoading] = useState(false);
 
   // Validation schema for creating a question
   const questionValidationSchema = Yup.object().shape({
@@ -84,6 +87,17 @@ const Questions = () => {
         'Invalid right answer',
       ),
     explanation: Yup.string(),
+  });
+
+  const getInitialFormValues = (question?: any) => ({
+    questionText: question?.questionText || '',
+    option1: question?.option1 || '',
+    option2: question?.option2 || '',
+    option3: question?.option3 || '',
+    option4: question?.option4 || '',
+    option5: question?.option5 || '',
+    rightAnswer: question?.rightAnswer || '',
+    explanation: question?.explanation || '',
   });
 
   // Initial form values for creating a question
@@ -330,6 +344,39 @@ const Questions = () => {
     }
   };
 
+
+
+
+
+const handleUpdateQuestion = async (values: any, questionId: string) => {
+  try {
+    setUpdateLoading(true);
+
+    const questionData = {
+      ...values,
+      subjectId,
+      chapterId,
+      topicId,
+    };
+
+    const response = await AxiosHelper.putData(`/update-questions/${questionId}`, questionData);
+
+    if (response?.data?.status) {
+      toast.success('Question updated successfully');
+      setShowUpdateModal(null);
+      fetchQuestions();
+    } else {
+      throw new Error(response?.data?.message || 'Failed to update question');
+    }
+  } catch (error: any) {
+    console.error('Error updating question:', error);
+    toast.error(error.message || 'Failed to update question');
+  } finally {
+    setUpdateLoading(false);
+  }
+};
+
+
   // Handle search
   const handleSearch = () => {
     setPage(1);
@@ -384,18 +431,6 @@ const Questions = () => {
     } finally {
       setCreateLoading(false);
     }
-  };
-
-  // Get the display value for the right answer
-  const getRightAnswerDisplay = (question: any) => {
-    if (!question || !question.rightAnswer) return 'N/A';
-
-    // Map option1 -> 1, option2 -> 2, etc.
-    const displayValue =
-      QUESTION_FORMAT.RIGHT_ANSWER_REVERSE_MAP[question.rightAnswer];
-
-    // Return the actual option value
-    return question[question.rightAnswer] || 'N/A';
   };
 
   // Handle key press for search
@@ -1056,7 +1091,16 @@ const Questions = () => {
                                       <RiEyeLine className="mr-3 h-4 w-4" />
                                       Preview Question
                                     </button>
-
+                                    <button
+                                      onClick={() => {
+                                        setShowUpdateModal(question._id);
+                                        setShowOptionsFor(null);
+                                      }}
+                                      className="flex w-full items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600/50"
+                                    >
+                                      <FiEdit className="mr-3 h-4 w-4" />
+                                      Edit Question
+                                    </button>
                                     {/* Duplicate Button */}
                                     {/* <button
                                       onClick={() => {
@@ -1183,6 +1227,52 @@ const Questions = () => {
                   onSubmit={handleCreateQuestion}
                   isReset={true}
                   disabled={createLoading}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showUpdateModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ zIndex: '214748364' }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-[95%] md:max-w-[98%] w-full max-h-[98vh] overflow-y-auto"
+            >
+              <div className="sticky top-0 z-10 flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center">
+                  <FiEdit className="mr-3 h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  Update Question
+                </h2>
+                <button
+                  onClick={() => setShowUpdateModal(null)}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 transition-colors"
+                >
+                  <FiX className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="p-6">
+                <MyForm
+                  fields={formFields}
+                  initialValues={getInitialFormValues(
+                    questions.find((q) => q._id === showUpdateModal),
+                  )}
+                  validSchema={questionValidationSchema}
+                  onSubmit={(values) =>
+                    handleUpdateQuestion(values, showUpdateModal)
+                  }
+                  isReset={false}
+                  disabled={updateLoading}
                 />
               </div>
             </motion.div>
@@ -1446,7 +1536,7 @@ const Questions = () => {
                           <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-amber-800 dark:text-amber-300">
                             <div
                               dangerouslySetInnerHTML={{
-                                __html: question.option5,
+                                __html: question.explanation,
                               }}
                             />
                           </div>

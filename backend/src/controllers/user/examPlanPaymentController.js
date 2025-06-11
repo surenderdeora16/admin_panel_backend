@@ -157,7 +157,8 @@ exports.getUserPurchasedExamPlans = async (req, res) => {
 exports.checkExamPlanPurchase = async (req, res) => {
   try {
     const { examPlanId } = req.params;
-
+    const { couponCode } = req.body;
+    const userId = req?.user_id;
     // Validate exam plan ID
     if (!examPlanId) {
       return res.noRecords("Exam plan ID is required");
@@ -168,6 +169,27 @@ exports.checkExamPlanPurchase = async (req, res) => {
 
     if (!examPlan) {
       return res.noRecords("Exam plan not found");
+    }
+
+    const originalAmount = examPlan?.price;
+    let discountAmount = null;
+    let finalAmount = null;
+
+    if (couponCode) {
+      try {
+        couponData = await couponService.validateCoupon(
+          couponCode,
+          userId,
+          "EXAM_PLAN",
+          examPlanId,
+          originalAmount
+        );
+
+        discountAmount = couponData?.discountAmount;
+        finalAmount = couponData?.finalAmount;
+      } catch (error) {
+        throw new Error(error.message);
+      }
     }
 
     // Check if user has an active purchase
@@ -203,6 +225,8 @@ exports.checkExamPlanPurchase = async (req, res) => {
         title: examPlan.title,
         price: examPlan.price,
         mrp: examPlan.mrp,
+        discountAmount,
+        finalAmount,
         validityDays: examPlan.validityDays,
       },
     });
@@ -230,7 +254,6 @@ exports.getExamPlanCoupons = async (req, res) => {
 
     // Get exam plan details
     const examPlan = await ExamPlan.findById(examPlanId);
-
 
     if (!examPlan) {
       return res.noRecords("Exam plan not found");
@@ -308,4 +331,3 @@ exports.validateExamPlanCoupon = async (req, res) => {
     return res.someThingWentWrong(error);
   }
 };
-

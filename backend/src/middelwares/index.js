@@ -21,10 +21,12 @@ const showValidationErrors = (req, res, next) => {
             return acc;
         }, {});
 
+        // If there's only one error, return just its value
+        const errorValues = Object.values(errJson);
         return res.status(422).json({
             status: false,
-            message: REQUIRED_PARAMETER_MISING,
-            data: errJson //errors.array()
+            message: errorValues?.length === 1 ? errorValues?.[0] : REQUIRED_PARAMETER_MISING || REQUIRED_PARAMETER_MISING,
+            data: errJson
         });
     }
 

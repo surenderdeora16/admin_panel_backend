@@ -80,7 +80,7 @@ class BannerController {
       if (!isOrderUpdateOnly && !newImages.length && banner.images.filter(img => !img.deletedAt && img.isActive).length === 0) {
         return res.status(400).json({
           status: false,
-          message: "Invalid Input Provided..!!",
+          message: "At least one image is required",
           data: {
             images: "At least one image is required"
           }

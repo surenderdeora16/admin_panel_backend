@@ -100,9 +100,9 @@ const AxiosHelper = {
 
     return axios.put(url, data, mergedConfig).catch(errorHandler);
   },
-  deleteData: async (url: any) => {
+  deleteData: async (url: any, data?:any) => {
     commonHeaders();
-    return axios.delete(url).catch(errorHandler);
+    return axios.delete(url, data).catch(errorHandler);
   },
 };
 

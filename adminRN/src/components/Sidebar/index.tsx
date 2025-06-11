@@ -145,14 +145,14 @@ const MENU_CONFIG = {
       ],
     },
     {
-      name: 'Admit, Result & Links',
+      name: 'Links',
       icon: CgWebsite,
       children: [
-        {
-          name: 'Admit & Result',
-          path: '/settings/admin-card-and-result',
-          icon: GrScorecard,
-        },
+        // {
+        //   name: 'Admit & Result',
+        //   path: '/settings/admin-card-and-result',
+        //   icon: GrScorecard,
+        // },
         // {
         //   name: 'SMS Service',
         //   path: '/settings/sms-service',

@@ -354,7 +354,7 @@ router.post("/questions", questionController.createQuestion); // add this to cre
 router.delete("/questions/:id", questionController.deleteQuestion);
 // router.get("/questions/topic/:topicId",  questionController.getQuestionsByTopic)
 // // router.get("questions/:id",  questionController.getQuestion)
-// router.put("update-questions/:id",  questionController.updateQuestion)
+router.put("/update-questions/:id",  questionController.updateQuestion)
 // // router.delete("/:id",  questionController.deleteQuestion)
 
 // Batch Routes

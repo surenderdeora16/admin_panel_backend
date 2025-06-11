@@ -7,7 +7,7 @@ const catchAsync = require("../../utils/catchAsync");
 
 exports.dashboard = async (req, res) => {
   try {
-    const { limit = 5, pageNo = 1 } = req.query;
+    const { limit = 10, pageNo = 1 } = req.query;
 
     // Fetch banners
     const banners = await Banner.findOne({ isActive: true })
@@ -27,12 +27,15 @@ exports.dashboard = async (req, res) => {
       .lean();
 
     // Fetch upcoming govt exams
-    const exams = await UpcomingGovtExam.find({ status: true, deletedAt: null })
-      .sort({ examDate: 1 })
-      .skip((pageNo - 1) * limit)
-      .limit(limit)
+    const examsRaw = await UpcomingGovtExam.find({ status: true, deletedAt: null })
+      .sort({ createdAt: -1 })
       .lean();
 
+    const exams = examsRaw.map(exam => ({
+      ...exam,
+      dateStatus: exam.examDate ? exam.examDate : "Date to be announced soon"
+    }));
+  
     const response = {
       banners: bannerImages,
       batches,

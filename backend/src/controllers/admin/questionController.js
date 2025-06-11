@@ -4,6 +4,9 @@ const Topic = require("../../models/Topic");
 const xlsx = require("xlsx");
 const fs = require("fs");
 const path = require("path");
+const Subject = require("../../models/Subject");
+const Chapter = require("../../models/Chapter");
+const mongoose = require("mongoose")
 
 // Get questions by topic
 exports.getQuestions = async (req, res) => {
@@ -375,6 +378,84 @@ exports.deleteQuestion = async (req, res) => {
 }
 
 
+
+exports.updateQuestion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      questionText,
+      option1,
+      option2,
+      option3,
+      option4,
+      option5,
+      rightAnswer,
+      explanation,
+      subjectId,
+      chapterId,
+      topicId,
+      correctMarks,
+      negativeMarks,
+    } = req.body;
+
+    // Validate question ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ status: false, message: 'Invalid question ID' });
+    }
+
+    // Check if question exists
+    const question = await Question.findById(id);
+    if (!question) {
+      return res.status(404).json({ status: false, message: 'Question not found' });
+    }
+
+    // Validate references
+    const subject = await Subject.findById(subjectId);
+    if (!subject) {
+      return res.status(404).json({ status: false, message: 'Subject not found' });
+    }
+
+    const chapter = await Chapter.findById(chapterId);
+    if (!chapter) {
+      return res.status(404).json({ status: false, message: 'Chapter not found' });
+    }
+
+    const topic = await Topic.findById(topicId);
+    if (!topic) {
+      return res.status(404).json({ status: false, message: 'Topic not found' });
+    }
+
+    // Update question fields
+    question.questionText = questionText;
+    question.option1 = option1;
+    question.option2 = option2;
+    question.option3 = option3;
+    question.option4 = option4;
+    question.option5 = option5 || '';
+    question.rightAnswer = rightAnswer;
+    question.explanation = explanation || '';
+    question.subjectId = subjectId;
+    question.chapterId = chapterId;
+    question.topicId = topicId;
+    question.correctMarks = correctMarks || question.correctMarks;
+    question.negativeMarks = negativeMarks || question.negativeMarks;
+    question.updatedBy = req.user?._id;
+    question.updatedAt = new Date();
+
+    await question.save();
+
+    res.status(200).json({
+      status: true,
+      message: 'Question updated successfully',
+      data: question,
+    });
+  } catch (error) {
+    console.error('Error updating question:', error);
+    res.status(500).json({ status: false, message: 'Server error' });
+  }
+};
+
+
 // const Question = require("../../models/Question")
 // const Topic = require("../../models/Topic")
 // const xlsx = require("xlsx")
@@ -541,86 +622,7 @@ exports.deleteQuestion = async (req, res) => {
 // }
 
 // // Update a question
-// exports.updateQuestion = async (req, res) => {
-//   try {
-//     const {
-//       questionText,
-//       option1,
-//       option2,
-//       option3,
-//       option4,
-//       option5,
-//       rightAnswer,
-//       explanation,
-//       subjectId,
-//       chapterId,
-//       topicId,
-//       correctMarks,
-//       negativeMarks,
-//       status,
-//     } = req.body
 
-//     // Find question
-//     const question = await Question.findById(req.params.id)
-
-//     if (!question) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Question not found",
-//       })
-//     }
-
-//     // Check if topic is being changed
-//     const oldTopicId = question.topicId
-//     const newTopicId = topicId || oldTopicId
-
-//     // Update question
-//     const updatedQuestion = await Question.findByIdAndUpdate(
-//       req.params.id,
-//       {
-//         questionText: questionText || question.questionText,
-//         option1: option1 || question.option1,
-//         option2: option2 || question.option2,
-//         option3: option3 || question.option3,
-//         option4: option4 || question.option4,
-//         option5: option5 || question.option5,
-//         rightAnswer: rightAnswer || question.rightAnswer,
-//         explanation: explanation || question.explanation,
-//         subjectId: subjectId || question.subjectId,
-//         chapterId: chapterId || question.chapterId,
-//         topicId: newTopicId,
-//         correctMarks: correctMarks || question.correctMarks,
-//         negativeMarks: negativeMarks || question.negativeMarks,
-//         status: status !== undefined ? status : question.status,
-//         updatedBy: req.user._id,
-//       },
-//       { new: true, runValidators: true },
-//     )
-
-//     // Update topic question counts if topic changed
-//     if (oldTopicId.toString() !== newTopicId.toString()) {
-//       await Topic.findByIdAndUpdate(oldTopicId, {
-//         $inc: { questionCount: -1 },
-//       })
-//       await Topic.findByIdAndUpdate(newTopicId, {
-//         $inc: { questionCount: 1 },
-//       })
-//     }
-
-//     return res.status(200).json({
-//       success: true,
-//       data: updatedQuestion,
-//       message: "Question updated successfully",
-//     })
-//   } catch (error) {
-//     console.error("Error updating question:", error)
-//     return res.status(500).json({
-//       success: false,
-//       message: "Failed to update question",
-//       error: error.message,
-//     })
-//   }
-// }
 
 // // Delete a question
 // exports.deleteQuestion = async (req, res) => {

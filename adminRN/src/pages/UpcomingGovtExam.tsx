@@ -9,9 +9,6 @@ const upcomingExamValidation = Yup.object().shape({
     .required('Exam title is required')
     .max(200, 'Title must be less than 200 characters'),
   description: Yup.string().optional(),
-  examDate: Yup.date()
-    .optional()
-    .typeError('Invalid date format. Use YYYY-MM-DD'),
   status: Yup.boolean().required('Status is required'),
   image: Yup.mixed().optional(),
 });
@@ -44,21 +41,32 @@ const tableColumns = [
     ),
   },
   { header: 'Exam Title', accessor: 'title', sortable: true },
-  {
-    header: 'Exam Description',
-    accessor: 'description',
-    render: (value: any) => (
-      <div
-        className="max-w-[400px] max-h-[135px] text-ellipsis overflow-hidden bg-white shadow-3 p-3 rounded-lg line-clamp-5"
-        title={value?.replace(/<[^>]*>?/gm, '')}
-      >
-        {value?.replace(/<[^>]*>?/gm, '')}
-      </div>
-    ),
-  },
+  // {
+  //   header: 'Exam Description',
+  //   accessor: 'description',
+  //   render: (value: any) => (
+  //     <div
+  //       className="max-w-[400px] max-h-[135px] text-ellipsis overflow-hidden bg-white shadow-3 p-3 rounded-lg line-clamp-5"
+  //       title={value?.replace(/<[^>]*>?/gm, '')}
+  //     >
+  //       {value?.replace(/<[^>]*>?/gm, '')}
+  //     </div>
+  //   ),
+  // },
   {
     header: 'Exam Date',
     accessor: 'examDate',
+    sortable: true,
+    render: (value: any) =>
+      new Date(value).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+  },
+  {
+    header: 'Added On',
+    accessor: 'createdAt',
     sortable: true,
     render: (value: any) =>
       new Date(value).toLocaleDateString('en-US', {
@@ -84,7 +92,7 @@ const UpcomingGovtExam = () => {
   const initialFormValues = {
     title: '',
     description: '',
-    examDate:  '',
+    examDate:  null,
     status: true,
     image: initialEditData?.image || null
   };
