@@ -723,6 +723,13 @@ exports.submitExam = async (req, res) => {
     });
 
     exam.rank = betterExams + 1;
+
+    const totalCandidatesAtSubmission = await Exam.countDocuments({
+      testSeriesId: exam.testSeriesId,
+      status: "COMPLETED",
+    });
+    exam.totalCandidatesAtSubmission = totalCandidatesAtSubmission;
+
     await exam.save({ session });
 
     // Commit transaction
@@ -741,6 +748,7 @@ exports.submitExam = async (req, res) => {
       maxScore: exam.maxScore,
       percentage: exam.percentage,
       rank: exam.rank,
+      totalCandidatesAtSubmission:exam.totalCandidatesAtSubmission
     });
   } catch (error) {
     await session.abortTransaction();
@@ -1847,6 +1855,7 @@ exports.getExamResultList = async (req, res) => {
     const total = await Exam.countDocuments({
       userId,
       status: "COMPLETED",
+      deletedAt: null
     });
 
     if (total === 0) {
@@ -1857,6 +1866,7 @@ exports.getExamResultList = async (req, res) => {
     const exams = await Exam.find({
       userId,
       status: "COMPLETED",
+      deletedAt: null
     })
       .populate("testSeriesId", "title correctMarks")
       .sort({ endTime: -1 })

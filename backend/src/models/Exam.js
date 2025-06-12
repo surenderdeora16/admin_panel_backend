@@ -67,6 +67,9 @@ const ExamSchema = new Schema(
     rank: {
       type: Number,
     },
+    totalCandidatesAtSubmission: {
+      type: Number,
+    },
     sectionTimings: [
       {
         sectionId: {
@@ -92,7 +95,6 @@ const ExamSchema = new Schema(
   },
   { timestamps: true }
 );
-
 
 // Add index in Exam model
 ExamSchema.index({ status: 1, endTime: 1 }); // For faster expired exam queries
