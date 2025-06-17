@@ -97,6 +97,7 @@ exports.getNotesByExamPlan = async (req, res) => {
   try {
     const { examPlanId } = req.params;
     const userId = req.user._id;
+    console.log("examPlanId", examPlanId);
 
     if (!examPlanId || !ObjectId.isValid(examPlanId)) {
       return res.status(400).json({
@@ -115,7 +116,9 @@ exports.getNotesByExamPlan = async (req, res) => {
     const notes = await Note.find({
       examPlanId,
       status: true,
-    }).sort({ sequence: 1, createdAt: -1 });
+    })
+    .populate("examPlanId", "title price mrp validityDays")
+    .sort({ sequence: 1, createdAt: -1 });
 
     // Check if the user has purchased this exam plan
     const purchase = await UserPurchase.findOne({
@@ -393,7 +396,7 @@ exports.getAllNotes = async (req, res) => {
     // Get all active notes
     const notes = await Note.find({
       status: true,
-      deletedAt: null, 
+      deletedAt: null,
     })
       .populate("examPlanId", "title price mrp validityDays")
       .sort({ examPlanId: 1, sequence: 1, createdAt: -1 });
@@ -420,7 +423,7 @@ exports.getAllNotes = async (req, res) => {
       if (!notesByExamPlan[examPlanId]) {
         notesByExamPlan[examPlanId] = {
           examPlan: {
-           ...note?.examPlanId?.toObject(),
+            ...note?.examPlanId?.toObject(),
             hasPurchased: purchasedExamPlanIds?.has(examPlanId),
           },
           notes: [],

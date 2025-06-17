@@ -73,3 +73,5 @@
 {"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading 'title')","service":"lms-api","timestamp":"2025-05-23 03:56:52","userId":"67eef5d7c820b2008c63e357"}
 {"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading 'title')","service":"lms-api","timestamp":"2025-05-23 21:40:27","userId":"67eef5d7c820b2008c63e357"}
 {"error":{},"level":"error","message":"Error in getAllNotes: Cannot read properties of undefined (reading 'title')","service":"lms-api","timestamp":"2025-05-23 21:43:27","userId":"67eef5d7c820b2008c63e357"}
+{"error":{},"level":"error","message":"Error in getNotesByExamPlan: conosole is not defined","service":"lms-api","timestamp":"2025-06-18 00:41:10","userId":"67e989a03de126aa23c879f2"}
+{"error":{},"level":"error","message":"Error in getNotesByExamPlan: examPlanIds is not defined","service":"lms-api","timestamp":"2025-06-18 00:41:59","userId":"67e989a03de126aa23c879f2"}

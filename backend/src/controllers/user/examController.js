@@ -9,13 +9,17 @@ const UserPurchase = require("../../models/UserPurchase");
 const mongoose = require("mongoose");
 const language = require("../../languages/english");
 const { scheduleExamAutoSubmit } = require("../../services/examService");
-const User = require("../../models/User")
-const { generateResultPDF, generateResultPDFAlternative } = require("../../services/pdfGenerationService")
-const { calculatePercentile, getPerformanceInsights } = require("../../services/analyticsService")
-const path = require("path")
-const fs = require("fs")
-
-
+const User = require("../../models/User");
+const {
+  generateResultPDF,
+  generateResultPDFAlternative,
+} = require("../../services/pdfGenerationService");
+const {
+  calculatePercentile,
+  getPerformanceInsights,
+} = require("../../services/analyticsService");
+const path = require("path");
+const fs = require("fs");
 
 /**
  * @desc    Start a new exam
@@ -748,7 +752,7 @@ exports.submitExam = async (req, res) => {
       maxScore: exam.maxScore,
       percentage: exam.percentage,
       rank: exam.rank,
-      totalCandidatesAtSubmission:exam.totalCandidatesAtSubmission
+      totalCandidatesAtSubmission: exam.totalCandidatesAtSubmission,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -862,7 +866,6 @@ exports.autoSubmitExam = async (examId) => {
   }
 };
 
-
 /**
  * @desc    Get all exam questions structured by sections
  * @route   GET /api/exams/:examId/all-questions
@@ -870,8 +873,8 @@ exports.autoSubmitExam = async (examId) => {
  */
 exports.getAllExamQuestions = async (req, res) => {
   try {
-    const { examId } = req.params
-    const userId = req.user._id
+    const { examId } = req.params;
+    const userId = req.user._id;
 
     // Check if exam exists and belongs to the user
     const exam = await Exam.findOne({
@@ -879,31 +882,34 @@ exports.getAllExamQuestions = async (req, res) => {
       userId,
     }).populate({
       path: "testSeriesId",
-      select: "title duration correctMarks negativeMarks passingPercentage instructions",
-    })
+      select:
+        "title duration correctMarks negativeMarks passingPercentage instructions",
+    });
 
     if (!exam) {
-      return res.noRecords("Exam not found")
+      return res.noRecords("Exam not found");
     }
 
     // Check if exam is still ongoing
     if (exam.status !== "STARTED") {
-      return res.noRecords("Exam has already been completed")
+      return res.noRecords("Exam has already been completed");
     }
 
     // Check if exam time has expired
     if (new Date() > new Date(exam.endTime)) {
-      return res.noRecords("Exam time has expired. The exam will be auto-submitted.")
+      return res.noRecords(
+        "Exam time has expired. The exam will be auto-submitted."
+      );
     }
 
     // Get all sections for this test series
     const sections = await Section.find({
       testSeriesId: exam.testSeriesId._id,
       status: true,
-    }).sort({ sequence: 1 })
+    }).sort({ sequence: 1 });
 
     if (sections.length === 0) {
-      return res.noRecords("No sections found for this exam")
+      return res.noRecords("No sections found for this exam");
     }
 
     // Get all exam questions
@@ -918,18 +924,20 @@ exports.getAllExamQuestions = async (req, res) => {
         path: "sectionId",
         select: "name sequence",
       })
-      .sort({ sequence: 1 })
+      .sort({ sequence: 1 });
 
     if (examQuestions.length === 0) {
-      return res.noRecords("No questions found for this exam")
+      return res.noRecords("No questions found for this exam");
     }
 
     // Structure questions by sections
-    const structuredSections = []
+    const structuredSections = [];
 
     for (const section of sections) {
       // Filter questions for this section
-      const sectionQuestions = examQuestions.filter((eq) => eq.sectionId._id.toString() === section._id.toString())
+      const sectionQuestions = examQuestions.filter(
+        (eq) => eq.sectionId._id.toString() === section._id.toString()
+      );
 
       // Format questions to remove sensitive information
       const formattedQuestions = sectionQuestions.map((eq) => ({
@@ -947,16 +955,21 @@ exports.getAllExamQuestions = async (req, res) => {
         isMarkedForReview: eq.isMarkedForReview,
         status: eq.status,
         visitCount: eq.visitCount,
-      }))
+      }));
 
       // Get section stats
       const sectionStats = {
         totalQuestions: sectionQuestions.length,
-        attempted: sectionQuestions.filter((eq) => eq.status === "ATTEMPTED").length,
-        unattempted: sectionQuestions.filter((eq) => eq.status === "UNATTEMPTED").length,
-        skipped: sectionQuestions.filter((eq) => eq.status === "SKIPPED").length,
-        markedForReview: sectionQuestions.filter((eq) => eq.isMarkedForReview).length,
-      }
+        attempted: sectionQuestions.filter((eq) => eq.status === "ATTEMPTED")
+          .length,
+        unattempted: sectionQuestions.filter(
+          (eq) => eq.status === "UNATTEMPTED"
+        ).length,
+        skipped: sectionQuestions.filter((eq) => eq.status === "SKIPPED")
+          .length,
+        markedForReview: sectionQuestions.filter((eq) => eq.isMarkedForReview)
+          .length,
+      };
 
       // Add section with its questions to the structured sections array
       structuredSections.push({
@@ -965,22 +978,27 @@ exports.getAllExamQuestions = async (req, res) => {
         sequence: section.sequence,
         questions: formattedQuestions,
         stats: sectionStats,
-      })
+      });
     }
 
     // Calculate overall exam stats
     const overallStats = {
       totalQuestions: examQuestions.length,
       attempted: examQuestions.filter((eq) => eq.status === "ATTEMPTED").length,
-      unattempted: examQuestions.filter((eq) => eq.status === "UNATTEMPTED").length,
+      unattempted: examQuestions.filter((eq) => eq.status === "UNATTEMPTED")
+        .length,
       skipped: examQuestions.filter((eq) => eq.status === "SKIPPED").length,
-      markedForReview: examQuestions.filter((eq) => eq.isMarkedForReview).length,
-    }
+      markedForReview: examQuestions.filter((eq) => eq.isMarkedForReview)
+        .length,
+    };
 
     // Calculate remaining time
-    const remainingTime = Math.max(0, new Date(exam.endTime).getTime() - new Date().getTime())
-    const remainingMinutes = Math.floor(remainingTime / 60000)
-    const remainingSeconds = Math.floor((remainingTime % 60000) / 1000)
+    const remainingTime = Math.max(
+      0,
+      new Date(exam.endTime).getTime() - new Date().getTime()
+    );
+    const remainingMinutes = Math.floor(remainingTime / 60000);
+    const remainingSeconds = Math.floor((remainingTime % 60000) / 1000);
 
     // Prepare response data
     const responseData = {
@@ -1000,19 +1018,21 @@ exports.getAllExamQuestions = async (req, res) => {
         status: exam.status,
         remainingTime: {
           milliseconds: remainingTime,
-          formatted: `${remainingMinutes}:${remainingSeconds.toString().padStart(2, "0")}`,
+          formatted: `${remainingMinutes}:${remainingSeconds
+            .toString()
+            .padStart(2, "0")}`,
         },
       },
       sections: structuredSections,
       stats: overallStats,
-    }
+    };
 
-    return res.success(responseData, "Exam questions retrieved successfully")
+    return res.success(responseData, "Exam questions retrieved successfully");
   } catch (error) {
-    console.error("Error getting all exam questions:", error)
-    return res.someThingWentWrong(error)
+    console.error("Error getting all exam questions:", error);
+    return res.someThingWentWrong(error);
   }
-}
+};
 
 /**
  * @desc    Answer an exam question (Batch update)
@@ -1020,45 +1040,47 @@ exports.getAllExamQuestions = async (req, res) => {
  * @access  Private (User)
  */
 exports.answerExamQuestionBatch = async (req, res) => {
-  const session = await mongoose.startSession()
-  session.startTransaction()
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
   try {
-    const { examId } = req.params
-    const { questionId, answer, timeSpent, isMarkedForReview } = req.body
-    const userId = req.user._id
+    const { examId } = req.params;
+    const { questionId, answer, timeSpent, isMarkedForReview } = req.body;
+    const userId = req.user._id;
 
     // Validate required fields
     if (!questionId || answer === undefined) {
-      await session.abortTransaction()
-      session.endSession()
-      return res.noRecords("Question ID and answer are required")
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("Question ID and answer are required");
     }
 
     // Check if exam exists and belongs to the user
     const exam = await Exam.findOne({
       _id: examId,
       userId,
-    })
+    });
 
     if (!exam) {
-      await session.abortTransaction()
-      session.endSession()
-      return res.noRecords("Exam not found")
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("Exam not found");
     }
 
     // Check if exam is still ongoing
     if (exam.status !== "STARTED") {
-      await session.abortTransaction()
-      session.endSession()
-      return res.noRecords("Exam has already been completed")
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("Exam has already been completed");
     }
 
     // Check if exam time has expired
     if (new Date() > new Date(exam.endTime)) {
-      await session.abortTransaction()
-      session.endSession()
-      return res.noRecords("Exam time has expired. The exam will be auto-submitted.")
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords(
+        "Exam time has expired. The exam will be auto-submitted."
+      );
     }
 
     // Get exam question
@@ -1068,46 +1090,46 @@ exports.answerExamQuestionBatch = async (req, res) => {
     }).populate({
       path: "questionId",
       select: "rightAnswer",
-    })
+    });
 
     if (!examQuestion) {
-      await session.abortTransaction()
-      session.endSession()
-      return res.noRecords("Question not found")
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("Question not found");
     }
 
     // Update exam question
-    examQuestion.userAnswer = answer
-    examQuestion.isCorrect = answer === examQuestion.questionId.rightAnswer
-    examQuestion.status = "ATTEMPTED"
+    examQuestion.userAnswer = answer;
+    examQuestion.isCorrect = answer === examQuestion.questionId.rightAnswer;
+    examQuestion.status = "ATTEMPTED";
 
     if (isMarkedForReview !== undefined) {
-      examQuestion.isMarkedForReview = isMarkedForReview
+      examQuestion.isMarkedForReview = isMarkedForReview;
     }
 
     if (timeSpent) {
-      examQuestion.timeSpent += Number.parseInt(timeSpent)
+      examQuestion.timeSpent += Number.parseInt(timeSpent);
     }
 
-    await examQuestion.save({ session })
+    await examQuestion.save({ session });
 
     // Commit transaction
-    await session.commitTransaction()
-    session.endSession()
+    await session.commitTransaction();
+    session.endSession();
 
     return res.successUpdate({
       id: examQuestion._id,
       userAnswer: examQuestion.userAnswer,
       isMarkedForReview: examQuestion.isMarkedForReview,
       status: examQuestion.status,
-    })
+    });
   } catch (error) {
-    await session.abortTransaction()
-    session.endSession()
-    console.error("Error answering exam question:", error)
-    return res.someThingWentWrong(error)
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Error answering exam question:", error);
+    return res.someThingWentWrong(error);
   }
-}
+};
 
 /**
  * @desc    Update question status in batch (mark/skip/review)
@@ -1115,98 +1137,99 @@ exports.answerExamQuestionBatch = async (req, res) => {
  * @access  Private (User)
  */
 exports.updateQuestionStatusBatch = async (req, res) => {
-  const session = await mongoose.startSession()
-  session.startTransaction()
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
   try {
-    const { examId } = req.params
-    const { questionId, status, isMarkedForReview, timeSpent } = req.body
-    const userId = req.user._id
+    const { examId } = req.params;
+    const { questionId, status, isMarkedForReview, timeSpent } = req.body;
+    const userId = req.user._id;
 
     // Validate required fields
     if (!questionId || !status) {
-      await session.abortTransaction()
-      session.endSession()
-      return res.noRecords("Question ID and status are required")
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("Question ID and status are required");
     }
 
     // Validate status
     if (!["ATTEMPTED", "UNATTEMPTED", "SKIPPED"].includes(status)) {
-      await session.abortTransaction()
-      session.endSession()
-      return res.noRecords("Invalid status. Must be ATTEMPTED, UNATTEMPTED, or SKIPPED")
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords(
+        "Invalid status. Must be ATTEMPTED, UNATTEMPTED, or SKIPPED"
+      );
     }
 
     // Check if exam exists and belongs to the user
     const exam = await Exam.findOne({
       _id: examId,
       userId,
-    })
+    });
 
     if (!exam) {
-      await session.abortTransaction()
-      session.endSession()
-      return res.noRecords("Exam not found")
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("Exam not found");
     }
 
     // Check if exam is still ongoing
     if (exam.status !== "STARTED") {
-      await session.abortTransaction()
-      session.endSession()
-      return res.noRecords("Exam has already been completed")
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("Exam has already been completed");
     }
 
     // Check if exam time has expired
     if (new Date() > new Date(exam.endTime)) {
-      await session.abortTransaction()
-      session.endSession()
-      return res.noRecords("Exam time has expired. The exam will be auto-submitted.")
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords(
+        "Exam time has expired. The exam will be auto-submitted."
+      );
     }
 
     // Get exam question
     const examQuestion = await ExamQuestion.findOne({
       examId,
       _id: questionId,
-    })
+    });
 
     if (!examQuestion) {
-      await session.abortTransaction()
-      session.endSession()
-      return res.noRecords("Question not found")
+      await session.abortTransaction();
+      session.endSession();
+      return res.noRecords("Question not found");
     }
 
     // Update exam question
-    examQuestion.status = status
+    examQuestion.status = status;
 
     if (isMarkedForReview !== undefined) {
-      examQuestion.isMarkedForReview = isMarkedForReview
+      examQuestion.isMarkedForReview = isMarkedForReview;
     }
 
     if (timeSpent) {
-      examQuestion.timeSpent += Number.parseInt(timeSpent)
+      examQuestion.timeSpent += Number.parseInt(timeSpent);
     }
 
-    await examQuestion.save({ session })
+    await examQuestion.save({ session });
 
     // Commit transaction
-    await session.commitTransaction()
-    session.endSession()
+    await session.commitTransaction();
+    session.endSession();
 
     return res.successUpdate({
       id: examQuestion._id,
       status: examQuestion.status,
       isMarkedForReview: examQuestion.isMarkedForReview,
-    })
+    });
   } catch (error) {
-    await session.abortTransaction()
-    session.endSession()
-    console.error("Error updating question status:", error)
-    return res.someThingWentWrong(error)
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Error updating question status:", error);
+    return res.someThingWentWrong(error);
   }
-}
-
-
-
+};
 
 /**
  * @desc    Get exam result
@@ -1215,81 +1238,91 @@ exports.updateQuestionStatusBatch = async (req, res) => {
  */
 exports.getExamResult = async (req, res) => {
   try {
-    const { examId } = req.params
-    const userId = req.user._id
+    const { examId } = req.params;
+    const userId = req.user._id;
 
     // Check if exam exists and belongs to the user
     const exam = await Exam.findOne({
       _id: examId,
       userId,
-    }).populate("testSeriesId")
+    }).populate("testSeriesId");
 
     if (!exam) {
-      return res.noRecords("Exam not found")
+      return res.noRecords("Exam not found");
     }
 
     // Check if exam is completed
     if (exam.status !== "COMPLETED") {
-      return res.noRecords("Exam has not been completed yet")
+      return res.noRecords("Exam has not been completed yet");
     }
 
     // Get all sections
     const sections = await Section.find({
       testSeriesId: exam.testSeriesId,
-    }).sort({ sequence: 1 })
+    }).sort({ sequence: 1 });
 
     // Get section-wise statistics
-    const sectionStats = []
+    const sectionStats = [];
     for (const section of sections) {
       const sectionQuestions = await ExamQuestion.find({
         examId,
         sectionId: section._id,
-      })
+      });
 
       const sectionStat = {
         sectionId: section._id,
         name: section.name,
         totalQuestions: sectionQuestions.length,
-        attempted: sectionQuestions.filter((eq) => eq.status === "ATTEMPTED").length,
+        attempted: sectionQuestions.filter((eq) => eq.status === "ATTEMPTED")
+          .length,
         correct: sectionQuestions.filter((eq) => eq.isCorrect === true).length,
         wrong: sectionQuestions.filter((eq) => eq.isCorrect === false).length,
-        skipped: sectionQuestions.filter((eq) => eq.status === "SKIPPED").length,
-      }
+        skipped: sectionQuestions.filter((eq) => eq.status === "SKIPPED")
+          .length,
+      };
 
-      sectionStats.push(sectionStat)
+      sectionStats.push(sectionStat);
     }
 
     // Calculate time statistics
-    const totalDuration = (new Date(exam.endTime) - new Date(exam.startTime)) / 1000 // in seconds
+    const totalDuration =
+      (new Date(exam.endTime) - new Date(exam.startTime)) / 1000; // in seconds
     const sectionTimings = exam.sectionTimings.map((st) => {
-      const section = sections.find((s) => s._id.toString() === st.sectionId.toString())
+      const section = sections.find(
+        (s) => s._id.toString() === st.sectionId.toString()
+      );
       return {
         sectionId: st.sectionId,
         name: section ? section.name : "Unknown",
         totalTimeSpent: st.totalTimeSpent,
-      }
-    })
+      };
+    });
 
     // Generate PDF for this exam result
-    let pdfUrl = null
-    let pdfGenerationError = null
+    let pdfUrl = null;
+    let pdfGenerationError = null;
 
     try {
       // Check if PDF already exists
-      const timestamp = new Date(exam.endTime).getTime()
-      const filename = `exam_result_${examId}_${timestamp}.pdf`
-      const uploadsDir = path.join(process.cwd(), "public", "uploads", "results")
-      const filepath = path.join(uploadsDir, filename)
+      const timestamp = new Date(exam.endTime).getTime();
+      const filename = `exam_result_${examId}_${timestamp}.pdf`;
+      const uploadsDir = path.join(
+        process.cwd(),
+        "public",
+        "uploads",
+        "results"
+      );
+      const filepath = path.join(uploadsDir, filename);
 
       // Ensure uploads directory exists
       if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true })
+        fs.mkdirSync(uploadsDir, { recursive: true });
       }
 
       // Check if PDF already exists
       if (!fs.existsSync(filepath)) {
         // Generate new PDF
-        console.log("Generating new PDF for exam:", examId)
+        console.log("Generating new PDF for exam:", examId);
 
         // Get detailed data for PDF generation
         const examQuestions = await ExamQuestion.find({ examId })
@@ -1307,46 +1340,57 @@ exports.getExamResult = async (req, res) => {
             path: "sectionId",
             select: "name sequence",
           })
-          .sort({ sequence: 1 })
+          .sort({ sequence: 1 });
 
         // Get user data
-        const user = await User.findById(userId).select("name email mobile")
+        const user = await User.findById(userId).select("name email mobile");
 
         // Build result data for PDF
-        const resultData = await buildDetailedResultData(exam, examQuestions, sections, user)
+        const resultData = await buildDetailedResultData(
+          exam,
+          examQuestions,
+          sections,
+          user
+        );
 
         // Try primary PDF generation method (Puppeteer)
-        let pdfBuffer = null
+        let pdfBuffer = null;
         try {
-          pdfBuffer = await generateResultPDF(resultData)
+          pdfBuffer = await generateResultPDF(resultData);
         } catch (puppeteerError) {
-          console.warn("Puppeteer PDF generation failed, trying alternative method:", puppeteerError.message)
+          console.warn(
+            "Puppeteer PDF generation failed, trying alternative method:",
+            puppeteerError.message
+          );
 
           // Try alternative PDF generation method (html-pdf)
           try {
-            pdfBuffer = await generateResultPDFAlternative(resultData)
+            pdfBuffer = await generateResultPDFAlternative(resultData);
           } catch (alternativeError) {
-            console.error("Alternative PDF generation also failed:", alternativeError.message)
-            throw new Error("Both PDF generation methods failed")
+            console.error(
+              "Alternative PDF generation also failed:",
+              alternativeError.message
+            );
+            throw new Error("Both PDF generation methods failed");
           }
         }
 
         if (pdfBuffer) {
           // Save PDF file
-          fs.writeFileSync(filepath, pdfBuffer)
-          pdfUrl = `${process.env.BASEURL}/uploads/results/${filename}`
-          console.log("PDF generated successfully:", pdfUrl)
+          fs.writeFileSync(filepath, pdfBuffer);
+          pdfUrl = `${process.env.BASEURL}/uploads/results/${filename}`;
+          console.log("PDF generated successfully:", pdfUrl);
         } else {
-          pdfGenerationError = "Failed to generate PDF buffer"
+          pdfGenerationError = "Failed to generate PDF buffer";
         }
       } else {
         // PDF already exists
-        pdfUrl = `${process.env.BASEURL}/uploads/results/${filename}`
-        console.log("Using existing PDF:", pdfUrl)
+        pdfUrl = `${process.env.BASEURL}/uploads/results/${filename}`;
+        console.log("Using existing PDF:", pdfUrl);
       }
     } catch (error) {
-      console.error("Error generating PDF:", error)
-      pdfGenerationError = error.message
+      console.error("Error generating PDF:", error);
+      pdfGenerationError = error.message;
     }
 
     // Format result
@@ -1378,15 +1422,14 @@ exports.getExamResult = async (req, res) => {
         error: pdfGenerationError,
         generatedAt: pdfUrl ? new Date().toISOString() : null,
       },
-    }
+    };
 
-    return res.success(result)
+    return res.success(result);
   } catch (error) {
-    console.error("Error getting exam result:", error)
-    return res.someThingWentWrong(error)
+    console.error("Error getting exam result:", error);
+    return res.someThingWentWrong(error);
   }
-}
-
+};
 
 /**
  * @desc    Get exam review
@@ -1395,22 +1438,22 @@ exports.getExamResult = async (req, res) => {
  */
 exports.getExamReview = async (req, res) => {
   try {
-    const { examId } = req.params
-    const userId = req.user._id
+    const { examId } = req.params;
+    const userId = req.user._id;
 
     // Check if exam exists and belongs to the user
     const exam = await Exam.findOne({
       _id: examId,
       userId,
-    })
+    });
 
     if (!exam) {
-      return res.noRecords("Exam not found")
+      return res.noRecords("Exam not found");
     }
 
     // Check if exam is completed
     if (exam.status !== "COMPLETED") {
-      return res.noRecords("Exam has not been completed yet")
+      return res.noRecords("Exam has not been completed yet");
     }
 
     // Get all exam questions with answers
@@ -1419,13 +1462,14 @@ exports.getExamReview = async (req, res) => {
     })
       .populate({
         path: "questionId",
-        select: "questionText option1 option2 option3 option4 option5 rightAnswer explanation",
+        select:
+          "questionText option1 option2 option3 option4 option5 rightAnswer explanation",
       })
       .populate({
         path: "sectionId",
         select: "name sequence",
       })
-      .sort({ sequence: 1 })
+      .sort({ sequence: 1 });
 
     // Format questions with correct answers
     const reviewQuestions = examQuestions?.map((eq) => ({
@@ -1451,86 +1495,102 @@ exports.getExamReview = async (req, res) => {
       status: eq.status,
       isMarkedForReview: eq.isMarkedForReview,
       timeSpent: eq.timeSpent,
-    }))
+    }));
 
     // Group questions by section
-    const sectionMap = new Map()
+    const sectionMap = new Map();
     reviewQuestions?.forEach((q) => {
       if (!sectionMap.has(q?.section?.id?.toString())) {
         sectionMap.set(q.section?.id?.toString(), {
           section: q?.section,
           questions: [],
-        })
+        });
       }
-      sectionMap.get(q.section.id?.toString()).questions.push(q)
-    })
+      sectionMap.get(q.section.id?.toString()).questions.push(q);
+    });
 
-    const sectionReviews = Array.from(sectionMap.values())
+    const sectionReviews = Array.from(sectionMap.values());
 
     // Generate or get existing PDF URL
-    let pdfUrl = null
-    let pdfGenerationError = null
+    let pdfUrl = null;
+    let pdfGenerationError = null;
 
     try {
       // Check if PDF already exists
-      const timestamp = new Date(exam.endTime).getTime()
-      const filename = `exam_result_${examId}_${timestamp}.pdf`
-      const uploadsDir = path.join(process.cwd(), "public", "uploads", "results")
-      const filepath = path.join(uploadsDir, filename)
+      const timestamp = new Date(exam.endTime).getTime();
+      const filename = `exam_result_${examId}_${timestamp}.pdf`;
+      const uploadsDir = path.join(
+        process.cwd(),
+        "public",
+        "uploads",
+        "results"
+      );
+      const filepath = path.join(uploadsDir, filename);
 
       // Ensure uploads directory exists
       if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true })
+        fs.mkdirSync(uploadsDir, { recursive: true });
       }
 
       // Check if PDF already exists
       if (!fs.existsSync(filepath)) {
         // Generate new PDF
-        console.log("Generating new PDF for exam review:", examId)
+        console.log("Generating new PDF for exam review:", examId);
 
         // Get sections
         const sections = await Section.find({
           testSeriesId: exam.testSeriesId,
-        }).sort({ sequence: 1 })
+        }).sort({ sequence: 1 });
 
         // Get user data
-        const user = await User.findById(userId).select("name email mobile")
+        const user = await User.findById(userId).select("name email mobile");
 
         // Build result data for PDF
-        const resultData = await buildDetailedResultData(exam, examQuestions, sections, user)
+        const resultData = await buildDetailedResultData(
+          exam,
+          examQuestions,
+          sections,
+          user
+        );
 
         // Try primary PDF generation method (Puppeteer)
-        let pdfBuffer = null
+        let pdfBuffer = null;
         try {
-          pdfBuffer = await generateResultPDF(resultData)
+          pdfBuffer = await generateResultPDF(resultData);
         } catch (puppeteerError) {
-          console.warn("Puppeteer PDF generation failed, trying alternative method:", puppeteerError.message)
+          console.warn(
+            "Puppeteer PDF generation failed, trying alternative method:",
+            puppeteerError.message
+          );
 
           // Try alternative PDF generation method (html-pdf)
           try {
-            pdfBuffer = await generateResultPDFAlternative(resultData)
+            pdfBuffer = await generateResultPDFAlternative(resultData);
           } catch (alternativeError) {
-            console.error("Alternative PDF generation also failed:", alternativeError.message)
-            throw new Error("Both PDF generation methods failed")
+            console.error(
+              "Alternative PDF generation also failed:",
+              alternativeError.message
+            );
+            throw new Error("Both PDF generation methods failed");
           }
         }
 
         if (pdfBuffer) {
           // Save PDF file
-          fs.writeFileSync(filepath, pdfBuffer)
-          pdfUrl = `${process.env.BASEURL}/uploads/results/${filename}`
-          console.log("PDF generated successfully for review:", pdfUrl)
+          fs.writeFileSync(filepath, pdfBuffer);
+          pdfUrl = `${process.env.BASEURL}/uploads/results/${filename}`;
+          console.log("PDF generated successfully for review:", pdfUrl);
         } else {
-          pdfGenerationError = "Failed to generate PDF buffer"
+          pdfGenerationError = "Failed to generate PDF buffer";
         }
       } else {
         // PDF already exists
-        pdfUrl = `${process.env.BASEURL}/uploads/results/${filename}`
-        console.log("Using existing PDF for review:", pdfUrl)
+        pdfUrl = `${process.env.BASEURL}/uploads/results/${filename}`;
+        console.log("Using existing PDF for review:", pdfUrl);
       }
     } catch (error) {
-      console.error("Error generating PDF for review:", error)
-      pdfGenerationError = error.message
+      console.error("Error generating PDF for review:", error);
+      pdfGenerationError = error.message;
     }
 
     return res.success({
@@ -1551,65 +1611,83 @@ exports.getExamReview = async (req, res) => {
         error: pdfGenerationError,
         generatedAt: pdfUrl ? new Date().toISOString() : null,
       },
-    })
+    });
   } catch (error) {
-    console.error("Error getting exam review:", error)
-    return res.someThingWentWrong(error)
+    console.error("Error getting exam review:", error);
+    return res.someThingWentWrong(error);
   }
-}
-
-
+};
 
 async function buildDetailedResultData(exam, examQuestions, sections, user) {
   try {
     // Get test series with exam plan
-    const testSeries = await TestSeries.findById(exam.testSeriesId).populate("examPlanId", "title")
+    const testSeries = await TestSeries.findById(exam.testSeriesId).populate(
+      "examPlanId",
+      "title"
+    );
 
     // Build section analysis
-    const sectionAnalysis = []
+    const sectionAnalysis = [];
     for (const section of sections) {
       const sectionQuestions = examQuestions.filter(
-        (eq) => eq.sectionId && eq.sectionId._id && eq.sectionId._id.toString() === section._id.toString(),
-      )
+        (eq) =>
+          eq.sectionId &&
+          eq.sectionId._id &&
+          eq.sectionId._id.toString() === section._id.toString()
+      );
 
       const sectionStats = {
         sectionId: section._id,
         name: section.name || "Unknown Section",
         sequence: section.sequence || 0,
         totalQuestions: sectionQuestions.length,
-        attempted: sectionQuestions.filter((eq) => eq.status === "ATTEMPTED").length,
+        attempted: sectionQuestions.filter((eq) => eq.status === "ATTEMPTED")
+          .length,
         correct: sectionQuestions.filter((eq) => eq.isCorrect === true).length,
         wrong: sectionQuestions.filter((eq) => eq.isCorrect === false).length,
-        skipped: sectionQuestions.filter((eq) => eq.status === "SKIPPED").length,
-        markedForReview: sectionQuestions.filter((eq) => eq.isMarkedForReview).length,
+        skipped: sectionQuestions.filter((eq) => eq.status === "SKIPPED")
+          .length,
+        markedForReview: sectionQuestions.filter((eq) => eq.isMarkedForReview)
+          .length,
         accuracy: 0,
         score: 0,
         maxScore: 0,
-        timeSpent: sectionQuestions.reduce((total, eq) => total + (eq.timeSpent || 0), 0),
-      }
+        timeSpent: sectionQuestions.reduce(
+          (total, eq) => total + (eq.timeSpent || 0),
+          0
+        ),
+      };
 
       sectionStats.accuracy =
         sectionStats.attempted > 0
-          ? Number.parseFloat(((sectionStats.correct / sectionStats.attempted) * 100).toFixed(2))
-          : 0
+          ? Number.parseFloat(
+              ((sectionStats.correct / sectionStats.attempted) * 100).toFixed(2)
+            )
+          : 0;
 
-      const correctMarks = testSeries?.correctMarks || 1
-      const negativeMarks = testSeries?.negativeMarks || 0.25
+      const correctMarks = testSeries?.correctMarks || 1;
+      const negativeMarks = testSeries?.negativeMarks || 0.25;
 
-      sectionStats.score = sectionStats.correct * correctMarks - sectionStats.wrong * negativeMarks
-      sectionStats.maxScore = sectionStats.totalQuestions * correctMarks
+      sectionStats.score =
+        sectionStats.correct * correctMarks -
+        sectionStats.wrong * negativeMarks;
+      sectionStats.maxScore = sectionStats.totalQuestions * correctMarks;
 
-      sectionAnalysis.push(sectionStats)
+      sectionAnalysis.push(sectionStats);
     }
 
     // Build subject analysis
-    const subjectAnalysis = {}
+    const subjectAnalysis = {};
     examQuestions.forEach((eq) => {
-      if (!eq.questionId || !eq.questionId.subjectId || !eq.questionId.subjectId.name) {
-        return
+      if (
+        !eq.questionId ||
+        !eq.questionId.subjectId ||
+        !eq.questionId.subjectId.name
+      ) {
+        return;
       }
 
-      const subjectName = eq.questionId.subjectId.name
+      const subjectName = eq.questionId.subjectId.name;
       if (!subjectAnalysis[subjectName]) {
         subjectAnalysis[subjectName] = {
           total: 0,
@@ -1619,70 +1697,87 @@ async function buildDetailedResultData(exam, examQuestions, sections, user) {
           skipped: 0,
           accuracy: 0,
           score: 0,
-        }
+        };
       }
 
-      subjectAnalysis[subjectName].total++
-      if (eq.status === "ATTEMPTED") subjectAnalysis[subjectName].attempted++
-      if (eq.isCorrect === true) subjectAnalysis[subjectName].correct++
-      if (eq.isCorrect === false) subjectAnalysis[subjectName].wrong++
-      if (eq.status === "SKIPPED") subjectAnalysis[subjectName].skipped++
-    })
+      subjectAnalysis[subjectName].total++;
+      if (eq.status === "ATTEMPTED") subjectAnalysis[subjectName].attempted++;
+      if (eq.isCorrect === true) subjectAnalysis[subjectName].correct++;
+      if (eq.isCorrect === false) subjectAnalysis[subjectName].wrong++;
+      if (eq.status === "SKIPPED") subjectAnalysis[subjectName].skipped++;
+    });
 
     // Calculate subject accuracies
-    const correctMarks = testSeries?.correctMarks || 1
-    const negativeMarks = testSeries?.negativeMarks || 0.25
+    const correctMarks = testSeries?.correctMarks || 1;
+    const negativeMarks = testSeries?.negativeMarks || 0.25;
 
     Object.keys(subjectAnalysis).forEach((subject) => {
-      const data = subjectAnalysis[subject]
-      data.accuracy = data.attempted > 0 ? Number.parseFloat(((data.correct / data.attempted) * 100).toFixed(2)) : 0
-      data.score = data.correct * correctMarks - data.wrong * negativeMarks
-    })
+      const data = subjectAnalysis[subject];
+      data.accuracy =
+        data.attempted > 0
+          ? Number.parseFloat(
+              ((data.correct / data.attempted) * 100).toFixed(2)
+            )
+          : 0;
+      data.score = data.correct * correctMarks - data.wrong * negativeMarks;
+    });
 
     // Get percentile
-    let percentile = 0
-    let totalAttempts = 0
+    let percentile = 0;
+    let totalAttempts = 0;
     try {
       const allExams = await Exam.find({
         testSeriesId: exam.testSeriesId,
         status: "COMPLETED",
-      }).sort({ totalScore: -1 })
+      }).sort({ totalScore: -1 });
 
-      totalAttempts = allExams.length
+      totalAttempts = allExams.length;
       if (totalAttempts > 0) {
         percentile = calculatePercentile(
           exam.totalScore || 0,
-          allExams.map((e) => e.totalScore || 0),
-        )
+          allExams.map((e) => e.totalScore || 0)
+        );
       }
     } catch (error) {
-      console.error("Error calculating percentile:", error)
+      console.error("Error calculating percentile:", error);
     }
 
     // Get insights
-    let insights = []
+    let insights = [];
     try {
-      const subjectAnalysisArray = Object.keys(subjectAnalysis).map((subject) => ({
-        name: subject,
-        ...subjectAnalysis[subject],
-      }))
+      const subjectAnalysisArray = Object.keys(subjectAnalysis).map(
+        (subject) => ({
+          name: subject,
+          ...subjectAnalysis[subject],
+        })
+      );
 
-      insights = getPerformanceInsights(exam, sectionAnalysis, subjectAnalysisArray)
+      insights = getPerformanceInsights(
+        exam,
+        sectionAnalysis,
+        subjectAnalysisArray
+      );
     } catch (error) {
       insights = [
         {
           title: "Performance Analysis",
           description: "Your performance data has been recorded successfully.",
         },
-      ]
+      ];
     }
 
     // Calculate time analysis
-    const totalTimeSpent = examQuestions.reduce((total, eq) => total + (eq.timeSpent || 0), 0)
-    const avgTimePerQuestion = examQuestions.length > 0 ? totalTimeSpent / examQuestions.length : 0
-    const examDurationSeconds = (testSeries?.duration || 0) * 60
+    const totalTimeSpent = examQuestions.reduce(
+      (total, eq) => total + (eq.timeSpent || 0),
+      0
+    );
+    const avgTimePerQuestion =
+      examQuestions.length > 0 ? totalTimeSpent / examQuestions.length : 0;
+    const examDurationSeconds = (testSeries?.duration || 0) * 60;
     const timeEfficiency =
-      examDurationSeconds > 0 ? ((examDurationSeconds - totalTimeSpent) / examDurationSeconds) * 100 : 0
+      examDurationSeconds > 0
+        ? ((examDurationSeconds - totalTimeSpent) / examDurationSeconds) * 100
+        : 0;
 
     // Return structured data for PDF generation
     return {
@@ -1722,10 +1817,15 @@ async function buildDetailedResultData(exam, examQuestions, sections, user) {
         totalAttempts,
         accuracy:
           exam.attemptedQuestions > 0
-            ? Number.parseFloat(((exam.correctAnswers / exam.attemptedQuestions) * 100).toFixed(2))
+            ? Number.parseFloat(
+                ((exam.correctAnswers / exam.attemptedQuestions) * 100).toFixed(
+                  2
+                )
+              )
             : 0,
         avgTimePerQuestion: Math.floor(avgTimePerQuestion),
-        isPassed: (exam.percentage || 0) >= (testSeries?.passingPercentage || 33),
+        isPassed:
+          (exam.percentage || 0) >= (testSeries?.passingPercentage || 33),
       },
       sectionAnalysis,
       subjectAnalysis: Object.keys(subjectAnalysis).map((subject) => ({
@@ -1749,13 +1849,12 @@ async function buildDetailedResultData(exam, examQuestions, sections, user) {
         topic: eq.questionId?.topicId?.name || "Unknown Topic",
         section: eq.sectionId?.name || "Unknown Section",
       })),
-    }
+    };
   } catch (error) {
-    console.error("Error building detailed result data:", error)
-    throw error
+    console.error("Error building detailed result data:", error);
+    throw error;
   }
 }
-
 
 /**
  * @desc    Get exam navigation
@@ -1855,7 +1954,7 @@ exports.getExamResultList = async (req, res) => {
     const total = await Exam.countDocuments({
       userId,
       status: "COMPLETED",
-      deletedAt: null
+      deletedAt: null,
     });
 
     if (total === 0) {
@@ -1866,28 +1965,49 @@ exports.getExamResultList = async (req, res) => {
     const exams = await Exam.find({
       userId,
       status: "COMPLETED",
-      deletedAt: null
+      deletedAt: null,
     })
-      .populate("testSeriesId", "title correctMarks")
       .sort({ endTime: -1 })
       .skip((pageNo - 1) * limit)
-      .limit(Number(limit));
+      .limit(Number(limit))
+      .lean();
+
+    // Log exams to verify testSeriesId
+    console.log("Exams fetched:", exams.map(e => ({ _id: e._id, testSeriesId: e.testSeriesId })));
+
+    // Manually populate testSeriesId, including soft-deleted TestSeries
+    const testSeriesIds = exams.map((exam) => exam.testSeriesId).filter(Boolean); // Filter out invalid IDs
+    const testSeries = await TestSeries.find({
+      _id: { $in: testSeriesIds },
+    })
+      .setOptions({ withDeleted: true }) // Include both deleted and non-deleted TestSeries
+      .select("title correctMarks");
+
+    // Log testSeries to verify fetched records
+    console.log("TestSeries fetched:", testSeries);
+
+    // Map testSeries data to exams
+    const testSeriesMap = testSeries.reduce((map, ts) => {
+      map[ts._id.toString()] = ts; // Use toString() to avoid ObjectId comparison issues
+      return map;
+    }, {});
+
+    console.log("testSeriesMap:", testSeriesMap);
 
     // Format exams
-    console.log("exams", exams)
     const formattedExams = exams.map((exam) => {
-      const totalMarks =
-        exam.testSeriesId && exam.testSeriesId.correctMarks
-          ? exam.totalQuestions * exam.testSeriesId.correctMarks
-          : exam.maxScore || 0;
+      const testSeriesData = testSeriesMap[exam.testSeriesId?.toString()];
+      const totalMarks = testSeriesData?.correctMarks
+        ? exam.totalQuestions * testSeriesData.correctMarks
+        : exam.maxScore || 0;
       return {
         id: exam._id,
-        testSeries: exam.testSeriesId
+        testSeries: testSeriesData
           ? {
-              id: exam.testSeriesId._id,
-              title: exam.testSeriesId.title,
+              id: testSeriesData._id,
+              title: testSeriesData.title,
             }
-          : null,
+          : null, // Will be null only if testSeriesId is invalid
         startTime: exam.startTime,
         endTime: exam.endTime,
         totalQuestions: exam.totalQuestions,
@@ -1904,7 +2024,7 @@ exports.getExamResultList = async (req, res) => {
 
     return res.pagination(formattedExams, total, limit, pageNo);
   } catch (error) {
-    console.log("error", error)
+    console.log("Error:", error);
     console.error("Error getting exam history:", error);
     return res.someThingWentWrong(error);
   }

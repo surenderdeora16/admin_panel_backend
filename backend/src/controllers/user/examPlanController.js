@@ -191,10 +191,10 @@ exports.getUserExamPlanById = async (req, res) => {
     // Check if user has purchased this exam plan
     const purchase = await UserPurchase.findOne({
       userId,
-      itemType: "examPlan",
+      itemType: "EXAM_PLAN",
       itemId: examPlan._id,
       expiryDate: { $gt: new Date() },
-      status: "active",
+      status: "ACTIVE",
     })
 
     const examPlanObj = examPlan.toObject()

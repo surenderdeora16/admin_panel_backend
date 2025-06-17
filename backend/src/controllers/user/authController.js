@@ -117,12 +117,10 @@ exports.forgotPassword = async (req, res) => {
   } catch (error) {
     // logger.error("Forgot password error:", error)
     if (error.message === "Failed to send SMS. Please try again later.") {
-      return res
-        .status(400)
-        .json({
-          status: false,
-          message: "Unable to send OTP at the moment. Please try again later.",
-        });
+      return res.status(400).json({
+        status: false,
+        message: "Unable to send OTP at the moment. Please try again later.",
+      });
     }
     return res.someThingWentWrong(error);
   }
@@ -137,21 +135,17 @@ exports.verifyOtp = async (req, res) => {
 
     console.log("otpRecord", otpRecord);
     if (!otpRecord) {
-      return res
-        .status(400)
-        .json({
-          status: false,
-          message: "No active OTP found. Please request a new OTP.",
-        });
+      return res.status(400).json({
+        status: false,
+        message: "No active OTP found. Please request a new OTP.",
+      });
     }
 
     if (otpRecord.isExpired()) {
-      return res
-        .status(400)
-        .json({
-          status: false,
-          message: "OTP has expired. Please request a new OTP.",
-        });
+      return res.status(400).json({
+        status: false,
+        message: "OTP has expired. Please request a new OTP.",
+      });
     }
 
     if (otpRecord.otp !== otp) {
@@ -259,12 +253,10 @@ exports.changePassword = async (req, res) => {
 
     const isMatch = await user.checkPassword(oldPassword);
     if (!isMatch)
-      return res
-        .status(401)
-        .json({
-          status: false,
-          message: "Old password is incorrect. Please try again.",
-        });
+      return res.status(401).json({
+        status: false,
+        message: "Old password is incorrect. Please try again.",
+      });
 
     user.password = newPassword;
     await user.save();
@@ -381,7 +373,6 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-
 exports.changeProfileImage = async (req, res) => {
   try {
     if (req.file != undefined) {
@@ -408,23 +399,28 @@ exports.changeProfileImage = async (req, res) => {
 // Get student profile
 exports.getProfile = catchAsync(async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select("-password")
+    const user = await User.findById(req.user.id)
+      .select("-password")
+      .populate("state", "_id name")
+      .populate("district", "_id name");
+
+    console.log("user", user);
 
     if (!user) {
-      return res.noRecords("User not found")
+      return res.noRecords("User not found");
     }
 
     // Add computed fields
     const profileData = {
       ...user.toObject(),
-      profileCompleteness: calculateProfileCompleteness(user),
-    }
+      // profileCompleteness: calculateProfileCompleteness(user),
+    };
 
-    res.success(profileData, "Profile retrieved successfully")
+    res.success(profileData, "Profile retrieved successfully");
   } catch (error) {
-    res.someThingWentWrong(error)
+    res.someThingWentWrong(error);
   }
-})
+});
 
 exports.logout = async (req, res) => {
   try {
@@ -438,25 +434,20 @@ exports.logout = async (req, res) => {
   }
 };
 
-
 function calculateProfileCompleteness(user) {
-  const fields = [
-    "name",
-    "email",
-    "mobile",
-    "state",
-    "district",
-  ]
+  const fields = ["name", "email", "mobile", "state", "district"];
 
-  let completedFields = 0
+  let completedFields = 0;
 
   fields.forEach((field) => {
-    const fieldValue = field.includes(".") ? field.split(".").reduce((obj, key) => obj?.[key], user) : user[field]
+    const fieldValue = field.includes(".")
+      ? field.split(".").reduce((obj, key) => obj?.[key], user)
+      : user[field];
 
     if (fieldValue && fieldValue.toString().trim() !== "") {
-      completedFields++
+      completedFields++;
     }
-  })
+  });
 
-  return Math.round((completedFields / fields.length) * 100)
+  return Math.round((completedFields / fields.length) * 100);
 }

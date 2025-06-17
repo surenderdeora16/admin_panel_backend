@@ -80,8 +80,10 @@ TestSeriesSchema.index({ title: "text", description: "text" })
 
 // Pre-find middleware to exclude soft-deleted records
 TestSeriesSchema.pre(/^find/, function (next) {
-  this.where({ deletedAt: null })
-  next()
+   if (!this.getOptions().withDeleted) {
+    this.where({ deletedAt: null });
+  }
+  next();
 })
 
 module.exports = mongoose.model("TestSeries", TestSeriesSchema)
