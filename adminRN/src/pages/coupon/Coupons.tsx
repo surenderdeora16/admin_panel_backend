@@ -20,7 +20,7 @@ const validationSchema = Yup.object().shape({
     .required('Coupon code is required')
     .min(3, 'Coupon code must be at least 3 characters')
     .max(20, 'Coupon code cannot exceed 20 characters'),
- 
+
   discountType: Yup.string()
     .required('Discount type is required')
     .oneOf(['PERCENTAGE', 'FIXED'], 'Invalid discount type'),
@@ -68,21 +68,22 @@ const formFields = [
       { id: 'PERCENTAGE', name: 'Percentage' },
       { id: 'FIXED', name: 'Fixed Amount' },
     ],
+    disabled: true,
     col: 6,
   },
   { label: 'Discount Value', name: 'discountValue', type: 'number', col: 6 },
-  {
-    label: 'Max Discount Amount',
-    name: 'maxDiscountAmount',
-    type: 'number',
-    col: 6,
-  },
-  {
-    label: 'Min Purchase Amount',
-    name: 'minPurchaseAmount',
-    type: 'number',
-    col: 6,
-  },
+  // {
+  //   label: 'Max Discount Amount',
+  //   name: 'maxDiscountAmount',
+  //   type: 'number',
+  //   col: 6,
+  // },
+  // {
+  //   label: 'Min Purchase Amount',
+  //   name: 'minPurchaseAmount',
+  //   type: 'number',
+  //   col: 6,
+  // },
   { label: 'Start Date', name: 'startDate', type: 'date', col: 6 },
   { label: 'End Date', name: 'endDate', type: 'date', col: 6 },
   {
@@ -95,6 +96,7 @@ const formFields = [
       { id: 'NOTE', name: 'Notes Only' },
       { id: 'SPECIFIC', name: 'Specific Items' },
     ],
+    disabled: true,
     col: 6,
   },
   { label: 'Usage Limit', name: 'usageLimit', type: 'number', col: 6 },
@@ -103,20 +105,6 @@ const formFields = [
 ];
 
 // Initial Form Values
-const initialFormValues = {
-  code: '',
-  description: '',
-  discountType: 'PERCENTAGE',
-  discountValue: 10,
-  maxDiscountAmount: '',
-  minPurchaseAmount: 0,
-  startDate: new Date(),
-  endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-  applicableFor: 'ALL',
-  usageLimit: '',
-  perUserLimit: 1,
-  isActive: true,
-};
 
 // Coupon Component
 const Coupons = () => {
@@ -134,6 +122,7 @@ const Coupons = () => {
     total: 0,
     pages: 0,
   });
+  const [editData, setEditData] = useState();
 
   // Date formatting utility
   const formatDate = (dateString) => {
@@ -185,7 +174,9 @@ const Coupons = () => {
     try {
       setLoading(true);
 
-      const statsRes = await AxiosHelper.getData(`/coupon/${selectedCoupon._id}/stats`);
+      const statsRes = await AxiosHelper.getData(
+        `/coupon/${selectedCoupon._id}/stats`,
+      );
       if (statsRes?.data?.status) {
         setStats(statsRes.data.data);
       } else {
@@ -305,7 +296,28 @@ const Coupons = () => {
     },
   ];
 
-  console.log('stats', stats);
+  useEffect(() => {
+    if (editData) {
+      console.log('DATE', new Date().toISOString().split('T')[0]);
+      console.log('editData?.startDate', editData?.startDate.split('T')[0]);
+    }
+  }, [editData]);
+
+  const initialFormValues = {
+    code: '',
+    description: '',
+    discountType: 'FIXED',
+    discountValue: 10,
+    maxDiscountAmount: 0,
+    minPurchaseAmount: 0,
+    startDate: editData?.startDate.split('T')[0] || "",
+    endDate: editData?.endDate.split('T')[0] || "", // 30 days from now
+    applicableFor: 'EXAM_PLAN',
+    usageLimit: '',
+    perUserLimit: 1,
+    isActive: true,
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <DataManager
@@ -322,6 +334,7 @@ const Coupons = () => {
         formFields={formFields}
         tableColumns={tableColumns}
         initialFormValues={initialFormValues}
+        onEditButton={(value) => setEditData(value)}
         showPagination={true}
         showAdd={true}
         showEdit={true}

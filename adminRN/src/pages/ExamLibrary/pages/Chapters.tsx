@@ -50,7 +50,7 @@ const Chapters = () => {
     list: '/chapters',
     create: '/chapters',
     update: (id: any) => `/chapters/${id}`,
-    delete: (id:any) => `delete-record/chapters/${id}`, // DELETE endpoint
+    delete: (id:any) => `/chapters/${id}`, // DELETE endpoint
   };
 
   const validationSchema = Yup.object().shape({

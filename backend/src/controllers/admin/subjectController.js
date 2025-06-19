@@ -263,3 +263,4 @@ exports.deleteSubject = async (req, res) => {
     return res.someThingWentWrong(error);
   }
 };
+

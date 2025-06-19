@@ -386,12 +386,12 @@ const Topics: React.FC = () => {
       try {
         setDeleteLoading(topic._id);
         const timeoutId = setTimeout(async () => {
-          const response = await AxiosHelper.deleteData(`/topics/${topic._id}`);
+          const response = await AxiosHelper.deleteData(`/delete-record/topics/${topic._id}`);
           if (!response?.data?.status) {
             throw new Error(response?.data?.message || 'Failed to delete topic');
           }
           setDeletedTopic(null);
-          toast.success('Topic deleted permanently!');
+          toast.success('Topic deleted!');
         }, 5000);
 
         setDeletedTopic({ topic, timeoutId });
@@ -407,7 +407,7 @@ const Topics: React.FC = () => {
                 toast.dismiss();
                 toast.success('Topic restored successfully!');
               }}
-              className="bg-sky-600 px-3 py-1 rounded-md hover:bg-sky-700 text-white"
+              className="bg-sky-600 px-3 py-1 rounded-md hover:bg-sky-700 text-white text-nowrap"
             >
               Undo
             </button>
@@ -743,15 +743,15 @@ const Topics: React.FC = () => {
                                 >
                                   Edit
                                 </div>
-                                {/* {item.questionCount === 0 && (
+                                {/* {item.questionCount === 0 && ( */}
                                   <button
-                                    className="cursor-pointer text-red-500 hover:text-red-700 font-medium p-2 rounded-lg text-xs sm:text-sm"
+                                    className="cursor-pointer hover:bg-transparent text-red-500 hover:text-red-700 font-medium p-2 rounded-lg text-xs sm:text-sm"
                                     onClick={() => handleDelete(item)}
                                     disabled={deleteLoading === item._id}
                                   >
                                     {deleteLoading === item._id ? 'Deleting...' : 'Delete'}
                                   </button>
-                                )} */}
+                                {/* )} */}
                                 <button
                                   onClick={() => {
                                     const subjectId =

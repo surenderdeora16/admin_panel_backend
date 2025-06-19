@@ -26,6 +26,10 @@ const ChapterSchema = new Schema(
       type: Boolean,
       default: true,
     },
+   deletedAt: {
+      type: Date,
+      default: null,
+    },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "Admin",

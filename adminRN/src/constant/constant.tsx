@@ -33,7 +33,7 @@ export const STATUS = [
     { id: false, name: "In-Active" },
 ]
 
-export const TRUE_FALSE_OPTIONS = [{ id: true, name: "true" }, { id: false, name: "false" }]
+export const TRUE_FALSE_OPTIONS = [{ id: true, name: "Yes" }, { id: false, name: "No" }]
 
 export const QUESTION_TYPES = [
     { value: 'MULTIPLE_CHOICE', label: 'Multiple Choice' },

@@ -518,3 +518,9 @@
 {"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1748629326646-674178037.png - CORS policy violation: Origin not allowed"}
 {"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1748629787223-553647745.png - CORS policy violation: Origin not allowed"}
 {"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1748628892137-459238909.jpeg - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1749667732148-349523122.jpg - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1749667450028-381511923.jpg - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1748629787223-553647745.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1748628892137-459238909.jpeg - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/main_banner/images-1749664975535-489559289.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/main_banner/images-1749664222526-527753176.jpg - CORS policy violation: Origin not allowed"}

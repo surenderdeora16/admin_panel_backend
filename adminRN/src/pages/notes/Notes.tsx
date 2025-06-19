@@ -346,6 +346,7 @@ const Notes = () => {
   const [modalType, setModalType] = useState<'add' | 'edit' | ''>('');
   const [examPlanName, setExamPlanName] = useState('');
   const [preExamPlanId, setPreExamPlanId] = useState<any>('');
+  const [editData, setEditData] = useState<any>();
 
   const {
     examplan,
@@ -425,7 +426,7 @@ const Notes = () => {
       label: 'Exam Plan',
       name: 'examPlanId',
       type: 'select2',
-      options: [{id: "", name: "Select Exam plan"}, ...examplan],
+      options: [{ id: '', name: 'Select Exam plan' }, ...examplan],
       disabled: !!examPlanId || examplanLoading || !!examplanError,
       col: 12,
     },
@@ -494,12 +495,12 @@ const Notes = () => {
   const initialFormValues = {
     title: '',
     description: '',
-    examPlanId: examPlanId || '',
+    examPlanId: preExamPlanId || '',
     pdfFile: null,
     thumbnailImage: null,
-    isFree: false,
+    isFree: editData?.isFree,
     sequence: 0,
-    status: true,
+    status: editData?.status || '',
   };
 
   // // Custom render actions to add View Test Series button
@@ -534,6 +535,7 @@ const Notes = () => {
       multipartFormData={true}
       onEditButton={(value) => {
         console.log('value>>>>>>> insice', value);
+        setEditData(value);
         setPreExamPlanId(value);
       }}
       // renderActions={renderActions}

@@ -69,7 +69,7 @@ const SubjectsManager = () => {
         list: '/subjects', // GET endpoint with pagination and search
         create: '/subjects', // POST endpoint
         update: (id) => `/subjects/${id}`, // PUT endpoint
-        delete: (id) => `delete-record/subjects/${id}`, // DELETE endpoint
+        delete: (id) => `/subjects/${id}`, // DELETE endpoint
       }}
       validationSchema={subjectValidation} // Default create schema
       formFields={formFields}
