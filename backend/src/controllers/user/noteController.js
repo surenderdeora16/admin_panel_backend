@@ -399,7 +399,7 @@ exports.getAllNotes = async (req, res) => {
       deletedAt: null,
     })
       .populate("examPlanId", "title price mrp validityDays")
-      .sort({ examPlanId: 1, sequence: 1, createdAt: -1 });
+      .sort({  createdAt: -1 });
 
     // Get user's active purchases for exam plans
     const userPurchases = await UserPurchase.find({

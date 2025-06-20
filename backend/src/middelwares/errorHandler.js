@@ -14,7 +14,7 @@ module.exports = (err, req, res, next) => {
         // if (errData = JSON.parse(err.message))
         return res.status(422).json({
             status: false,
-            message: errorMessages.SOMETHING_WENT_WRONG,
+            message:err.message || errorMessages.SOMETHING_WENT_WRONG,
             // data: { [errData.field]: errData.message }
             data: err.message
         })

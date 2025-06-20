@@ -76,7 +76,7 @@ const SectionQuestions = () => {
   );
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
-    limit: 10,
+    limit: 100,
     total: 0,
   });
   const [sectionQPagination, setSectionQPagination] = useState<Pagination>({

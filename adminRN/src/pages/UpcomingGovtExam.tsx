@@ -9,8 +9,8 @@ const upcomingExamValidation = Yup.object().shape({
     .required('Exam title is required')
     .max(200, 'Title must be less than 200 characters'),
   description: Yup.string().optional(),
-  status: Yup.boolean().required('Status is required'),
-  image: Yup.mixed().optional(),
+  // status: Yup.boolean().required('Status is required'),
+  // image: Yup.mixed().optional(),
 });
 
 const formFields = [
@@ -21,8 +21,8 @@ const formFields = [
     type: 'text-editer',
     col: 12,
   },
-  { label: 'Exam Date', name: 'examDate', type: 'date', col: 6 },
-  { label: 'Status', name: 'status', type: 'select2', options: STATUS, col: 6 },
+  { label: 'Exam Date', name: 'examDate', type: 'date', col: 12 },
+  // { label: 'Status', name: 'status', type: 'select', options: STATUS, col: 6 },
   { label: 'Image', name: 'image', type: 'image-file', col: 12 },
 ];
 
@@ -88,13 +88,16 @@ const UpcomingGovtExam = () => {
   const [uploadProgress, setUploadProgress] = useState<any>(0);
   const [initialEditData, setInitialEditData] = useState<any>();
 
+// console.log
+console.log("initialEditData::", initialEditData)
 
   const initialFormValues = {
     title: '',
     description: '',
-    examDate:  null,
-    status: true,
-    image: initialEditData?.image || null
+    examDate: '',
+    // status: '',
+    image: '',
+    image_existing: ""
   };
 
   return (

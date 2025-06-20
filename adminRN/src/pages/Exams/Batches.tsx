@@ -5,6 +5,7 @@ import * as Yup from "yup"
 import { STATUS } from "../../constant/constant"
 import DataManager from "../../components/DataManager"
 import { useNavigate } from "react-router-dom"
+import Status from "../../helper/Status"
 
 const Batches = () => {
   const navigate = useNavigate()
@@ -25,7 +26,7 @@ const Batches = () => {
       .required("Batch name is required")
       .min(2, "Batch name must be at least 2 characters")
       .max(100, "Batch name cannot exceed 100 characters"),
-    image: Yup.mixed(),
+    // image: Yup.mixed(),
     sequence: Yup.number().min(0, "Sequence must be a non-negative integer").integer("Sequence must be an integer"),
     status: Yup.boolean(),
   })
@@ -55,13 +56,13 @@ const Batches = () => {
     //   type: "number",
     //   col: 6,
     // },
-    {
-      label: "Status",
-      name: "status",
-      type: "select2",
-      options: STATUS,
-      col: 12,
-    },
+    // {
+    //   label: "Status",
+    //   name: "status",
+    //   type: "select2",
+    //   options: STATUS,
+    //   col: 12,
+    // },
   ]
 
   const tableColumns = [
@@ -83,11 +84,12 @@ const Batches = () => {
       ),
     },
     // { header: "Sequence", accessor: "sequence", sortable: true },
-    {
-      header: "Status",
-      accessor: "status",
-      render: (value: boolean) => (value ? "Active" : "Inactive"),
-      sortable: true,
+     {
+      header: 'Status',
+      accessor: 'status',
+      render: (value: any, item: any) => (
+        <Status table="batches" status={value} data_id={item._id} />
+      ),
     },
   ]
 

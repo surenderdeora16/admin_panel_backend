@@ -7,7 +7,7 @@ const ExamPlan = require("../../models/ExamPlan");
 const AppError = require("../../utils/appError");
 const catchAsync = require("../../utils/catchAsync");
 const logger = require("../../utils/logger");
-
+const mongoose = require("mongoose")
 /**
  * @desc    Create a payment order for an exam plan
  * @route   POST /api/exam-plans/:examPlanId/order
@@ -122,29 +122,74 @@ exports.verifyExamPlanPayment = async (req, res) => {
  */
 exports.getUserPurchasedExamPlans = async (req, res) => {
   try {
-    // Get user's active purchases for exam plans
-    const purchases = await UserPurchase.find({
-      userId: req?.user_id,
-      itemType: "EXAM_PLAN",
-      status: "ACTIVE",
-      expiryDate: { $gt: new Date() },
-    })
-      .populate({
-        path: "itemId",
-        select: "title description image price mrp validityDays",
-      })
-      .populate({
-        path: "orderId",
-        select:
-          "orderNumber originalAmount discountAmount finalAmount couponCode",
-      });
+    const purchases = await UserPurchase.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(req?.user_id),
+          itemType: "EXAM_PLAN",
+          status: "ACTIVE",
+          expiryDate: { $gt: new Date() },
+          deletedAt: null, // skip deleted purchases
+        },
+      },
+      {
+        $lookup: {
+          from: "examplans", // collection name (lowercase, plural usually)
+          localField: "itemId",
+          foreignField: "_id",
+          as: "examPlan",
+        },
+      },
+      {
+        $unwind: {
+          path: "$examPlan",
+          preserveNullAndEmptyArrays: true, // include even if exam plan is deleted
+        },
+      },
+      {
+        $lookup: {
+          from: "orders",
+          localField: "orderId",
+          foreignField: "_id",
+          as: "order",
+        },
+      },
+      {
+        $unwind: {
+          path: "$order",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          itemType: 1,
+          expiryDate: 1,
+          status: 1,
+          purchaseDate: 1,
+          metadata: 1,
+          examPlan: {
+            _id: 1,
+            title: 1,
+            description: 1,
+            image: 1,
+            price: 1,
+            mrp: 1,
+            validityDays: 1,
+          },
+          order: {
+            orderNumber: 1,
+            originalAmount: 1,
+            discountAmount: 1,
+            finalAmount: 1,
+            couponCode: 1,
+          },
+        },
+      },
+    ]);
 
-    // Return purchases
     return res.success(purchases);
   } catch (error) {
-    console.error(`Error getting user purchased exam plans: ${error.message}`, {
-      error,
-    });
+    console.error(`Error getting user purchased exam plans: ${error.message}`, { error });
     return res.someThingWentWrong(error);
   }
 };

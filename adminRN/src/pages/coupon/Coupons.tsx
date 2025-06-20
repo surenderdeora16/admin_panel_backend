@@ -13,6 +13,7 @@ import AxiosHelper from '../../helper/AxiosHelper';
 import DataManager from '../../components/DataManager';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import Status from '../../helper/Status';
 
 // Validation Schema for Coupon
 const validationSchema = Yup.object().shape({
@@ -100,8 +101,8 @@ const formFields = [
     col: 6,
   },
   { label: 'Usage Limit', name: 'usageLimit', type: 'number', col: 6 },
-  { label: 'Per User Limit', name: 'perUserLimit', type: 'number', col: 6 },
-  { label: 'Is Active', name: 'isActive', type: 'check', col: 6 },
+  { label: 'Per User Limit', name: 'perUserLimit', type: 'number', col: 12 },
+  // { label: 'Is Active', name: 'isActive', type: 'check', col: 6 },
 ];
 
 // Initial Form Values
@@ -290,9 +291,10 @@ const Coupons = () => {
     },
     {
       header: 'Status',
-      accessor: 'isActive',
-      sortable: true,
-      render: (value) => (value ? 'Active' : 'Inactive'),
+      accessor: 'status',
+      render: (value: any, item: any) => (
+        <Status table="coupons" status={value} data_id={item._id} />
+      ),
     },
   ];
 
@@ -310,12 +312,12 @@ const Coupons = () => {
     discountValue: 10,
     maxDiscountAmount: 0,
     minPurchaseAmount: 0,
-    startDate: editData?.startDate.split('T')[0] || "",
-    endDate: editData?.endDate.split('T')[0] || "", // 30 days from now
+    startDate: editData?.startDate.split('T')[0] || '',
+    endDate: editData?.endDate.split('T')[0] || '', // 30 days from now
     applicableFor: 'EXAM_PLAN',
     usageLimit: '',
     perUserLimit: 1,
-    isActive: true,
+    // isActive: true,
   };
 
   return (

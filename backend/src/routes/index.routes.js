@@ -24,28 +24,6 @@ router.use(function (req, res, next) {
 // License Check..
 router.use(customMethods);
 
-// router.post('/uploads/editor', uploadEditor.single('file'), (req, res) => {
-//   try {
-//     if (!req.file) {
-//       return res.status(400).json({ success: false, message: 'No file uploaded' });
-//     }
-//     if (req.fileValidationError) {
-//       return res.status(400).json({ success: false, message: req.fileValidationError.file });
-//     }
-//     const fileUrl = `${process.env.BASEURL || 'http://localhost:3000'}/uploads/editor/${req.file.filename}`;
-//     res.json({
-//       success: true,
-//       data: {
-//         files: [fileUrl],
-//         baseurl: `${process.env.BASEURL || 'http://localhost:3000'}/uploads/editor/`
-//       }
-//     });
-//   } catch (error) {
-//     console.error('Editor upload error:', error);
-//     res.status(500).json({ success: false, message: 'Upload failed: ' + error.message });
-//   }
-// });
-
 
 router.post("/upload-editor-image", uploadEditor.single('file'),function (req, res) {
   console.log("editorimage",);

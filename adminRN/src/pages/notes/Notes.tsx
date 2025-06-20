@@ -303,6 +303,7 @@ import { STATUS } from '../../constant/constant';
 import AxiosHelper from '../../helper/AxiosHelper';
 import DataManager from '../../components/DataManager';
 import { useParams, useNavigate } from 'react-router-dom';
+import Status from '../../helper/Status';
 
 // Custom hook to fetch examplan
 const useExamPlan = () => {
@@ -451,13 +452,13 @@ const Notes = () => {
       col: 6,
     },
 
-    {
-      label: 'Status',
-      name: 'status',
-      type: 'select2',
-      options: STATUS,
-      col: 6,
-    },
+    // {
+    //   label: 'Status',
+    //   name: 'status',
+    //   type: 'select2',
+    //   options: STATUS,
+    //   col: 6,
+    // },
   ];
 
   const tableColumns = [
@@ -480,8 +481,9 @@ const Notes = () => {
     {
       header: 'Status',
       accessor: 'status',
-      render: (value: any) => (value ? 'Active' : 'Inactive'),
-      sortable: true,
+      render: (value: any, item: any) => (
+        <Status table="notes" status={value} data_id={item._id} />
+      ),
     },
   ];
 

@@ -98,7 +98,7 @@ exports.createNote = async (req, res) => {
       description,
       examPlanId,
       pdfFile: `/uploads/notes/${req.files.pdfFile[0].filename}`,
-      isFree: isFree == 1 ? true : false,
+      isFree: isFree,
       sequence: sequence || 0,
       status:
         status !== undefined ? status === "true" || status === true : true,
@@ -173,7 +173,7 @@ exports.updateNote = async (req, res) => {
     // Update note data
     if (title !== undefined) note.title = title;
     if (description !== undefined) note.description = description;
-    if (isFree !== undefined) note.isFree = isFree == 1 ? true : false;
+    if (isFree !== undefined) note.isFree = isFree;
     if (sequence !== undefined) note.sequence = sequence;
     if (status !== undefined)
       note.status = status === "true" || status === true;

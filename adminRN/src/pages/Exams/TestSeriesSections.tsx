@@ -6,6 +6,7 @@ import { STATUS } from "../../constant/constant"
 import AxiosHelper from "../../helper/AxiosHelper"
 import DataManager from "../../components/DataManager"
 import { useParams, useNavigate, Link } from "react-router-dom"
+import Status from "../../helper/Status"
 
 const TestSeriesSections = () => {
   const { testSeriesId } = useParams()
@@ -61,33 +62,34 @@ const TestSeriesSections = () => {
       name: "sequence",
       type: "number",
       min: 0,
-      col: 6,
+      col: 12,
     },
-    {
-      label: "Status",
-      name: "status",
-      type: "select2",
-      options: STATUS,
-      col: 6,
-    },
+    // {
+    //   label: "Status",
+    //   name: "status",
+    //   type: "select2",
+    //   options: STATUS,
+    //   col: 6,
+    // },
   ]
 
   const tableColumns = [
     { header: "Name", accessor: "name", sortable: true },
     { header: "Questions", accessor: "questionCount" },
     { header: "Sequence", accessor: "sequence", sortable: true },
-    {
-      header: "Status",
-      accessor: "status",
-      render: (value: boolean) => (value ? "Active" : "Inactive"),
-      sortable: true,
-    },
+  {
+    header: 'Status',
+    accessor: 'status',
+    render: (value: any, item: any) => (
+      <Status table="sections" status={value} data_id={item._id} />
+    ),
+  },
   ]
 
   const initialFormValues = {
     name: "",
     sequence: 0,
-    status: true,
+    // status: true,
   }
 
   // Custom render actions to add Manage Questions button

@@ -103,19 +103,19 @@ const Chapters = () => {
             ),
       disabled: loading || !!error,
     },
-    {
-      label: 'Sequence',
-      name: 'sequence',
-      type: 'number',
-      col: 6,
-    },
-    {
-      label: 'Status',
-      name: 'status',
-      type: 'select',
-      options: STATUS,
-      col: 6,
-    },
+    // {
+    //   label: 'Sequence',
+    //   name: 'sequence',
+    //   type: 'number',
+    //   col: 6,
+    // },
+    // {
+    //   label: 'Status',
+    //   name: 'status',
+    //   type: 'select',
+    //   options: STATUS,
+    //   col: 6,
+    // },
   ];
 
   const tableColumns = [

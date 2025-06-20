@@ -10,20 +10,21 @@ const subjectValidation = Yup.object().shape({
     .min(2, 'Subject name should be at least 2 characters')
     .max(100, 'Subject name cannot exceed 100 characters'),
 
-  status: Yup.boolean().required('Status is required'),
+  // status: Yup.boolean().required('Status is required'),
 });
 
 // Form Fields
 const formFields = [
   { label: 'Subject Name', name: 'name', type: 'text', col: 12 },
   { label: 'Description', name: 'description', type: 'text-editer', col: 12 },
-  {
-    label: 'Status',
-    name: 'status',
-    type: 'select',
-    options: STATUS,
-    col: 12,
-  },
+  
+  // {
+  //   label: 'Status',
+  //   name: 'status',
+  //   type: 'select',
+  //   options: STATUS,
+  //   col: 12,
+  // },
 ];
 
 // Table Columns
@@ -56,7 +57,7 @@ const tableColumns = [
 const initialFormValues = {
   name: '',
   description: '',
-  status: true,
+  // status: '',
 };
 
 // SubjectsManager Component

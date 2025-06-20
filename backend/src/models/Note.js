@@ -68,4 +68,24 @@ NoteSchema.pre(/^find/, function (next) {
   next()
 })
 
+
+// Auto prepend process.env.BASEURL to pdfFile on save
+NoteSchema.pre("save", function (next) {
+  if (this.pdfFile && !this.pdfFile.startsWith("http")) {
+    this.pdfFile = `${process.env.BASEURL}${this.pdfFile}`;
+  }
+  next();
+});
+
+// Auto prepend process.env.BASEURL to pdfFile on update
+NoteSchema.pre("findOneAndUpdate", function (next) {
+  const update = this.getUpdate();
+  if (update.pdfFile && !update.pdfFile.startsWith("http")) {
+    update.pdfFile = `${process.env.BASEURL}${update.pdfFile}`;
+    this.setUpdate(update);
+  }
+  next();
+});
+
+
 module.exports = mongoose.model("Note", NoteSchema)
