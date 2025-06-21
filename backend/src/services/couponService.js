@@ -15,7 +15,7 @@ const AppError = require("../utils/appError")
 exports.validateCoupon = async (couponCode, userId, itemType, itemId, amount) => {
   try {
     // Find the coupon by code
-    const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+    const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), status: true });
 
     // Check if coupon exists
     if (!coupon) {
@@ -104,7 +104,7 @@ exports.getApplicableCoupons = async (userId, itemType, itemId, amount) => {
   try {
     // Get all active coupons
     const coupons = await Coupon.find({
-      isActive: true,
+      status: true,
       endDate: { $gte: new Date() },
       // startDate: { $lte: new Date() },
       $or: [

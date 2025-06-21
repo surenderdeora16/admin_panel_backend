@@ -989,7 +989,7 @@ const handleUpdateQuestion = async (values: any, questionId: string) => {
 
                           {/* Question Cell */}
                           <td className="px-4 py-4 text-sm text-slate-700 dark:text-slate-300 max-w-[280px] break-words leading-relaxed">
-                            <div className="font-medium text-slate-900 dark:text-slate-100 mb-1">
+                            <div className="font-medium text-slate-900 dark:text-slate-100 mb-1 line-clamp-6">
                               <div
                                 dangerouslySetInnerHTML={{
                                   __html: question.questionText,

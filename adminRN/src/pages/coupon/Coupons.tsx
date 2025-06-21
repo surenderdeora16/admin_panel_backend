@@ -54,7 +54,7 @@ const validationSchema = Yup.object().shape({
   perUserLimit: Yup.number()
     .required('Per user limit is required')
     .min(1, 'Per user limit must be at least 1'),
-  isActive: Yup.boolean(),
+  status: Yup.boolean(),
 });
 
 // Form Fields for Coupon
@@ -102,7 +102,7 @@ const formFields = [
   },
   { label: 'Usage Limit', name: 'usageLimit', type: 'number', col: 6 },
   { label: 'Per User Limit', name: 'perUserLimit', type: 'number', col: 12 },
-  // { label: 'Is Active', name: 'isActive', type: 'check', col: 6 },
+  // { label: 'Is Active', name: 'status', type: 'check', col: 6 },
 ];
 
 // Initial Form Values
@@ -110,7 +110,7 @@ const formFields = [
 // Coupon Component
 const Coupons = () => {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState({ isActive: '', applicableFor: '' });
+  const [filters, setFilters] = useState({ status: '', applicableFor: '' });
   const [search, setSearch] = useState('');
   const [showStats, setShowStats] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
@@ -147,7 +147,7 @@ const Coupons = () => {
         search: query || search,
         sortBy: orderBy || 'createdAt',
         sortOrder: orderDirection === 1 ? 'asc' : 'desc',
-        isActive: filters.isActive,
+        status: filters.status,
         applicableFor: filters.applicableFor,
       };
       const response = await AxiosHelper.getData('/coupons', apiParams);
@@ -317,7 +317,7 @@ const Coupons = () => {
     applicableFor: 'EXAM_PLAN',
     usageLimit: '',
     perUserLimit: 1,
-    // isActive: true,
+    // status: true,
   };
 
   return (

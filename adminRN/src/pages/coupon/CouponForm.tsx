@@ -36,7 +36,7 @@ const CouponForm = ({ coupon, onClose, onSave }) => {
       applicableFor: coupon?.applicableFor || "ALL",
       usageLimit: coupon?.usageLimit || "",
       perUserLimit: coupon?.perUserLimit || 1,
-      isActive: coupon?.isActive !== undefined ? coupon.isActive : true,
+      status: coupon?.status !== undefined ? coupon.status : true,
     },
   })
 
@@ -74,7 +74,7 @@ const CouponForm = ({ coupon, onClose, onSave }) => {
       setValue("applicableFor", coupon.applicableFor)
       setValue("usageLimit", coupon.usageLimit)
       setValue("perUserLimit", coupon.perUserLimit)
-      setValue("isActive", coupon.isActive)
+      setValue("status", coupon.status)
 
       setStartDate(new Date(coupon.startDate))
       setEndDate(new Date(coupon.endDate))
@@ -344,7 +344,7 @@ const CouponForm = ({ coupon, onClose, onSave }) => {
             <label className="flex items-center">
               <input
                 type="checkbox"
-                {...register("isActive")}
+                {...register("status")}
                 className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
               />
               <span className="ml-2 text-sm text-gray-700">Active</span>

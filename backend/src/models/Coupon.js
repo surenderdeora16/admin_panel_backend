@@ -70,7 +70,7 @@ const CouponSchema = new Schema(
       type: Number,
       default: 0,
     },
-    isActive: {
+    status: {
       type: Boolean,
       default: true,
     },

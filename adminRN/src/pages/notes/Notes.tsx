@@ -417,12 +417,12 @@ const Notes = () => {
       type: 'text',
       col: 12,
     },
-    {
-      label: 'Description',
-      name: 'description',
-      type: 'text-editer',
-      col: 12,
-    },
+    // {
+    //   label: 'Description',
+    //   name: 'description',
+    //   type: 'text-editer',
+    //   col: 12,
+    // },
     {
       label: 'Exam Plan',
       name: 'examPlanId',
@@ -502,7 +502,7 @@ const Notes = () => {
     thumbnailImage: null,
     isFree: editData?.isFree,
     sequence: 0,
-    status: editData?.status || '',
+    // status: editData?.status || '',
   };
 
   // // Custom render actions to add View Test Series button
@@ -518,7 +518,7 @@ const Notes = () => {
   // };
 
   if (examplanLoading) return <div>Loading notes...</div>;
-  if (examplanError) return <div>{examplanError}</div>;
+  // if (examplanError) return <div>{examplanError}</div>;
 
   return (
     <DataManager

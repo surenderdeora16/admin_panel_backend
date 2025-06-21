@@ -50,7 +50,7 @@ const Chapters = () => {
     list: '/chapters',
     create: '/chapters',
     update: (id: any) => `/chapters/${id}`,
-    delete: (id:any) => `/chapters/${id}`, // DELETE endpoint
+    delete: (id: any) => `/chapters/${id}`, // DELETE endpoint
   };
 
   const validationSchema = Yup.object().shape({
@@ -70,12 +70,6 @@ const Chapters = () => {
       label: 'Chapter Name',
       name: 'name',
       type: 'text',
-      col: 12,
-    },
-    {
-      label: 'Description',
-      name: 'description',
-      type: 'text-editer',
       col: 12,
     },
     {
@@ -103,6 +97,13 @@ const Chapters = () => {
             ),
       disabled: loading || !!error,
     },
+    {
+      label: 'Description',
+      name: 'description',
+      type: 'text-editer',
+      col: 12,
+    },
+
     // {
     //   label: 'Sequence',
     //   name: 'sequence',

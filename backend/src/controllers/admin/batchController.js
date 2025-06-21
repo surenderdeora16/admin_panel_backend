@@ -9,7 +9,7 @@ exports.getBatches = async (req, res) => {
     const { limit, pageNo, query, orderBy, orderDirection } = req.query
 
     // Build query
-    const queryObj = {}
+    const queryObj = {deletedAt:null}
 
     if (query) {
       queryObj.$or = [{ name: { $regex: query, $options: "i" } }, { description: { $regex: query, $options: "i" } }]
