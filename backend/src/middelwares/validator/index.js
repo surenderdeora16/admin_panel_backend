@@ -273,10 +273,10 @@ module.exports = (method) => {
           .isLength({ max: 200 })
           .withMessage("Title must be less than 200 characters"),
 
-        check("examDate")
-          .optional()
-          .isISO8601()
-          .withMessage("Invalid date format. Use YYYY-MM-DD"),
+        // check("examDate")
+        //   .optional()
+        //   .isISO8601()
+        //   .withMessage("Invalid date format. Use YYYY-MM-DD"),
       ];
 
     case "updateUpcomingGovtExam":
@@ -288,10 +288,10 @@ module.exports = (method) => {
           .isLength({ max: 200 })
           .withMessage("Title must be less than 200 characters"),
 
-        check("examDate")
-          .optional()
-          .isISO8601()
-          .withMessage("Invalid date format. Use YYYY-MM-DD"),
+        // check("examDate")
+        //   .optional()
+        //   .isISO8601()
+        //   .withMessage("Invalid date format. Use YYYY-MM-DD"),
       ];
 
     // Exam Library ............................................................................

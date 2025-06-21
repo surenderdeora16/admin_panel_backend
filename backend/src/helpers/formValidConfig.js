@@ -1,10 +1,26 @@
 const FILE_SIZE = 2000000;
 
+// const SUPPORTED_FORMATS_IMAGE = [
+//     'image/jpg',
+//     'image/jpeg',
+//     'image/gif',
+//     'image/png'
+// ];
+
 const SUPPORTED_FORMATS_IMAGE = [
-    'image/jpg',
-    'image/jpeg',
-    'image/gif',
-    'image/png'
+  'image/jpeg',      // .jpeg, .jpg
+  'image/jpg',       // .jpg (optional, same as jpeg)
+  'image/png',       // .png
+  'image/gif',       // .gif
+  'image/webp',      // .webp
+  'image/avif',      // .avif (modern format with better compression)
+  'image/apng',      // .apng (animated PNG)
+  'image/svg+xml',   // .svg (vector format)
+  'image/bmp',       // .bmp (bitmap)
+  'image/x-icon',    // .ico (favicon files)
+  'image/tiff',      // .tif, .tiff
+  'image/heif',      // .heif (High Efficiency Image File Format)
+  'image/heic'       // .heic (used by iPhones)
 ];
 
 const MAX_INPUT_AMOUNT = 10000000;

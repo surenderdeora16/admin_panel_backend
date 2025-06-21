@@ -27,7 +27,7 @@ exports.createCoupon = async (req, res) => {
       endDate,
       usageLimit,
       perUserLimit,
-      isActive,
+      status,
     } = req.body;
 
     // Validate required fields
@@ -56,7 +56,7 @@ exports.createCoupon = async (req, res) => {
       endDate,
       usageLimit,
       perUserLimit,
-      isActive: isActive !== undefined ? isActive : true,
+      status: true,
       createdBy: req.admin._id,
     });
 
@@ -75,7 +75,7 @@ exports.createCoupon = async (req, res) => {
  */
 exports.getAllCoupons = async (req, res) => {
   try {
-    const { limit, pageNo, query, orderBy, orderDirection, isActive, applicableFor } = req.query;
+    const { limit, pageNo, query, orderBy, orderDirection, status, applicableFor } = req.query;
 
     // Build query
     const queryObj = {};
@@ -88,9 +88,9 @@ exports.getAllCoupons = async (req, res) => {
       ];
     }
 
-    // Add isActive filter
-    if (isActive !== undefined) {
-      queryObj.isActive = isActive === "true";
+    // Add status filter
+    if (status !== undefined) {
+      queryObj.status = status === "true";
     }
 
     // Add applicableFor filter
@@ -159,6 +159,7 @@ exports.updateCoupon = async (req, res) => {
 
     // Extract coupon data from request body
     const {
+      code,
       description,
       discountType,
       discountValue,
@@ -170,7 +171,7 @@ exports.updateCoupon = async (req, res) => {
       endDate,
       usageLimit,
       perUserLimit,
-      isActive,
+      status,
     } = req.body;
 
     // Get coupon by ID
@@ -182,6 +183,7 @@ exports.updateCoupon = async (req, res) => {
     }
 
     // Update coupon fields
+    if (code !== undefined) coupon.code = code;
     if (description !== undefined) coupon.description = description;
     if (discountType !== undefined) coupon.discountType = discountType;
     if (discountValue !== undefined) coupon.discountValue = discountValue;
@@ -193,7 +195,7 @@ exports.updateCoupon = async (req, res) => {
     if (endDate !== undefined) coupon.endDate = endDate;
     if (usageLimit !== undefined) coupon.usageLimit = usageLimit;
     if (perUserLimit !== undefined) coupon.perUserLimit = perUserLimit;
-    if (isActive !== undefined) coupon.isActive = isActive;
+    if (status !== undefined) coupon.status = status;
 
     // Set updatedBy
     coupon.updatedBy = req.admin._id;
@@ -228,7 +230,7 @@ exports.deleteCoupon = async (req, res) => {
 
     // Soft delete coupon
     coupon.deletedAt = new Date();
-    coupon.isActive = false;
+    coupon.status = false;
     coupon.updatedBy = req.admin._id;
 
     // Save updated coupon
