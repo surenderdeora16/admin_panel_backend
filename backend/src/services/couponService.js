@@ -23,7 +23,7 @@ exports.validateCoupon = async (couponCode, userId, itemType, itemId, amount) =>
     }
 
     // Check if coupon is valid
-    if (!coupon.isValid()) {
+    if (!coupon.$isValid()) {
       throw new Error("Coupon has expired or is no longer valid");
     }
 

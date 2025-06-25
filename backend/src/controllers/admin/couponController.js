@@ -78,7 +78,7 @@ exports.getAllCoupons = async (req, res) => {
     const { limit, pageNo, query, orderBy, orderDirection, status, applicableFor } = req.query;
 
     // Build query
-    const queryObj = {};
+    const queryObj = {deletedAt:null};
 
     // Add search filter
     if (query) {

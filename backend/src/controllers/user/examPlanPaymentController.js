@@ -312,8 +312,13 @@ exports.getExamPlanCoupons = async (req, res) => {
       examPlan.price
     );
 
-    // Return coupons
-    return res.success(coupons);
+    console.log("coupons>>", coupons)
+
+    // Filter coupons to ensure final price is positive
+    const validCoupons = coupons.filter((coupon) => coupon.finalAmount > 0);
+
+    // Return valid coupons
+    return res.success(validCoupons);
   } catch (error) {
     console.error(`Error getting exam plan coupons: ${error.message}`, {
       error,
