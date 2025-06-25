@@ -57,7 +57,7 @@ exports.createBatch = async (req, res) => {
     const { name, description, sequence, status } = req.body
 
     // Check if batch with same name already exists
-    const existingBatch = await Batch.findOne({ name })
+    const existingBatch = await Batch.findOne({ name, deletedAt:null })
     if (existingBatch) {
       return res.status(400).json({
         status: false,

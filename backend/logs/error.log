@@ -677,3 +677,4 @@
 {"level":"error","message":"OPTIONS /uploads/exam_plans/image-1750447459874-180775754.jpg - CORS policy violation: Origin not allowed"}
 {"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1750489971418-748347995.png - CORS policy violation: Origin not allowed"}
 {"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1750489944053-959840761.png - CORS policy violation: Origin not allowed"}
+{"level":"error","message":"OPTIONS /uploads/upcoming_govt_exam/image-1750874761461-437030384.png - CORS policy violation: Origin not allowed"}

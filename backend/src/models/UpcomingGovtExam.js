@@ -4,7 +4,6 @@ const UpcomingGovtExam = new mongoose.Schema({
     title: {
         type: String,
         required: [true, 'Exam title is required'],
-        unique: true
     },
     description: {
         type: String,

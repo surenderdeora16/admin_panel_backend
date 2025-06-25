@@ -513,7 +513,7 @@ router.get("/coupon/:id/usage", couponController.getCouponUsage);
 router.get("/users-datatable", usersController.list);
 // Get all users
 router.get("/users",  usersController.getAllUsers)
-
+router.post("/users/:id/change-password",  usersController.changeUserPasswordByAdmin);
 // Get user details
 router.get("/users/:id",  usersController.getUserDetails)
 

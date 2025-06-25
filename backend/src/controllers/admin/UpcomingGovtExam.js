@@ -21,14 +21,7 @@ exports.create = async (req, res) => {
       "Upcoming Govt. Exam created successfully"
     );
   } catch (error) {
-    return res.status(500).json({
-      status: false,
-      message:
-        error.code === 11000
-          ? "Exam title already exists"
-          : "Failed to create exam",
-      data: error,
-    });
+    return res.someThingWentWrong(error);
   }
 };
 
@@ -125,9 +118,7 @@ exports.toggleStatus = async (req, res) => {
 
     res.json({
       status: true,
-      message: `Exam ${
-        exam.status ? "activated" : "deactivated"
-      } successfully`,
+      message: `Exam ${exam.status ? "activated" : "deactivated"} successfully`,
     });
   } catch (error) {
     console.error(error);

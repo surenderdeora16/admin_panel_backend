@@ -8,8 +8,6 @@ const BatchSchema = new Schema(
       required: [true, "Batch name is required"],
       trim: true,
       maxlength: [100, "Batch name cannot exceed 100 characters"],
-      unique: true,
-      index: true,
     },
     description: {
       type: String,
@@ -50,8 +48,6 @@ const BatchSchema = new Schema(
   { timestamps: true },
 )
 
-// Create text index for search optimization
-BatchSchema.index({ name: "text", description: "text" })
 
 // Pre-find middleware to exclude soft-deleted records
 BatchSchema.pre(/^find/, function (next) {

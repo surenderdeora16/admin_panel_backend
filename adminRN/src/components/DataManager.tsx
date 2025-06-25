@@ -218,6 +218,7 @@ const DataManager = ({
   const [error, setError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<any>(false);
   const [deleteIndex, setDeleteIndex] = useState<any>(null);
+  const [apiError, setApiError] = useState('');
 
   // Memoized form values for edit mode
   const modalFormValues = useMemo(() => {
@@ -269,9 +270,14 @@ const DataManager = ({
         }
       } catch (err: any) {
         const errorMessage =
-          err.response?.data?.message || `Failed to fetch ${itemName}`;
+          err?.response?.data?.message || `Failed to fetch ${itemName}`;
         setError(errorMessage);
+        setApiError(errorMessage);
         toast.error(errorMessage);
+
+        setTimeout(() => {
+          setApiError('');
+        }, 10000);
         setData([]);
       } finally {
         setLoading(false);
@@ -312,7 +318,7 @@ const DataManager = ({
   );
 
   // Optimized form submit handler
-   const handleFormSubmit = async (values: any) => {
+  const handleFormSubmit = async (values: any) => {
     try {
       if (modalMode === 'add' && endpoints.create) {
         let response;
@@ -361,14 +367,18 @@ const DataManager = ({
         orderDirection,
       });
       setShowModal(false);
-       onEditButton?.(null); 
+      onEditButton?.(null);
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || `Failed to ${modalMode} ${itemName}`;
+      setApiError(errorMessage);
+
+      setTimeout(() => {
+          setApiError('');
+        }, 10000);
       toast.error(errorMessage);
     }
   };
-
 
   // Optimized delete handler
   const handleDelete = useCallback(
@@ -394,7 +404,13 @@ const DataManager = ({
       } catch (err: any) {
         const errorMessage =
           err.response?.data?.message || `Failed to delete ${itemName}`;
+        setApiError(errorMessage);
         toast.error(errorMessage);
+
+        setTimeout(() => {
+          setApiError('');
+        }, 10000);
+
       } finally {
         setDeleteLoading(false);
         setDeleteIndex(null);
@@ -435,6 +451,7 @@ const DataManager = ({
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {modalMode === 'add' ? `Add ${itemName}` : `Update ${itemName}`}
               </h2>
+              {apiError && <div className="text-red-500 font-medium duration-1000">{apiError}</div>}
               <button
                 onClick={() => {
                   setShowModal(false);
