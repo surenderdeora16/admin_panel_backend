@@ -76,13 +76,13 @@ const Batches = () => {
       ),
     },
     { header: "Name", accessor: "name", sortable: true },
-    {
-      header: "Description",
-      accessor: "description",
-      render: (value: string) => (
-        <div dangerouslySetInnerHTML={{ __html: value }} />
-      ),
-    },
+    // {
+    //   header: "Description",
+    //   accessor: "description",
+    //   render: (value: string) => (
+    //     <div dangerouslySetInnerHTML={{ __html: value }} />
+    //   ),
+    // },
     // { header: "Sequence", accessor: "sequence", sortable: true },
      {
       header: 'Status',

@@ -356,10 +356,20 @@ exports.updateProfile = async (req, res) => {
     if (name) req.user.name = name;
     if (email) req.user.email = email;
     if (mobile) req.user.mobile = mobile;
-    if (state) req.user.state = state;
-    if (district) req.user.district = district;
 
-    if (req.file) req.user.image = req.file.filename;
+    // Convert state and district to ObjectId if they exist
+    if (state && mongoose.Types.ObjectId.isValid(state)) {
+      req.user.state = new mongoose.Types.ObjectId(state);
+    }
+
+    if (district && mongoose.Types.ObjectId.isValid(district)) {
+      req.user.district = new mongoose.Types.ObjectId(district);
+    }
+
+    // If sending image file
+    if (req.file) {
+      req.user.image = req.file.filename;
+    }
 
     await req.user.save();
 

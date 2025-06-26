@@ -15,7 +15,7 @@ exports.getNotes = async (req, res) => {
       req.query;
 
     // Build query
-    const queryObj = {};
+    const queryObj = {deletedAt: null};
 
     if (query) {
       queryObj.$or = [

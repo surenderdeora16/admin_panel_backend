@@ -1,53 +1,63 @@
-const ExamPlan = require("../../models/ExamPlan")
-const UserPurchase = require("../../models/UserPurchase")
-const mongoose = require("mongoose")
-const path = require("path")
-const fs = require("fs")
-const TestSeries = require("../../models/TestSeries")
-const Section = require("../../models/Section")
+const ExamPlan = require("../../models/ExamPlan");
+const UserPurchase = require("../../models/UserPurchase");
+const mongoose = require("mongoose");
+const path = require("path");
+const fs = require("fs");
+const TestSeries = require("../../models/TestSeries");
+const Section = require("../../models/Section");
 
 // * Get all exam plans with purchase status for the authenticated user
 exports.getUserExamPlans = async (req, res) => {
   try {
     // Get query parameters for filtering and pagination
-    const { limit, pageNo: page, query: search, orderBy: sortBy, orderDirection: sortOrder, batchId } = req.query
+    const {
+      limit,
+      pageNo: page,
+      query: search,
+      orderBy: sortBy,
+      orderDirection: sortOrder,
+      batchId,
+    } = req.query;
 
     // Build query object
     const query = {
-      status: true,
+      // status: true,
       deletedAt: null,
-    }
+    };
 
     // Add batch filter if provided
     if (batchId) {
-      query.batchId = mongoose.Types.ObjectId(batchId)
+      query.batchId = mongoose.Types.ObjectId(batchId);
     }
 
     // Add search filter if provided
     if (search) {
-      query.$or = [{ title: { $regex: search, $options: "i" } }, { description: { $regex: search, $options: "i" } }]
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
     }
 
     // Calculate pagination values
-    const skip = (Number.parseInt(page) - 1) * Number.parseInt(limit)
-    const sortDirection = sortOrder === "asc" ? 1 : -1
+    const skip = (Number.parseInt(page) - 1) * Number.parseInt(limit);
+    const sortDirection = sortOrder === "asc" ? 1 : -1;
 
     // Get user ID from authenticated user
-    const userId = req.user._id
+    const userId = req.user._id;
 
     // Find all exam plans
     const examPlans = await ExamPlan.find(query)
       .populate("batchId", "name")
       .sort({ [sortBy]: sortDirection })
       .skip(skip)
-      .limit(Number.parseInt(limit))
+      .limit(Number.parseInt(limit));
 
     // Get total count for pagination
-    const totalCount = await ExamPlan.countDocuments(query)
+    const totalCount = await ExamPlan.countDocuments(query);
 
     // Return if no records found
     if (!examPlans.length) {
-      return res.datatableNoRecords()
+      return res.datatableNoRecords();
     }
 
     // Get user's purchases for these exam plans
@@ -57,63 +67,68 @@ exports.getUserExamPlans = async (req, res) => {
       itemId: { $in: examPlans.map((plan) => plan._id) },
       expiryDate: { $gt: new Date() }, // Only active purchases
       status: "active",
-    })
+    });
 
     // Create a map of purchased exam plan IDs for quick lookup
-    const purchasedExamPlanIds = new Map()
+    const purchasedExamPlanIds = new Map();
     userPurchases.forEach((purchase) => {
       purchasedExamPlanIds.set(purchase.itemId.toString(), {
         purchaseId: purchase._id,
         purchaseDate: purchase.createdAt,
         expiryDate: purchase.expiryDate,
-      })
-    })
+      });
+    });
 
     // Add purchase status to each exam plan
     const examPlansWithPurchaseStatus = examPlans.map((plan) => {
-      const planObj = plan.toObject()
-      const planId = plan._id.toString()
+      const planObj = plan.toObject();
+      const planId = plan._id.toString();
 
       // Check if this plan is purchased
       if (purchasedExamPlanIds.has(planId)) {
-        const purchaseInfo = purchasedExamPlanIds.get(planId)
-        planObj.isPurchased = true
-        planObj.purchaseId = purchaseInfo.purchaseId
-        planObj.purchaseDate = purchaseInfo.purchaseDate
-        planObj.expiryDate = purchaseInfo.expiryDate
+        const purchaseInfo = purchasedExamPlanIds.get(planId);
+        planObj.isPurchased = true;
+        planObj.purchaseId = purchaseInfo.purchaseId;
+        planObj.purchaseDate = purchaseInfo.purchaseDate;
+        planObj.expiryDate = purchaseInfo.expiryDate;
 
         // Calculate remaining days
-        const today = new Date()
-        const expiryDate = new Date(purchaseInfo.expiryDate)
-        const diffTime = Math.abs(expiryDate - today)
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        const today = new Date();
+        const expiryDate = new Date(purchaseInfo.expiryDate);
+        const diffTime = Math.abs(expiryDate - today);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        planObj.remainingDays = diffDays
+        planObj.remainingDays = diffDays;
       } else {
-        planObj.isPurchased = false
+        planObj.isPurchased = false;
       }
 
       // Format image URL if exists
       if (planObj.image) {
-        planObj.imageUrl = `${process.env.BASE_URL}${planObj.image}`
+        planObj.imageUrl = `${process.env.BASE_URL}${planObj.image}`;
       }
 
-      return planObj
-    })
+      return planObj;
+    });
 
     // Return response with pagination
-    return res.pagination(examPlansWithPurchaseStatus, totalCount, limit, page)
+    return res.pagination(examPlansWithPurchaseStatus, totalCount, limit, page);
   } catch (error) {
-    console.error("Error fetching exam plans:", error)
-    return res.someThingWentWrong(error)
+    console.error("Error fetching exam plans:", error);
+    return res.someThingWentWrong(error);
   }
-}
-
+};
 
 // * Get exam plans by batch
 exports.getExamPlansByBatch = async (req, res) => {
   try {
-    const { limit, pageNo: page, query: search, orderBy: sortBy, orderDirection: sortOrder } = req.query;
+    const {
+      limit,
+      pageNo: page,
+      query: search,
+      orderBy: sortBy,
+      orderDirection: sortOrder,
+    } = req.query;
     const { batchId } = req.params;
 
     // Validate batchId
@@ -124,13 +139,16 @@ exports.getExamPlansByBatch = async (req, res) => {
     // Build query object
     const query = {
       batchId: new mongoose.Types.ObjectId(batchId),
-      status: true,
+      // status: true,
       deletedAt: null,
     };
 
     // Add search filter if provided
     if (search) {
-      query.$or = [{ title: { $regex: search, $options: "i" } }, { description: { $regex: search, $options: "i" } }];
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
     }
 
     // Calculate pagination values
@@ -169,23 +187,21 @@ exports.getExamPlansByBatch = async (req, res) => {
   }
 };
 
-
-
 // * Get a single exam plan with purchase status
 exports.getUserExamPlanById = async (req, res) => {
   try {
-    const { id } = req.params
-    const userId = req.user._id
+    const { id } = req.params;
+    const userId = req.user._id;
 
     // Find the exam plan
     const examPlan = await ExamPlan.findOne({
       _id: id,
-      status: true,
+      // status: true,
       deletedAt: null,
-    }).populate("batchId", "name")
+    }).populate("batchId", "name");
 
     if (!examPlan) {
-      return res.noRecords("Exam plan not found")
+      return res.noRecords("Exam plan not found");
     }
 
     // Check if user has purchased this exam plan
@@ -195,55 +211,53 @@ exports.getUserExamPlanById = async (req, res) => {
       itemId: examPlan._id,
       expiryDate: { $gt: new Date() },
       status: "ACTIVE",
-    })
+    });
 
-    const examPlanObj = examPlan.toObject()
+    const examPlanObj = examPlan.toObject();
 
     if (purchase) {
-      examPlanObj.isPurchased = true
-      examPlanObj.purchaseId = purchase._id
-      examPlanObj.purchaseDate = purchase.createdAt
-      examPlanObj.expiryDate = purchase.expiryDate
+      examPlanObj.isPurchased = true;
+      examPlanObj.purchaseId = purchase._id;
+      examPlanObj.purchaseDate = purchase.createdAt;
+      examPlanObj.expiryDate = purchase.expiryDate;
 
       // Calculate remaining days
-      const today = new Date()
-      const expiryDate = new Date(purchase.expiryDate)
-      const diffTime = Math.abs(expiryDate - today)
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      const today = new Date();
+      const expiryDate = new Date(purchase.expiryDate);
+      const diffTime = Math.abs(expiryDate - today);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      examPlanObj.remainingDays = diffDays
+      examPlanObj.remainingDays = diffDays;
     } else {
-      examPlanObj.isPurchased = false
+      examPlanObj.isPurchased = false;
     }
 
     // Format image URL if exists
     if (examPlanObj.image) {
-      examPlanObj.imageUrl = `${process.env.BASE_URL}${examPlanObj.image}`
+      examPlanObj.imageUrl = `${process.env.BASE_URL}${examPlanObj.image}`;
     }
 
-    return res.success(examPlanObj)
+    return res.success(examPlanObj);
   } catch (error) {
-    console.error("Error fetching exam plan:", error)
-    return res.someThingWentWrong(error)
+    console.error("Error fetching exam plan:", error);
+    return res.someThingWentWrong(error);
   }
-}
+};
 
-
-
-// Test Series 
+// Test Series
 exports.getAllTestSeries = async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 10, 
-      search = "", 
-      examPlanId = null, 
-      sortBy = "createdAt", 
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      examPlanId = null,
+      sortBy = "createdAt",
       sortOrder = "desc",
-      isFree = null
+      isFree = null,
     } = req.query;
 
-    console.log(".......................................................")
+    console.log(".......................................................");
     // Build query object
     const query = { status: true, deletedAt: null };
 
@@ -251,13 +265,13 @@ exports.getAllTestSeries = async (req, res) => {
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } }
+        { description: { $regex: search, $options: "i" } },
       ];
     }
 
     // Add exam plan filter
     if (examPlanId) {
-      console.log("examPlanId", examPlanId)
+      console.log("examPlanId", examPlanId);
       query.examPlanId = new mongoose.Types.ObjectId(examPlanId);
     }
 
@@ -265,11 +279,11 @@ exports.getAllTestSeries = async (req, res) => {
     if (isFree !== null) {
       query.isFree = isFree === "true";
     }
-console.log("query", query)
+    console.log("query", query);
     // Count total records
     const total = await TestSeries.countDocuments(query);
 
-    console.log("total", total)
+    console.log("total", total);
 
     if (total === 0) {
       return res.status(200).json({
@@ -281,15 +295,15 @@ console.log("query", query)
           totalPages: 0,
           pagination: [],
           limit: parseInt(limit),
-          record: []
-        }
+          record: [],
+        },
       });
     }
 
     // Calculate pagination values
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const totalPages = Math.ceil(total / parseInt(limit));
-    
+
     // Generate pagination array
     const pagination = [];
     for (let i = 1; i <= totalPages; i++) {
@@ -307,8 +321,8 @@ console.log("query", query)
         select: "title batchId isFree price mrp validityDays",
         populate: {
           path: "batchId",
-          select: "name"
-        }
+          select: "name",
+        },
       })
       .skip(skip)
       .limit(parseInt(limit))
@@ -318,24 +332,26 @@ console.log("query", query)
     const enhancedTestSeries = await Promise.all(
       testSeries.map(async (series) => {
         const seriesObj = series.toObject();
-        
+
         // Get section count
-        const sectionCount = await Section.countDocuments({ 
+        const sectionCount = await Section.countDocuments({
           testSeriesId: series?._id,
           status: true,
-          deletedAt: null
+          deletedAt: null,
         });
         seriesObj.sectionCount = sectionCount;
-        
+
         // Get sections for this test series
-        const sections = await Section.find({ 
+        const sections = await Section.find({
           testSeriesId: series._id,
           status: true,
-          deletedAt: null
-        }).select("name sequence totalQuestions").sort({ sequence: 1 });
-        
+          deletedAt: null,
+        })
+          .select("name sequence totalQuestions")
+          .sort({ sequence: 1 });
+
         seriesObj.sections = sections;
-        
+
         // Check if user has purchased this test series (if it's not free)
         if (!series.isFree && req.user) {
           const userPurchase = await UserPurchase.findOne({
@@ -343,18 +359,18 @@ console.log("query", query)
             itemType: "EXAM_PLAN",
             itemId: series.examPlanId._id,
             status: "ACTIVE",
-            expiryDate: { $gt: new Date() }
+            expiryDate: { $gt: new Date() },
           });
-          
+
           seriesObj.isPurchased = !!userPurchase;
-          
+
           if (userPurchase) {
             seriesObj.expiryDate = userPurchase.expiryDate;
           }
         } else {
           seriesObj.isPurchased = series.isFree;
         }
-        
+
         return seriesObj;
       })
     );
@@ -369,15 +385,15 @@ console.log("query", query)
         totalPages,
         pagination,
         limit: parseInt(limit),
-        record: enhancedTestSeries
-      }
+        record: enhancedTestSeries,
+      },
     });
   } catch (error) {
     console.error("Error fetching test series:", error);
     return res.status(500).json({
       status: false,
       message: "Something went wrong",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -395,21 +411,21 @@ exports.getTestSeriesById = async (req, res) => {
     const testSeries = await TestSeries.findOne({
       _id: id,
       status: true,
-      deletedAt: null
+      deletedAt: null,
     }).populate({
       path: "examPlanId",
       select: "title batchId isFree price mrp validityDays",
       populate: {
         path: "batchId",
-        select: "name"
-      }
+        select: "name",
+      },
     });
 
     if (!testSeries) {
       return res.status(404).json({
         status: false,
         message: "Test series not found",
-        data: null
+        data: null,
       });
     }
 
@@ -417,7 +433,7 @@ exports.getTestSeriesById = async (req, res) => {
     const sections = await Section.find({
       testSeriesId: testSeries._id,
       status: true,
-      deletedAt: null
+      deletedAt: null,
     }).sort({ sequence: 1 });
 
     // Check if user has purchased this test series (if it's not free)
@@ -430,11 +446,11 @@ exports.getTestSeriesById = async (req, res) => {
         itemType: "EXAM_PLAN",
         itemId: testSeries.examPlanId._id,
         status: "ACTIVE",
-        expiryDate: { $gt: new Date() }
+        expiryDate: { $gt: new Date() },
       });
-      
+
       isPurchased = !!userPurchase;
-      
+
       if (userPurchase) {
         expiryDate = userPurchase.expiryDate;
       }
@@ -449,15 +465,14 @@ exports.getTestSeriesById = async (req, res) => {
     return res.status(200).json({
       status: true,
       message: "Success",
-      data: result
+      data: result,
     });
   } catch (error) {
     console.error("Error fetching test series:", error);
     return res.status(500).json({
       status: false,
       message: "Something went wrong",
-      error: error.message
+      error: error.message,
     });
   }
 };
-

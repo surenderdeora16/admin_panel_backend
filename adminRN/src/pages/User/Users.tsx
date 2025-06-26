@@ -51,25 +51,30 @@ const PasswordChangeForm = memo(
   ({
     onSubmit,
   }: {
-    onSubmit: (data: { newPassword: string; confirmPassword: string }) => Promise<void>;
+    onSubmit: (data: {
+      newPassword: string;
+      confirmPassword: string;
+    }) => Promise<void>;
   }) => {
     const [formData, setFormData] = useState({
       newPassword: '',
       confirmPassword: '',
     });
+    const [cpLoading, setCpLoading] = useState(false);
     const [passwordError, setPasswordError] = useState('');
     const newPasswordRef = useRef<HTMLInputElement>(null);
     const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const { id, value } = e.target;
-      setFormData(prev => ({ ...prev, [id]: value }));
+      setFormData((prev) => ({ ...prev, [id]: value }));
       setPasswordError('');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      
+      setCpLoading(true);
+
       if (formData.newPassword !== formData.confirmPassword) {
         setPasswordError('Passwords do not match');
         toast.error('Passwords do not match');
@@ -86,9 +91,13 @@ const PasswordChangeForm = memo(
         await onSubmit(formData);
         setFormData({ newPassword: '', confirmPassword: '' });
         setPasswordError('');
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error changing password:', error);
-        toast.error(error.response?.data?.message || 'Failed to change password');
+        toast.error(
+          error.response?.data?.message || 'Failed to change password',
+        );
+      } finally {
+        setCpLoading(false);
       }
     };
 
@@ -136,21 +145,24 @@ const PasswordChangeForm = memo(
           )}
           <button
             type="submit"
+            disabled={cpLoading}
             className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 dark:hover:bg-blue-700"
           >
-            Change Password
+            {cpLoading ? 'Changing...' : 'Change Password'}
           </button>
         </form>
       </div>
     );
-  }
+  },
 );
 PasswordChangeForm.displayName = 'PasswordChangeForm';
 
 const Users = () => {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [userDetails, setUserDetails] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'purchases' | 'payments' | 'changePassword'>('purchases');
+  const [activeTab, setActiveTab] = useState<
+    'purchases' | 'payments' | 'changePassword'
+  >('purchases');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -175,14 +187,20 @@ const Users = () => {
   }, [selectedUser]);
 
   const handlePasswordChange = useCallback(
-    async ({ newPassword, confirmPassword }: { newPassword: string; confirmPassword: string }) => {
+    async ({
+      newPassword,
+      confirmPassword,
+    }: {
+      newPassword: string;
+      confirmPassword: string;
+    }) => {
       await AxiosHelper.postData(`users/${selectedUser}/change-password`, {
         newPassword,
         confirmPassword,
       });
       toast.success('Password changed successfully');
     },
-    [selectedUser]
+    [selectedUser],
   );
 
   // Memoized tab content to prevent unnecessary re-renders
@@ -235,10 +253,7 @@ const Users = () => {
             </thead>
             <tbody>
               {userDetails.payments?.map((payment: any) => (
-                <tr
-                  key={payment._id}
-                  className="border-b dark:border-gray-700"
-                >
+                <tr key={payment._id} className="border-b dark:border-gray-700">
                   <td className="px-4 py-3">
                     ₹{payment.amount?.toLocaleString()}
                   </td>
@@ -263,10 +278,7 @@ const Users = () => {
               ))}
               {!userDetails.payments?.length && (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="text-center text-gray-500 py-6"
-                  >
+                  <td colSpan={4} className="text-center text-gray-500 py-6">
                     No payments found
                   </td>
                 </tr>
@@ -442,6 +454,17 @@ const Users = () => {
             ),
           },
           {
+            header: 'Registered On',
+            accessor: 'createdAt',
+            sortable: true,
+            render: (value: any) =>
+              new Date(value).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              }),
+          },
+          {
             header: 'Actions',
             accessor: 'actions',
             render: (_, item) => (
@@ -462,14 +485,12 @@ const Users = () => {
       />
 
       {isLoading && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 !m-0 flex items-center justify-center z-[98654]">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       )}
 
-      <AnimatePresence>
-        {isModalOpen && UserDetailModal}
-      </AnimatePresence>
+      <AnimatePresence>{isModalOpen && UserDetailModal}</AnimatePresence>
     </div>
   );
 };
