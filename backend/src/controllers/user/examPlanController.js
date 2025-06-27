@@ -63,10 +63,10 @@ exports.getUserExamPlans = async (req, res) => {
     // Get user's purchases for these exam plans
     const userPurchases = await UserPurchase.find({
       userId,
-      itemType: "examPlan",
+      itemType: "EXAM_PLAN",
       itemId: { $in: examPlans.map((plan) => plan._id) },
       expiryDate: { $gt: new Date() }, // Only active purchases
-      status: "active",
+      status: "ACTIVE",
     });
 
     // Create a map of purchased exam plan IDs for quick lookup

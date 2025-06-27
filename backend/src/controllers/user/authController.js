@@ -5,6 +5,7 @@ const { calculateExpiryTime } = require("../../helpers/string");
 const Storage = require("../../helpers/Storage");
 const { getCookiesConfig } = require("../../helpers/formValidConfig");
 const catchAsync = require("../../utils/catchAsync");
+const mongoose = require("mongoose");
 
 exports.register = async (req, res) => {
   try {
@@ -371,12 +372,22 @@ exports.updateProfile = async (req, res) => {
       req.user.image = req.file.filename;
     }
 
-    await req.user.save();
+    const updatedUser = await req.user.save();
+
+    const userResponse = {
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      mobile: updatedUser.mobile,
+      state: updatedUser.state ? updatedUser.state.toString() : null, // Convert ObjectId to string
+      district: updatedUser.district ? updatedUser.district.toString() : null, // Convert ObjectId to string
+      image: updatedUser.image || null,
+    };
 
     return res.json({
       status: true,
       message: "Profile Updated Successfully..!!",
-      data: req.user.toJSON(),
+      data: userResponse,
     });
   } catch (error) {
     return res.someThingWentWrong(error);
