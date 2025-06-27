@@ -39,12 +39,12 @@ exports.uploadTo = class {
       }
 
       // Check uploaded file is image.
-      if (isImage && !SUPPORTED_FORMATS_IMAGE.includes(file.mimetype)) {
-        req.fileValidationError = {
-          [file.fieldname]: "Please select only Image Only..!!",
-        };
-        return cb(null, false, new Error("Please select only Image Only..!!"));
-      }
+      // if (isImage && !SUPPORTED_FORMATS_IMAGE.includes(file.mimetype)) {
+      //   req.fileValidationError = {
+      //     [file.fieldname]: "Please select only Image Only..!!",
+      //   };
+      //   return cb(null, false, new Error("Please select only Image Only..!!"));
+      // }
 
       // Check uploaded file is Document.
       if (isDoc && !SUPPORTED_FORMATS_DOC.includes(file.mimetype)) {

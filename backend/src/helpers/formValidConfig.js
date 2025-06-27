@@ -23,6 +23,16 @@ const SUPPORTED_FORMATS_IMAGE = [
   'image/heic'       // .heic (used by iPhones)
 ];
 
+
+const SUPPORTED_IMAGE_EXTENSIONS = [
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.gif',
+  '.webp',
+  '.svg'
+];
+
 const MAX_INPUT_AMOUNT = 10000000;
 
 const SUPPORTED_FORMATS_DOC = [
@@ -34,6 +44,8 @@ const SUPPORTED_FORMATS_DOC = [
     'application/pdf',
     'application/vnd.rar'
 ];
+
+
 
 const RETREAT_STATUS = [
     { id: 1, name: "Sold Out" },
@@ -61,4 +73,4 @@ const getCookiesConfig = (maxAge = 48 * 60 * 60 * 1000) => {
     }
 }
 
-module.exports = { FILE_SIZE, RETREAT_STATUS, getCookiesConfig, SUPPORTED_FORMATS_IMAGE, SUPPORTED_FORMATS_DOC, MAX_INPUT_AMOUNT, mobileRegExp, getFilePath }
+module.exports = { FILE_SIZE, SUPPORTED_IMAGE_EXTENSIONS, RETREAT_STATUS, getCookiesConfig, SUPPORTED_FORMATS_IMAGE, SUPPORTED_FORMATS_DOC, MAX_INPUT_AMOUNT, mobileRegExp, getFilePath }
