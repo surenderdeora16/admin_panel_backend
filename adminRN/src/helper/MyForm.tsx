@@ -602,736 +602,252 @@ const MyForm = memo(
 );
 
 // COMPLETELY FIXED Jodit Editor with AUTOMATIC PREFILLING and NO BLANK SCREEN
-const TextEditer = memo(
-  ({
-    form,
-    field,
-    disabled = false,
-    height = '400',
-    error = false,
-    placeholder = 'Start typing...',
-    fieldIndex = 0,
-    initialContent = '',
-    currentValue = '',
-  }: {
-    form: any;
-    field: any;
-    disabled?: boolean;
-    height?: string;
-    error?: boolean;
-    placeholder?: string;
-    fieldIndex?: number;
-    initialContent?: string;
-    currentValue?: string;
-  }) => {
-    const editorRef = useRef<any>(null);
-    const containerRef = useRef<any>(null);
-    const [content, setContent] = useState('');
-    const [isMounted, setIsMounted] = useState(false);
-    const [isEditorReady, setIsEditorReady] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
-    const [isUploading, setIsUploading] = useState(false);
-    const [uploadError, setUploadError] = useState('');
-    const [isInitialized, setIsInitialized] = useState(false);
-    const focusTimeoutRef = useRef<any>(null);
-    const lastFocusTime = useRef<number>(0);
-    const uniqueId = `jodit-editor-${field?.name}-${fieldIndex}-${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
-    const initTimeoutRef = useRef<any>(null);
+const TextEditer = ({ form, field, disabled, height = '400', placeholder="",  }:any) => {
+  const editor = useRef(null);
+  const [content, setContent] = useState(field?.value || '');
+  const updateTimeout = useRef(null);
+  const lastContent = useRef(field?.value || '');
+  const selectionRange = useRef(null);
+  const isUserTyping = useRef(false);
 
-    // FIXED: Debounced content update with error handling
-    const debouncedUpdate = useMemo(
-      () =>
-        debounce((newContent: string) => {
-          try {
-            if (newContent !== content && form && form.setFieldValue) {
-              setContent(newContent);
-              form.setFieldValue(field?.name, newContent);
-            }
-          } catch (error) {
-            console.error('Error updating field:', error);
-            // Don't throw to prevent blank screen
-          }
-        }, 300),
-      [form, field?.name, content],
-    );
-
-    // FIXED: Initialize content with proper prefilling and error handling
-    useEffect(() => {
-      try {
-        setIsMounted(true);
-
-        // FIXED: Priority order for content initialization with automatic prefilling
-        const contentToSet =
-          currentValue || initialContent || field?.value || '';
-
-        console.log('🔄 Initializing editor content:', {
-          currentValue,
-          initialContent,
-          fieldValue: field?.value,
-          contentToSet,
-          fieldName: field?.name,
-        });
-
-        if (contentToSet !== content) {
-          setContent(contentToSet);
-        }
-      } catch (error) {
-        console.error('Error initializing editor:', error);
-        // Don't throw to prevent blank screen
+  // Sync editor content with form field value only if no user changes are pending
+  useEffect(() => {
+    if (field?.value !== lastContent.current && field?.value !== content && !isUserTyping.current) {
+      setContent(field?.value || '');
+      lastContent.current = field?.value || '';
+      if (editor.current && selectionRange.current) {
+        editor.current.selection.restore(selectionRange.current);
       }
-    }, [currentValue, initialContent, field?.value, field?.name]);
-
-    // FIXED: Update editor content when field value changes with automatic prefilling
-    useEffect(() => {
-      if (isEditorReady && editorRef.current && !isInitialized) {
-        try {
-          const contentToSet =
-            currentValue || initialContent || field?.value || '';
-
-          if (contentToSet && contentToSet !== editorRef?.current?.value) {
-            console.log(
-              '📝 Setting editor content for automatic prefilling:',
-              contentToSet.substring(0, 100) + '...',
-            );
-
-            // FIXED: Clear any existing timeout
-            if (initTimeoutRef.current) {
-              clearTimeout(initTimeoutRef.current);
-            }
-
-            // FIXED: Set content with delay to prevent blank screen
-            initTimeoutRef.current = setTimeout(() => {
-              try {
-                if (
-                  editorRef.current &&
-                  editorRef.current.value !== undefined
-                ) {
-                  editorRef.current.value = contentToSet;
-                  setContent(contentToSet);
-                  setIsInitialized(true);
-
-                  // Update form field to ensure sync
-                  if (
-                    form &&
-                    form.setFieldValue &&
-                    contentToSet !== currentValue
-                  ) {
-                    form.setFieldValue(field?.name, contentToSet);
-                  }
-
-                  console.log(
-                    '✅ Editor content automatically prefilled successfully',
-                  );
-                }
-              } catch (error) {
-                console.error('Error setting editor content:', error);
-                // Don't throw to prevent blank screen
-              }
-            }, 100);
-          }
-        } catch (error) {
-          console.error('Error in content update effect:', error);
-          // Don't throw to prevent blank screen
-        }
+    }
+    return () => {
+      if (updateTimeout.current) {
+        clearTimeout(updateTimeout.current);
       }
-    }, [
-      isEditorReady,
-      currentValue,
-      initialContent,
-      field?.value,
-      isInitialized,
-      form,
-      field?.name,
-    ]);
+    };
+  }, [field?.value, content]);
 
-    // FIXED: Cleanup on unmount to prevent memory leaks and blank screen
-    useEffect(() => {
-      return () => {
-        try {
-          debouncedUpdate.cancel();
-          if (focusTimeoutRef.current) {
-            clearTimeout(focusTimeoutRef.current);
-          }
-          if (initTimeoutRef.current) {
-            clearTimeout(initTimeoutRef.current);
-          }
-        } catch (error) {
-          console.error('Error in cleanup:', error);
-        }
-      };
-    }, [debouncedUpdate]);
+  // Debounced update for form field
+  const updateFormField = useCallback((newContent:any) => {
+    if (updateTimeout.current) {
+      clearTimeout(updateTimeout.current);
+    }
+    isUserTyping.current = true;
+    updateTimeout.current = setTimeout(() => {
+      form.setFieldValue(field?.name, newContent);
+      lastContent.current = newContent;
+      isUserTyping.current = false;
+    }, 300);
+  }, [form, field?.name]);
 
-    // FIXED: Intelligent focus management with error handling
-    const handleFocus = useCallback(() => {
-      try {
-        const now = Date.now();
-        if (now - lastFocusTime.current < 100) return;
+  // Save cursor position
+  const saveCursorPosition = useCallback(() => {
+    if (editor.current && editor.current.selection) {
+      selectionRange.current = editor.current.selection.save();
+    }
+  }, []);
 
-        lastFocusTime.current = now;
+  // Restore cursor position
+  const restoreCursorPosition = useCallback(() => {
+    if (editor.current && selectionRange.current) {
+      editor.current.selection.restore(selectionRange.current);
+    }
+  }, []);
 
-        if (focusTimeoutRef.current) {
-          clearTimeout(focusTimeoutRef.current);
-        }
+  // Categorized symbols for mathematics, physics, education, and government exams
+  const symbolCategories = {
+    greekLetters: {
+      label: 'Greek Letters',
+      symbols: [
+        'Α', 'Β', 'Γ', 'Δ', 'Ε', 'Ζ', 'Η', 'Θ', 'Ι', 'Κ', 'Λ', 'Μ', 'Ν', 'Ξ', 'Ο', 'Π', 'Ρ', 'Σ', 'Τ', 'Υ', 'Φ', 'Χ', 'Ψ', 'Ω',
+        'α', 'β', 'γ', 'δ', 'ε', 'ζ', 'η', 'θ', 'ι', 'κ', 'λ', 'μ', 'ν', 'ξ', 'ο', 'π', 'ρ', 'σ', 'τ', 'υ', 'φ', 'χ', 'ψ', 'ω'
+      ]
+    },
+    mathOperators: {
+      label: 'Mathematical Operators',
+      symbols: [
+        '∑', '∏', '∫', '∮', '∂', '∇', '∆', '∞', '∝', '∴', '∵', '∀', '∃', '∄', '∈', '∉', '∋', '∌',
+        '⊂', '⊃', '⊆', '⊇', '∪', '∩', '≠', '≈', '≡', '≤', '≥', '≪', '≫', '≺', '≻', '≼', '≽',
+        '±', '∓', '×', '÷', '⋅', '∘', '√', '∛', '∜', '½', '⅓', '⅔', '¼', '¾', '⅕', '⅖', '⅗', '⅘', '⅙', '⅚', '⅛', '⅜', '⅝', '⅞'
+      ]
+    },
+    physics: {
+      label: 'Physics Symbols',
+      symbols: [
+        'ℏ', 'ℎ', 'ℓ', 'ℯ', 'ℰ', 'ℱ', 'ℳ', 'ℴ', 'Ω', 'μ₀', 'ε₀', 'σ', 'γ', 'λ', 'ω', 'φ', 'ψ', 'θ',
+        'α', 'β', 'ρ', 'τ', 'ν', 'κ', 'χ', 'ξ', 'ζ', 'η', '∆E', '∆t', '∆p', '∆x', 'ħ', 'c', 'G', 'k', 'R'
+      ]
+    },
+    education: {
+      label: 'Education & Exams',
+      symbols: [
+        '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹', '⁰', '₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉',
+        '₊', '₋', '₌', '₍', '₎', 'ₐ', 'ₑ', 'ₕ', 'ᵢ', 'ⱼ', 'ₖ', 'ₗ', 'ₘ', 'ₙ', 'ₒ', 'ₚ', 'ᵣ', 'ₛ', 'ₜ', 'ᵤ', 'ᵥ', 'ₓ',
+        '°', '′', '″', '‴', '℃', '℉', '€', '£', '¥', '¢', '₹', '©', '®', '™', '§', '¶', '†', '‡', '•', '‰', '‱'
+      ]
+    },
+    geometry: {
+      label: 'Geometry',
+      symbols: [
+        '○', '●', '□', '■', '△', '▲', '▼', '▽', '◆', '◇', '◊', '⊥', '∥', '∠', '≅', '∼', '≐', '≑', '≒', '≓'
+      ]
+    },
+    arrows: {
+      label: 'Arrows',
+      symbols: [
+        '←', '→', '↑', '↓', '↔', '↕', '↖', '↗', '↘', '↙', '⇐', '⇒', '⇑', '⇓', '⇔', '⇕'
+      ]
+    },
+    logic: {
+      label: 'Logic',
+      symbols: [
+        '∧', '∨', '¬', '⊕', '⊗', '⊙', '⊤', '⊥', '∀', '∃', '∄'
+      ]
+    }
+  };
 
-        focusTimeoutRef.current = setTimeout(() => {
-          try {
-            if (
-              editorRef.current &&
-              editorRef.current.editor &&
-              isEditorReady
-            ) {
-              const activeElement = document.activeElement;
-              const isEditorFocused =
-                activeElement === editorRef.current.editor ||
-                editorRef.current.editor.contains(activeElement);
-
-              if (
-                !isEditorFocused &&
-                containerRef.current &&
-                containerRef.current.contains(activeElement)
-              ) {
-                editorRef.current.editor.focus();
-              }
-            }
-          } catch (error) {
-            console.warn('Focus error:', error);
-            // Don't throw to prevent blank screen
-          }
-        }, 50);
-      } catch (error) {
-        console.error('Error in handleFocus:', error);
-      }
-    }, [isEditorReady]);
-
-    // FIXED: Custom upload function with proper error handling
-    const handleImageUpload = useCallback(
-      async (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          try {
-            setIsUploading(true);
-            setUploadProgress(0);
-            setUploadError('');
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const xhr = new XMLHttpRequest();
-
-            xhr.upload.addEventListener('progress', (e) => {
-              try {
-                if (e.lengthComputable) {
-                  const percentComplete = Math.round(
-                    (e.loaded / e.total) * 100,
-                  );
-                  setUploadProgress(percentComplete);
-                }
-              } catch (error) {
-                console.error('Progress error:', error);
-              }
-            });
-
-            xhr.addEventListener('load', () => {
-              try {
-                setIsUploading(false);
-                setUploadProgress(0);
-
-                if (xhr.status === 200) {
-                  try {
-                    const response = JSON.parse(xhr.responseText);
-                    if (response.error) {
-                      setUploadError(response.msg || 'Upload failed');
-                      reject(new Error(response.msg || 'Upload failed'));
-                    } else {
-                      resolve(response.data);
-                    }
-                  } catch (error) {
-                    setUploadError('Invalid server response');
-                    reject(new Error('Invalid server response'));
-                  }
-                } else {
-                  setUploadError(`Upload failed with status: ${xhr.status}`);
-                  reject(new Error(`Upload failed with status: ${xhr.status}`));
-                }
-              } catch (error) {
-                console.error('Load event error:', error);
-                reject(error);
-              }
-            });
-
-            xhr.addEventListener('error', () => {
-              try {
-                setIsUploading(false);
-                setUploadProgress(0);
-                setUploadError('Network error during upload');
-                reject(new Error('Network error during upload'));
-              } catch (error) {
-                console.error('Error event error:', error);
-              }
-            });
-
-            xhr.addEventListener('timeout', () => {
-              try {
-                setIsUploading(false);
-                setUploadProgress(0);
-                setUploadError('Upload timeout');
-                reject(new Error('Upload timeout'));
-              } catch (error) {
-                console.error('Timeout event error:', error);
-              }
-            });
-
-            xhr.open(
-              'POST',
-              (import.meta.env?.VITE_API_BASE_URL || '') +
-                'upload-editor-image',
-            );
-            xhr.setRequestHeader(
-              'x-api-key',
-              import.meta.env?.VITE_LICENCE || '',
-            );
-            xhr.timeout = 30000;
-            xhr.send(formData);
-          } catch (error) {
-            console.error('Upload setup error:', error);
-            setIsUploading(false);
-            setUploadError('Upload setup failed');
-            reject(error);
-          }
-        });
-      },
-      [],
-    );
-
-    // FIXED: File drop handler with error handling
-    const handleFileDrop = useCallback(
-      (editor: any) => {
-        try {
-          if (!editor.editor) return;
-
-          editor.editor.addEventListener('drop', async (e: DragEvent) => {
-            try {
-              e.preventDefault();
-
-              const files = e.dataTransfer?.files;
-              if (!files || files.length === 0) return;
-
-              const file = files[0];
-              if (!file.type.startsWith('image/')) {
-                setUploadError('Please select an image file');
-                return;
-              }
-
-              setIsUploading(true);
-              setUploadProgress(0);
-              setUploadError('');
-
-              const imageUrl = await handleImageUpload(file);
-
-              if (editor.selection) {
-                editor.selection.insertImage(
-                  imageUrl,
-                  {
-                    alt: 'Uploaded image',
-                    style: 'max-width: 100%; height: auto;',
-                  },
-                  250,
-                );
-
-                setTimeout(() => {
-                  try {
-                    if (
-                      editorRef.current &&
-                      typeof editorRef.current.value !== 'undefined'
-                    ) {
-                      const newContent = editorRef.current.value;
-                      debouncedUpdate(newContent);
-                    }
-                  } catch (error) {
-                    console.error('Error updating content after drop:', error);
-                  }
-                }, 100);
-              }
-            } catch (error) {
-              console.error('Drag and drop upload error:', error);
-              setUploadError(error.message || 'Upload failed');
-            }
-          });
-
-          editor.editor.addEventListener('dragover', (e: DragEvent) => {
-            e.preventDefault();
-          });
-        } catch (error) {
-          console.error('Error setting up file drop:', error);
-        }
-      },
-      [handleImageUpload, debouncedUpdate],
-    );
-
-    // Math and Physics Symbols (same as before)
-    const mathPhysicsSymbols = [
-      'Α',
-      'Β',
-      'Γ',
-      'Δ',
-      'Ε',
-      'Ζ',
-      'Η',
-      'Θ',
-      'Ι',
-      'Κ',
-      'Λ',
-      'Μ',
-      'Ν',
-      'Ξ',
-      'Ο',
-      'Π',
-      'Ρ',
-      'Σ',
-      'Τ',
-      'Υ',
-      'Φ',
-      'Χ',
-      'Ψ',
-      'Ω',
-      'α',
-      'β',
-      'γ',
-      'δ',
-      'ε',
-      'ζ',
-      'η',
-      'θ',
-      'ι',
-      'κ',
-      'λ',
-      'μ',
-      'ν',
-      'ξ',
-      'ο',
-      'π',
-      'ρ',
-      'σ',
-      'τ',
-      'υ',
-      'φ',
-      'χ',
-      'ψ',
-      'ω',
-      '∑',
-      '∏',
-      '∫',
-      '∮',
-      '∂',
-      '∇',
-      '∆',
-      '∞',
-      '∝',
-      '∴',
-      '∵',
-      '∀',
-      '∃',
-      '∄',
-      '∈',
-      '∉',
-      '∋',
-      '∌',
-      '⊂',
-      '⊃',
-      '⊆',
-      '⊇',
-      '∪',
-      '∩',
-      '≠',
-      '≈',
-      '≡',
-      '≤',
-      '≥',
-      '≪',
-      '≫',
-      '≺',
-      '≻',
-      '≼',
-      '≽',
-      '≾',
-      '≿',
-      '⊀',
-      '⊁',
-      '⊄',
-      '⊅',
-      '⊈',
-      '⊉',
-      '⊊',
-      '⊋',
-      '±',
-      '∓',
-      '×',
-      '÷',
-      '⋅',
-      '∘',
-      '√',
-      '∛',
-      '∜',
-      '∝',
-      '∞',
-      '∑',
-      '∏',
-      '½',
-      '⅓',
-      '⅔',
-      '¼',
-      '¾',
-      '⅕',
-      '⅖',
-      '⅗',
-      '⅘',
-      '⅙',
-      '⅚',
-      '⅛',
-      '⅜',
-      '⅝',
-      '⅞',
-      '¹',
-      '²',
-      '³',
-      '⁴',
-      '⁵',
-      '⁶',
-      '⁷',
-      '⁸',
-      '⁹',
-      '⁰',
-      '₀',
-      '₁',
-      '₂',
-      '₃',
-      '₄',
-      '₅',
-      '₆',
-      '₇',
-      '₈',
-      '₉',
-      '₊',
-      '₋',
-      '₌',
-      '₍',
-      '₎',
-      'ₐ',
-      'ₑ',
-      'ₕ',
-      'ᵢ',
-      'ⱼ',
-      'ₖ',
-      'ₗ',
-      'ₘ',
-      'ₙ',
-      'ₒ',
-      'ₚ',
-      'ᵣ',
-      'ₛ',
-      'ₜ',
-      'ᵤ',
-      'ᵥ',
-      'ₓ',
-      'ℏ',
-      'ℎ',
-      'ℓ',
-      '℮',
-      'ℯ',
-      'ℰ',
-      'ℱ',
-      'ℳ',
-      'ℴ',
-      'ℵ',
-      'ℶ',
-      'ℷ',
-      'ℸ',
-      '⅁',
-      '⅂',
-      '⅃',
-      '⅄',
-      '←',
-      '→',
-      '↑',
-      '↓',
-      '↔',
-      '↕',
-      '↖',
-      '↗',
-      '↘',
-      '↙',
-      '⇐',
-      '⇒',
-      '⇑',
-      '⇓',
-      '⇔',
-      '⇕',
-      '○',
-      '●',
-      '□',
-      '■',
-      '△',
-      '▲',
-      '▼',
-      '▽',
-      '◆',
-      '◇',
-      '◊',
-      '∧',
-      '∨',
-      '¬',
-      '⊕',
-      '⊗',
-      '⊙',
-      '⊥',
-      '⊤',
-      '°',
-      '′',
-      '″',
-      '‴',
-      '℃',
-      '℉',
-      'Ω',
-      '€',
-      '£',
-      '¥',
-      '¢',
-      '₹',
-      '©',
-      '®',
-      '™',
-      '§',
-      '¶',
-      '†',
-      '‡',
-      '•',
-      '‰',
-      '‱',
-    ];
-
-    // FIXED: Enhanced Jodit configuration with automatic prefilling support and error handling
-    const config = useMemo(
-      () => ({
-        readonly: disabled,
+  // JoditEditor configuration
+  const config = useMemo(
+    () => ({
+      readonly: disabled,
+      activeButtonsInReadOnly: ['source', 'fullsize', 'print', 'about', 'dots'],
+      saveModeInCookie: false,
+      spellcheck: true,
+      editorCssClass: false,
+      triggerChangeEvent: true,
+      width: 'auto',
         height: Number.parseInt(height) || 400,
-        placeholder,
-        language: 'en',
-        theme: 'default',
-        saveModeInCookie: false,
-        spellcheck: true,
-        editorCssClass: 'jodit-editor-enhanced',
-        namespace: uniqueId,
-        autofocus: false,
-        tabIndex: 1,
-        toolbarAdaptive: true,
-        toolbarSticky: true,
-        showCharsCounter: false,
-        showWordsCounter: false,
-        showXPathInStatusbar: false,
-        askBeforePasteHTML: false,
-        askBeforePasteFromWord: false,
-        defaultActionOnPaste: 'insert_clear_html',
-        enableDragAndDropFileToEditor: true,
+      minHeight: 200,
+      direction: '',
+      language: 'en',
+      debugLanguage: false,
+      i18n: 'en',
+      tabIndex: -1,
+      toolbar: true,
+      enter: 'P',
+      useSplitMode: false,
+      askBeforePasteHTML: false,
+      askBeforePasteFromWord: false,
+      enableDragAndDropFileToEditor: true,
+      clipboard: {
+        useDefault: true,
+        pasteAsHTML: true,
+        cleanOnPaste: false,
+        defaultAction: 'insert',
+      },
+      history: {
+        enable: true,
+        maxHistory: 100,
+        undoDepth: 100,
+        redoDepth: 100,
+      },
+      link: {
+        modeClassName: 'jodit-link',
+        noFollow: false,
+        openInNewTab: true,
+        processPastedLinks: true,
+      },
+      uploader: {
+        insertImageAsBase64URI: false,
+        url: `${import.meta.env?.VITE_API_BASE_URL}upload-editor-image`,
+        format: 'json',
+        pathVariableName: 'path',
+        filesVariableName: () => 'file',
+        headers: {
+          'x-api-key': import.meta.env?.VITE_LICENCE,
+        },
+        prepareData: (formData:any) => formData,
+        isSuccess: (resp:any) => !resp.error,
+        getMsg: (resp:any) => (Array.isArray(resp.msg) ? resp.msg.join(' ') : resp.msg || 'Unknown error'),
+        process: (resp:any) => ({
+          files: [resp.data],
+          path: '',
+          baseurl: '',
+          error: resp.error ? 1 : 0,
+          msg: resp.msg,
+        }),
+        defaultHandlerSuccess: function (data:any) {
+          const files = data.files || [];
+          if (files.length) {
+            this.selection.insertImage(files[0], null, 250);
+          }
+        },
+        defaultHandlerError: function (resp:any) {
+          this.events?.fire('errorPopap', this.i18n(resp.msg || 'Upload failed'));
+        },
+        withCredentials: false,
+      },
+      popup: {
+        defaultTimeout: 0,
+      },
+      buttons: [
+        'source', '|',
+        'bold', 'italic', 'underline', 'strikethrough', '|',
+        'ul', 'ol', '|',
+        'outdent', 'indent', '|',
+        'font', 'fontsize', 'brush', 'paragraph', '|',
+        'image', 'video', 'table', 'link', '|',
+        'align', 'undo', 'redo', '|',
+        'hr', 'eraser', 'copyformat', '|',
+        'symbol', 'fullsize', 'print', 'about',
+      ],
+      buttonsXS: [
+        'bold', 'italic', 'image', '|',
+        'brush', 'paragraph', '|',
+        'align', 'undo', 'redo', '|',
+        'eraser', 'dots',
+      ],
+      preserveCursor: true,
+      autofocus: false,
+      saveSelectionOnBlur: true,
 
-        buttons: [
-          'source',
-          '|',
-          'bold',
-          'italic',
-          'underline',
-          'strikethrough',
-          '|',
-          'superscript',
-          'subscript',
-          '|',
-          'ul',
-          'ol',
-          '|',
-          'outdent',
-          'indent',
-          '|',
-          'font',
-          'fontsize',
-          'brush',
-          'paragraph',
-          '|',
-          'image',
-          'file',
-          'video',
-          'table',
-          'link',
-          '|',
-          'align',
-          'undo',
-          'redo',
-          '|',
-          'hr',
-          'eraser',
-          'copyformat',
-          '|',
-          'symbol',
-          'fullsize',
-        ],
+      controls: {
+        symbol: {
+          popup: (editor:any, current:any, self:any, close:any) => {
+            try {
+              const div = editor.create.div('jodit-symbols-popup');
+              div.style.cssText = `
+                display: flex;
+                flex-direction: column;
+                max-width: 600px;
+                max-height: 400px;
+                overflow-y: auto;
+                background: white;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                z-index: 999999;
+                padding: 10px;
+                font-family: Arial, sans-serif;
+              `;
 
-        buttonsMD: [
-          'source',
-          '|',
-          'bold',
-          'italic',
-          '|',
-          'ul',
-          'ol',
-          '|',
-          'image',
-          'link',
-          '|',
-          'align',
-          'undo',
-          'redo',
-          '|',
-          'symbol',
-        ],
+              // Create category tabs
+              const categoryTabs = editor.create.div('jodit-category-tabs');
+              categoryTabs.style.cssText = `
+                display: flex;
+                border-bottom: 1px solid #ddd;
+                margin-bottom: 10px;
+              `;
 
-        buttonsXS: [
-          'bold',
-          'italic',
-          '|',
-          'ul',
-          'ol',
-          '|',
-          'image',
-          'link',
-          'symbol',
-        ],
+              const symbolsContainer = editor.create.div('jodit-symbols-container');
+              symbolsContainer.style.cssText = `
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+                gap: 5px;
+                padding: 10px;
+              `;
 
-        controls: {
-          symbol: {
-            popup: (editor: any, current: any, self: any, close: any) => {
-              try {
-                const div = editor.create.div('jodit-symbols-popup');
-                div.style.cssText = `
-                  display: grid;
-                  grid-template-columns: repeat(12, 1fr);
-                  gap: 3px;
-                  padding: 15px;
-                  max-width: 600px;
-                  max-height: 400px;
-                  overflow-y: auto;
-                  background: white;
-                  border: 1px solid #ccc;
-                  border-radius: 8px;
-                  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-                  z-index: 999999;
-                `;
+              let activeCategory = Object.keys(symbolCategories)[0];
 
-                mathPhysicsSymbols.forEach((symbol) => {
+              // Function to render symbols for a category
+              const renderSymbols = (category:any) => {
+                symbolsContainer.innerHTML = '';
+                symbolCategories[category].symbols.forEach((symbol:any) => {
                   try {
                     const button = editor.create.element('button');
                     button.textContent = symbol;
                     button.title = symbol;
                     button.style.cssText = `
-                      padding: 8px 4px;
+                      padding: 8px;
                       border: 1px solid #ddd;
                       background: white;
                       cursor: pointer;
@@ -1357,11 +873,10 @@ const TextEditer = memo(
                       button.style.transform = 'scale(1)';
                     });
 
-                    button.addEventListener('click', (e) => {
+                    button.addEventListener('click', (e:any) => {
                       try {
                         e.preventDefault();
                         e.stopPropagation();
-
                         if (editor.selection) {
                           editor.selection.insertHTML(symbol);
                         } else {
@@ -1373,382 +888,107 @@ const TextEditer = memo(
                       }
                     });
 
-                    div.appendChild(button);
+                    symbolsContainer.appendChild(button);
                   } catch (error) {
                     console.error('Error creating symbol button:', error);
                   }
                 });
-
-                return div;
-              } catch (error) {
-                console.error('Error creating symbol popup:', error);
-                return editor.create.div();
-              }
-            },
-            tooltip: 'Insert Math/Physics Symbol',
-            icon: 'symbol',
-          },
-        },
-
-        uploader: {
-          insertImageAsBase64URI: false,
-          url:
-            (import.meta.env?.VITE_API_BASE_URL || '') + 'upload-editor-image',
-          format: 'json',
-          pathVariableName: 'path',
-          filesVariableName: () => 'file',
-          headers: {
-            'x-api-key': import.meta.env?.VITE_LICENCE || '',
-          },
-
-          isSuccess: (resp: any) => {
-            console.log('📤 Upload response:', resp);
-            return !resp.error && resp.data;
-          },
-
-          getMsg: (resp: any) => {
-            return resp.msg || 'Upload completed';
-          },
-
-          process: (resp: any) => {
-            try {
-              console.log('🔄 Processing upload response:', resp);
-
-              setIsUploading(false);
-              setUploadProgress(0);
-
-              if (resp.error) {
-                setUploadError(resp.msg || 'Upload failed');
-                return {
-                  files: [],
-                  path: '',
-                  baseurl: '',
-                  error: 1,
-                  msg: resp.msg || 'Upload failed',
-                };
-              }
-
-              return {
-                files: [resp.data],
-                path: '',
-                baseurl: '',
-                error: 0,
-                msg: resp.msg || 'Upload successful',
               };
-            } catch (error) {
-              console.error('Error processing upload response:', error);
-              return {
-                files: [],
-                path: '',
-                baseurl: '',
-                error: 1,
-                msg: 'Processing failed',
-              };
-            }
-          },
 
-          defaultHandlerSuccess: function (data: any) {
-            try {
-              console.log('✅ Upload success handler called with:', data);
+              // Create category buttons
+              Object.keys(symbolCategories).forEach((categoryKey) => {
+                const tabButton = editor.create.element('button');
+                tabButton.textContent = symbolCategories[categoryKey].label;
+                tabButton.style.cssText = `
+                  padding: 8px 12px;
+                  border: none;
+                  background: ${categoryKey === activeCategory ? '#e3f2fd' : 'white'};
+                  cursor: pointer;
+                  font-size: 14px;
+                  color: ${categoryKey === activeCategory ? '#2196f3' : '#333'};
+                  border-bottom: ${categoryKey === activeCategory ? '2px solid #2196f3' : 'none'};
+                  transition: all 0.2s;
+                `;
 
-              const files = data.files || [];
-              if (files.length > 0 && this.selection) {
-                const imageUrl = files[0];
-                console.log('🖼️ Inserting image:', imageUrl);
-
-                this.selection.insertImage(
-                  imageUrl,
-                  {
-                    alt: 'Uploaded image',
-                    style: 'max-width: 100%; height: auto;',
-                  },
-                  250,
-                );
-
-                setTimeout(() => {
-                  try {
-                    if (
-                      isEditorReady &&
-                      editorRef?.current &&
-                      typeof editorRef?.current?.value !== 'undefined'
-                    ) {
-                      const newContent = editorRef?.current?.value;
-                      console.log('📝 Updating content after image insert');
-                      debouncedUpdate(newContent);
-                    }
-                  } catch (error) {
-                    console.error(
-                      'Error updating content after upload:',
-                      error,
-                    );
-                  }
-                }, 200);
-              } else {
-                console.error('❌ No files in upload response or no selection');
-              }
-            } catch (error) {
-              console.error('❌ Upload success handler error:', error);
-              setUploadError('Failed to insert image into editor');
-            }
-          },
-
-          defaultHandlerError: function (resp: any) {
-            try {
-              console.error('❌ Upload error handler called with:', resp);
-
-              const errorMsg = resp.msg || resp.message || 'Upload failed';
-              setUploadError(errorMsg);
-
-              if (this.events && this.events.fire) {
-                this.events.fire('errorPopap', errorMsg);
-              }
-            } catch (error) {
-              console.error('Upload error handler error:', error);
-            }
-          },
-
-          withCredentials: false,
-        },
-
-        // FIXED: Improved event handling with automatic prefilling support and error handling
-        events: {
-          afterInit: (editor: any) => {
-            try {
-              console.log('🎯 Editor afterInit called');
-              setIsEditorReady(true);
-
-              // FIXED: Set initial content for automatic prefilling
-              const contentToSet =
-                currentValue || initialContent || field?.value || '';
-              if (editor && contentToSet) {
-                console.log(
-                  '📝 Setting initial content in editor for automatic prefilling:',
-                  contentToSet.substring(0, 100) + '...',
-                );
-                editor.value = contentToSet;
-                setContent(contentToSet);
-              }
-
-              handleFileDrop(editor);
-
-              if (editor.editor) {
-                editor.editor.addEventListener('click', () => {
-                  setTimeout(() => {
-                    try {
-                      if (
-                        editor.editor &&
-                        !editor.editor.contains(document.activeElement)
-                      ) {
-                        editor.editor.focus();
-                      }
-                    } catch (error) {
-                      console.error('Click focus error:', error);
-                    }
-                  }, 10);
+                tabButton.addEventListener('click', () => {
+                  activeCategory = categoryKey;
+                  // Update tab styles
+                  categoryTabs.querySelectorAll('button').forEach((btn:any) => {
+                    btn.style.background = 'white';
+                    btn.style.color = '#333';
+                    btn.style.borderBottom = 'none';
+                  });
+                  tabButton.style.background = '#e3f2fd';
+                  tabButton.style.color = '#2196f3';
+                  tabButton.style.borderBottom = '2px solid #2196f3';
+                  renderSymbols(categoryKey);
                 });
 
-                editor.editor.addEventListener(
-                  'keydown',
-                  (e: KeyboardEvent) => {
-                    if (e.key === 'Tab') {
-                      return;
-                    }
-                  },
-                );
+                categoryTabs.appendChild(tabButton);
+              });
 
-                editor.editor.addEventListener('paste', () => {
-                  setTimeout(() => {
-                    try {
-                      if (
-                        isEditorReady &&
-                        editorRef.current &&
-                        typeof editorRef.current.value !== 'undefined'
-                      ) {
-                        const newContent = editorRef.current.value;
-                        debouncedUpdate(newContent);
-                      }
-                    } catch (error) {
-                      console.error('Paste update error:', error);
-                    }
-                  }, 100);
-                });
-              }
+              // Initial render
+              renderSymbols(activeCategory);
 
-              console.log(
-                '✅ Jodit Editor initialized successfully with automatic prefilling support',
-              );
+              div.appendChild(categoryTabs);
+              div.appendChild(symbolsContainer);
+
+              return div;
             } catch (error) {
-              console.error('Editor afterInit error:', error);
-              // Don't throw to prevent blank screen
+              console.error('Error creating symbol popup:', error);
+              return editor.create.div();
             }
           },
-
-          change: (newContent: string) => {
-            try {
-              if (isEditorReady) {
-                debouncedUpdate(newContent);
-              }
-            } catch (error) {
-              console.error('Editor change error:', error);
-            }
-          },
-
-          focus: () => {
-            console.log('🎯 Editor focused');
-          },
-
-          blur: () => {
-            console.log('👋 Editor blurred');
-          },
-
-          beforeDestruct: () => {
-            try {
-              setIsEditorReady(false);
-              setIsInitialized(false);
-              debouncedUpdate.cancel();
-              if (focusTimeoutRef.current) {
-                clearTimeout(focusTimeoutRef.current);
-              }
-              if (initTimeoutRef.current) {
-                clearTimeout(initTimeoutRef.current);
-              }
-            } catch (error) {
-              console.error('Editor beforeDestruct error:', error);
-            }
-          },
+          tooltip: 'Insert Symbol',
+          icon: 'symbol',
         },
-      }),
-      [
-        disabled,
-        height,
-        placeholder,
-        debouncedUpdate,
-        content,
-        isEditorReady,
-        uniqueId,
-        handleImageUpload,
-        handleFileDrop,
-        currentValue,
-        initialContent,
-        field?.value,
-      ],
-    );
+      },
 
-    // FIXED: Prevent rendering on server side with error handling
-    if (!isMounted) {
-      return (
-        <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-          <div className="text-gray-500">Loading editor...</div>
-        </div>
-      );
-    }
+      events: {
+        afterPaste: (e:any) => {
+          console.log('Paste event:', e);
+          saveCursorPosition();
+          return true;
+        },
+        beforeLinkInsert: (link:any) => {
+          console.log('Inserting link:', link);
+          saveCursorPosition();
+          return true;
+        },
+        error: (error:any) => {
+          console.error('JoditEditor error:', error);
+        },
+        beforeChange: () => {
+          saveCursorPosition();
+        },
+        afterInit: () => {
+          if (editor.current) {
+            editor.current.events?.on('focus', () => {
+              restoreCursorPosition();
+            });
+          }
+        },
+      },
+    }),
+    [disabled, saveCursorPosition, restoreCursorPosition, height]
+  );
 
-    return (
-      <div
-        ref={containerRef}
-        className={`jodit-text-editor-container rounded-lg overflow-hidden ${
-          error ? 'ring-2 ring-rose-500' : 'ring-1 ring-gray-200'
-        }`}
-        onClick={handleFocus}
-      >
-        {/* Upload Progress Indicator */}
-        {isUploading && (
-          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-blue-400 animate-spin"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-              </div>
-              <div className="ml-3 flex-1">
-                <p className="text-sm text-blue-700">
-                  Uploading image... {uploadProgress}%
-                </p>
-                <div className="mt-2 w-full bg-blue-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Upload Error Display */}
-        {uploadError && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-red-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-red-700">
-                  Upload failed: {uploadError}
-                </p>
-                <button
-                  onClick={() => setUploadError('')}
-                  className="mt-2 text-sm text-red-600 hover:text-red-500 underline"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <JoditErrorBoundary>
-          <JoditEditor
-            ref={editorRef}
-            value={content}
-            config={config}
-            tabIndex={1}
-            onBlur={() => {
-              // Natural blur handling
-            }}
-            onChange={(newContent) => {
-              try {
-                if (newContent !== content && isEditorReady) {
-                  debouncedUpdate(newContent);
-                }
-              } catch (error) {
-                console.error('Editor onChange error:', error);
-              }
-            }}
-          />
-        </JoditErrorBoundary>
-      </div>
-    );
-  },
-);
+  return (
+    <JoditEditor
+      ref={editor}
+      value={content}
+      config={config}
+      onBlur={(newContent) => {
+        if (newContent !== content) {
+          setContent(newContent);
+          form.setFieldValue(field?.name, newContent);
+          lastContent.current = newContent;
+          saveCursorPosition();
+        }
+      }}
+    />
+  );
+};
 
 // FIXED: PictureInput with automatic prefilling
 const PictureInput = memo(

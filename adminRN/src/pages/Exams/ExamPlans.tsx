@@ -217,7 +217,32 @@ const ExamPlans = () => {
       accessor: 'validityDays',
       render: (value: number) => `${value} days`,
     },
+    {
+      header: 'Active Purchases',
+      accessor: 'activePurchaseCount',
+      render: (value: number, item: any) => {
+        if (!value || value === 0) {
+          return 'No active purchases';
+        }
 
+        // Find the minimum remaining days from all active purchases
+        const minRemainingDays =
+          item.activePurchaseDetails?.reduce((min: number, purchase: any) => {
+            return purchase.remainingDays < min ? purchase.remainingDays : min;
+          }, Number.POSITIVE_INFINITY) || 0;
+
+        return (
+          <div className="text-center">
+            <div className="font-semibold text-blue-600">{value} Active</div>
+            <div className="text-xs text-gray-500">
+              {minRemainingDays > 0
+                ? `${minRemainingDays} days left (min)`
+                : 'Expiring soon'}
+            </div>
+          </div>
+        );
+      },
+    },
     {
       header: 'Status',
       accessor: 'status',
