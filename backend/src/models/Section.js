@@ -1,5 +1,5 @@
-const mongoose = require("mongoose")
-const Schema = mongoose.Schema
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
 const SectionSchema = new Schema(
   {
@@ -40,16 +40,18 @@ const SectionSchema = new Schema(
       ref: "Admin",
     },
   },
-  { timestamps: true },
-)
+  { timestamps: true }
+);
 
 // Create compound index for test series + section name uniqueness
-SectionSchema.index({ testSeriesId: 1, name: 1 }, { unique: true })
+SectionSchema.index({ testSeriesId: 1, name: 1 }, { unique: true });
 
 // Pre-find middleware to exclude soft-deleted records
 SectionSchema.pre(/^find/, function (next) {
-  this.where({ deletedAt: null })
-  next()
-})
+  if (!this.getOptions().withDeleted) {
+    this.where({ deletedAt: null });
+  }
+  next();
+});
 
-module.exports = mongoose.model("Section", SectionSchema)
+module.exports = mongoose.model("Section", SectionSchema);

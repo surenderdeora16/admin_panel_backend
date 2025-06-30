@@ -34,45 +34,104 @@ exports.listGeneralSetting = async (req, res) => {
     }
 }
 
+// exports.updateGeneralSetting = async (req, res) => {
+//     try {
+//         var data = clean(req.body)
+//         var type = clean(req.query.type)
+//         delete data?.favicon;
+//         delete data?.footer_logo;
+//         delete data?.logo;
+
+//         // Files Upload
+//         const { logo = null, footer_logo = null, favicon = null } = req.files
+//         if (logo || footer_logo || favicon) {
+
+//             var setting = await GeneralSetting.find({ setting_name: ['favicon', 'footer_logo', 'logo'] });
+//             var setting_arr = setting.reduce((obj, item) => Object.assign(obj, { [item.field_name]: item.field_value }), {});
+
+//             if (logo != undefined) {
+//                 Storage.deleteFile(`setting/${setting_arr?.logo}`);
+//                 data.logo = logo[0].filename
+//             }
+
+//             if (footer_logo != undefined) {
+//                 Storage.deleteFile(`setting/${setting_arr?.footer_logo}`);
+//                 data.footer_logo = footer_logo[0].filename
+//             }
+
+
+//             if (favicon != undefined) {
+//                 Storage.deleteFile(`setting/${setting_arr?.favicon}`);
+//                 data.favicon = favicon[0].filename
+//             }
+//         }
+
+//         for (var key in data) {
+//             await GeneralSetting.updateOne({ field_name: key, setting_type: type }, { field_value: data[key] });
+//         }
+
+//         return res.successUpdate();
+//     } catch (error) {
+//         console.log("error", error)
+//         return res.someThingWentWrong(error);
+//     }
+// }
+
 exports.updateGeneralSetting = async (req, res) => {
     try {
-        var data = clean(req.body)
-        var type = clean(req.query.type)
-        delete data.favicon;
-        delete data.footer_logo;
-        delete data.logo;
+        const data = clean(req.body);
+        const settingType = clean(req.query.type); // Changed from 'type' to 'settingType' for clarity
 
-        // Files Upload
-        const { logo = null, footer_logo = null, favicon = null } = req.files
-        if (logo || footer_logo || favicon) {
+        // Remove non-setting fields
+        delete data.type;
+        
+        // Get all valid fields for this setting type
+        const validFields = await GeneralSetting.find({ 
+            setting_type: settingType 
+        }).distinct('field_name');
 
-            var setting = await GeneralSetting.find({ setting_name: ['favicon', 'footer_logo', 'logo'] });
-            var setting_arr = setting.reduce((obj, item) => Object.assign(obj, { [item.field_name]: item.field_value }), {});
-
-            if (logo != undefined) {
-                Storage.deleteFile(`setting/${setting_arr?.logo}`);
-                data.logo = logo[0].filename
-            }
-
-            if (footer_logo != undefined) {
-                Storage.deleteFile(`setting/${setting_arr?.footer_logo}`);
-                data.footer_logo = footer_logo[0].filename
-            }
-
-
-            if (favicon != undefined) {
-                Storage.deleteFile(`setting/${setting_arr?.favicon}`);
-                data.favicon = favicon[0].filename
+        let updateCount = 0;
+        
+        for (const [fieldName, fieldValue] of Object.entries(data)) {
+            if (validFields.includes(fieldName)) {
+                const result = await GeneralSetting.updateOne(
+                    { 
+                        field_name: fieldName, 
+                        setting_type: settingType 
+                    },
+                    { 
+                        field_value: fieldValue.toString() // Ensure string value
+                    }
+                );
+                
+                if (result.modifiedCount > 0) {
+                    updateCount++;
+                }
             }
         }
 
-        for (var key in data) {
-            await GeneralSetting.updateOne({ field_name: key, setting_type: type }, { field_value: data[key] });
+        if (updateCount === 0) {
+            return res.status(200).json({
+                success: false,
+                message: "No fields were updated - possibly invalid field names or same values"
+            });
         }
 
-        return res.successUpdate();
+
+        console.log("updateCount", updateCount)
+        
+        return res.status(200).json({
+            success: true,
+            message: `Successfully updated ${updateCount} field(s)`
+        });
+        
     } catch (error) {
-        return res.someThingWentWrong(error);
+        console.error("Error in updateGeneralSetting:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Something went wrong",
+            error: error.message
+        });
     }
 }
 

@@ -41,7 +41,7 @@ const useBatches = () => {
     fetchBatches();
   }, []);
 
-  return { batches, loading, error };
+  return { batches, loading };
 };
 
 const ExamPlans = () => {

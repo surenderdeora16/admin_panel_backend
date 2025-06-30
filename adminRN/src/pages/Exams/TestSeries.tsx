@@ -41,7 +41,7 @@ const useExamPlans = () => {
     fetchExamPlans();
   }, []);
 
-  return { examPlans, loading, error };
+  return { examPlans, loading };
 };
 
 const TestSeries = () => {

@@ -6,8 +6,7 @@ const logger = require("./logger")
 
 
 // Schedule task to run every day at midnight
-const scheduleUpdateExpiredPurchases = () => {
-  cron.schedule("0 0 * * *", async () => {
+const scheduleUpdateExpiredPurchases = async () => {
     try {
       console.log("Running scheduled task: Update expired purchases")
       const updatedCount = await razorpayService.updateExpiredPurchases()
@@ -15,7 +14,6 @@ const scheduleUpdateExpiredPurchases = () => {
     } catch (error) {
       console.error("Error in scheduled task:", error)
     }
-  })
 }
 
 

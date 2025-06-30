@@ -1245,7 +1245,10 @@ exports.getExamResult = async (req, res) => {
     const exam = await Exam.findOne({
       _id: examId,
       userId,
-    }).populate("testSeriesId");
+    }).populate({
+      path: "testSeriesId",
+      options: { withDeleted: true },
+    });
 
     if (!exam) {
       return res.noRecords("Exam not found");
@@ -1468,6 +1471,7 @@ exports.getExamReview = async (req, res) => {
       .populate({
         path: "sectionId",
         select: "name sequence",
+        options: { withDeleted: true },
       })
       .sort({ sequence: 1 });
 
@@ -1879,7 +1883,9 @@ exports.getExamNavigation = async (req, res) => {
     // Get all sections
     const sections = await Section.find({
       testSeriesId: exam.testSeriesId,
-    }).sort({ sequence: 1 });
+    })
+      .sort({ sequence: 1 })
+      // .setOptions({ withDeleted: true });
 
     // Get all exam questions status
     const examQuestions = await ExamQuestion.find({
@@ -1973,10 +1979,15 @@ exports.getExamResultList = async (req, res) => {
       .lean();
 
     // Log exams to verify testSeriesId
-    console.log("Exams fetched:", exams.map(e => ({ _id: e._id, testSeriesId: e.testSeriesId })));
+    console.log(
+      "Exams fetched:",
+      exams.map((e) => ({ _id: e._id, testSeriesId: e.testSeriesId }))
+    );
 
     // Manually populate testSeriesId, including soft-deleted TestSeries
-    const testSeriesIds = exams.map((exam) => exam.testSeriesId).filter(Boolean); // Filter out invalid IDs
+    const testSeriesIds = exams
+      .map((exam) => exam.testSeriesId)
+      .filter(Boolean); // Filter out invalid IDs
     const testSeries = await TestSeries.find({
       _id: { $in: testSeriesIds },
     })

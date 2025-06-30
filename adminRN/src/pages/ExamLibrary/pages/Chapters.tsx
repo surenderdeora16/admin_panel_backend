@@ -35,7 +35,7 @@ const useSubjects = () => {
     fetchSubjects();
   }, []); // Empty dependency array means it runs once on mount
 
-  return { subjects, loading, error };
+  return { subjects, loading };
 };
 
 const Chapters = () => {

@@ -6,6 +6,7 @@ const Storage = require("../../helpers/Storage");
 const { getCookiesConfig } = require("../../helpers/formValidConfig");
 const catchAsync = require("../../utils/catchAsync");
 const mongoose = require("mongoose");
+const logger = require("../../utils/logger");
 
 exports.register = async (req, res) => {
   try {
@@ -77,7 +78,7 @@ exports.login = async (req, res) => {
     // Set secure cookie
     res.cookie("accessToken", token, getCookiesConfig());
 
-    const record = { token, mobile, name: user.name, email: user.email };
+    const record = { token, mobile, name: user.name, email: user.email, image: user.image };
     return res.success(record, "Login successful! Welcome back.");
   } catch (error) {
     logger.error(`Login error: ${error.message}`);
