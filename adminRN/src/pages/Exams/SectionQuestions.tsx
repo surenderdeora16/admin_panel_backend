@@ -76,7 +76,7 @@ const SectionQuestions = () => {
   );
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
-    limit: 100,
+    limit: 25,
     total: 0,
   });
   const [sectionQPagination, setSectionQPagination] = useState<Pagination>({
@@ -300,7 +300,7 @@ const SectionQuestions = () => {
   };
   const handleRemoveQuestion = async (questionId: string) => {
     try {
-      console.log("questionId>", questionId)
+      console.log('questionId>', questionId);
       setProcessing((prev) => ({ ...prev, removingId: questionId }));
       const res = await AxiosHelper.deleteData(
         `/test-series/${testSeriesId}/sections/${sectionId}/questions`,
@@ -311,7 +311,9 @@ const SectionQuestions = () => {
       if (res.data?.status) {
         toast.success(
           res.data.data?.message ||
-            `${res.data.data?.removedCount || 1} question removed from section successfully`,
+            `${
+              res.data.data?.removedCount || 1
+            } question removed from section successfully`,
         );
         fetchSectionQuestions();
       } else {
@@ -493,7 +495,7 @@ const SectionQuestions = () => {
 
             {/* Filters */}
             {filtersVisible && (
-              <div className="p-5 space-y-5 border-b border-slate-200 bg-slate-50">
+              <div className="p-3 space-y-5 border-b border-slate-200 bg-slate-50">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   <ReactSelectInput
                     label="Subject"
@@ -560,18 +562,44 @@ const SectionQuestions = () => {
                     styles={customSelectStyles}
                   />
                 </div>
-                <SearchInput
-                  value={taxonomy.searchQuery}
-                  onChange={(e) =>
-                    setTaxonomy((prev) => ({
-                      ...prev,
-                      searchQuery: e.target.value,
-                    }))
-                  }
-                  onSearch={() =>
-                    setPagination((prev) => ({ ...prev, page: 1 }))
-                  }
-                />
+                <div className="flex w-full items-center gap-2">
+                  <div className='w-full'>
+                    <SearchInput
+                      value={taxonomy.searchQuery}
+                      onChange={(e) =>
+                        setTaxonomy((prev) => ({
+                          ...prev,
+                          searchQuery: e.target.value,
+                        }))
+                      }
+                      onSearch={() =>
+                        setPagination((prev) => ({ ...prev, page: 1 }))
+                      }
+                    />
+                  </div>
+                  <div className='min-w-26 !h-full relative z-20'>
+                    <Select
+                      defaultValue={{ value: 25, label: '25' }}
+                      onChange={(selectedOption) =>
+                        setPagination((prev) => ({
+                          ...prev,
+                          page: 1,
+                          limit: selectedOption.value,
+                        }))
+                      }
+                      options={[
+                        { value: 10, label: '10' },
+                        { value: 20, label: '20' },
+                        { value: 25, label: '25' },
+                        { value: 30, label: '30' },
+                        { value: 50, label: '50' },
+                        { value: 100, label: '100' },
+                      ]}
+                      classNamePrefix="react-select"
+                      className="w-full !h-full"
+                    />
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1005,14 +1033,13 @@ const SectionQuestionsTable: React.FC<SectionQuestionsTableProps> = ({
               </td>
               <td className="px-6 py-4">
                 <div className="text-sm font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md inline-block">
-                    <span
+                  <span
                     dangerouslySetInnerHTML={{
-                      __html:
-                      item.questionId[
+                      __html: item.questionId[
                         item.questionId.rightAnswer as keyof Question
                       ] as string,
                     }}
-                    />
+                  />
                 </div>
               </td>
               <td className="px-6 py-4">
